@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Bilans urlopowy (górny pasek) -->
+<div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+    <div class="stat bg-base-100 rounded-2xl shadow-sm p-4">
+        <div class="stat-title text-xs">Urlop wypoczynkowy</div>
+        <div class="stat-value text-2xl text-primary">{{ vacation_info.remaining_vacation }}</div>
+        <div class="stat-desc">
+            pozostało / {{ vacation_info.total }} dni
+            <span class="text-base-content/50">(wykorz. {{ vacation_info.used_vacation }})</span>
+        </div>
+    </div>
+    <div class="stat bg-base-100 rounded-2xl shadow-sm p-4">
+        <div class="stat-title text-xs">Urlop na żądanie</div>
+        <div class="stat-value text-2xl text-secondary">{{ vacation_info.remaining_on_demand }}</div>
+        <div class="stat-desc">
+            pozostało / {{ vacation_info.on_demand_total }} dni
+            <span class="text-base-content/50">(wykorz. {{ vacation_info.used_on_demand }})</span>
+        </div>
+    </div>
+    <div class="stat bg-base-100 rounded-2xl shadow-sm p-4 col-span-2 md:col-span-1">
+        <div class="stat-title text-xs">Praca zdalna</div>
+        <div class="stat-value text-2xl text-accent">{{ vacation_info.remaining_remote }}</div>
+        <div class="stat-desc">
+            pozostało / {{ vacation_info.remote_total }} dni
+            <span class="text-base-content/50">(wykorz. {{ vacation_info.used_remote }})</span>
+        </div>
+    </div>
+</div>
+
+<!-- Harmonijka miesięcy -->
+<div class="flex flex-col gap-3" x-data="{ openMonth: '{{ current_key[0] }}-{{ current_key[1] }}' }">
+
+    {% set current_display_year = namespace(value=None) %}
+
+    {% for month in months_data %}
+    {% set key = month.year ~ '-' ~ month.month %}
+
+    {# Separator roku #}
+    {% if month.year != current_display_year.value %}
+    {% set current_display_year.value = month.year %}
+    <div class="flex items-center gap-3 mt-2 first:mt-0">
+        <span class="text-xs font-semibold text-base-content/40 tracking-widest uppercase">
+            {{ month.year }}
+        </span>
+        <div class="flex-1 h-px bg-base-300"></div>
+    </div>
+    {% endif %}
+
+    <!-- Karta miesiąca -->
+    <div class="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+
+        <!-- Nagłówek miesiąca (klikamy aby rozwinąć) -->
+        <div class="flex items-center justify-between px-5 py-3 cursor-pointer hover:bg-base-50 transition-colors"
+             @click="openMonth = openMonth === '{{ key }}' ? null : '{{ key }}'">
+
+            <div class="flex items-center gap-3">
+                <!-- Ikona rozwinięcia -->
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="h-4 w-4 text-base-content/40 transition-transform duration-200"
+                     :class="openMonth === '{{ key }}' ? 'rotate-90' : ''"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+
+                <div>
+                    <span class="font-semibold">{{ month.month_name }}</span>
+                    {% if month.is_current %}
+                    <span class="badge badge-primary badge-sm ml-2">aktualny</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Podsumowanie widoczne zawsze -->
+            <div class="flex items-center gap-4 text-sm">
+                {% if month.summary.total_hours > 0 or not month.is_current %}
+                <div class="hidden sm:flex items-center gap-4">
+                    <span class="text-base-content/60">
+                        <span class="font-medium text-base-content">
+                            {{ "%.2f"|format(month.summary.total_hours)|replace('.', ',') }}h
+                        </span>
+                        / {{ "%.0f"|format(month.summary.expected_hours) }}h
+                    </span>
+
+                    {% if month.summary.overtime_hours > 0 %}
+                    <span class="badge badge-success badge-sm">
+                        +{{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h
+                    </span>
+                    {% elif month.summary.overtime_hours < 0 %}
+                    <span class="badge badge-error badge-sm">
+                        {{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h
+                    </span>
+                    {% endif %}
+
+                    <span class="font-semibold text-primary">
+                        {{ format_currency(month.summary.total_with_bonus) }}
+                    </span>
+                </div>
+                {% else %}
+                <span class="text-base-content/30 text-xs">brak wpisów</span>
+                {% endif %}
+
+                <!-- Przycisk dodaj dzień -->
+                <a href="{{ url_for('entries.add') }}"
+                   @click.stop
+                   class="btn btn-ghost btn-xs text-primary">
+                    + Dodaj
+                </a>
+            </div>
+        </div>
+
+        <!-- Rozwinięta zawartość -->
+        <div x-show="openMonth === '{{ key }}'"
+             x-cloak
+             x-transition:enter="transition ease-out duration-150"
+             x-transition:enter-start="opacity-0 -translate-y-1"
+             x-transition:enter-end="opacity-100 translate-y-0">
+
+            <div class="border-t border-base-200">
+
+                {% if month.entries %}
+                <!-- Tabela wpisów -->
+                <div class="overflow-x-auto">
+                    <table class="table table-sm w-full">
+                        <thead>
+                            <tr class="bg-base-200/60 text-xs text-base-content/60 uppercase tracking-wide">
+                                <th class="font-semibold">Data</th>
+                                <th class="font-semibold">Typ</th>
+                                <th class="font-semibold">Przyjście</th>
+                                <th class="font-semibold">Wyjście</th>
+                                <th class="font-semibold">Przerwa</th>
+                                <th class="font-semibold text-right">Godziny</th>
+                                <th class="font-semibold text-right">Wynagrodzenie</th>
+                                <th class="font-semibold"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in month.entries %}
+                            <tr class="entry-row transition-colors">
+                                <td class="font-medium">
+                                    {{ entry.date.strftime('%d.%m.%Y') }}
+                                    {% if entry.is_remote %}
+                                    <span class="badge badge-accent badge-xs ml-1" title="Praca zdalna">PZ</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if entry.entry_type == 'work' %}
+                                    <span class="badge badge-ghost badge-sm">Praca</span>
+                                    {% elif entry.entry_type == 'vacation' %}
+                                    <span class="badge badge-info badge-sm">Urlop</span>
+                                    {% elif entry.entry_type == 'on_demand' %}
+                                    <span class="badge badge-warning badge-sm">Na żądanie</span>
+                                    {% elif entry.entry_type == 'holiday' %}
+                                    <span class="badge badge-success badge-sm">Święto</span>
+                                    {% elif entry.entry_type == 'sick_leave' %}
+                                    <span class="badge badge-error badge-sm">Zwolnienie</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-base-content/70">
+                                    {% if entry.time_start %}
+                                        {{ entry.time_start.strftime('%H:%M') }}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-base-content/70">
+                                    {% if entry.time_end %}
+                                        {{ entry.time_end.strftime('%H:%M') }}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-base-content/70 text-xs">
+                                    {% if entry.break_start and entry.break_end %}
+                                        {{ entry.break_start.strftime('%H:%M') }}–{{ entry.break_end.strftime('%H:%M') }}
+                                        {% if entry.extra_break_minutes > 0 %}
+                                        <span class="text-warning">(+{{ entry.extra_break_minutes }}min)</span>
+                                        {% endif %}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-right font-medium">
+                                    {{ "%.2f"|format(entry.hours_billed)|replace('.', ',') }}h
+                                </td>
+                                <td class="text-right text-primary font-medium">
+                                    {% if month.hourly_rate > 0 %}
+                                        {{ format_currency(entry.hours_billed * month.hourly_rate) }}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <a href="{{ url_for('entries.edit', entry_id=entry.id) }}"
+                                           class="btn btn-ghost btn-xs">Edytuj</a>
+                                        <form method="POST"
+                                              action="{{ url_for('entries.delete', entry_id=entry.id) }}"
+                                              onsubmit="return confirm('Usunąć wpis?')">
+                                            <button type="submit" class="btn btn-ghost btn-xs text-error">Usuń</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="py-8 text-center text-base-content/40 text-sm">
+                    Brak wpisów w tym miesiącu.
+                    <a href="{{ url_for('entries.add') }}" class="link link-primary">Dodaj pierwszy dzień</a>
+                </div>
+                {% endif %}
+
+                <!-- Podsumowanie miesiąca -->
+                {% if month.entries %}
+                <div class="border-t border-base-200 bg-base-50 px-5 py-4">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <div class="text-xs text-base-content/50 mb-0.5">Przepracowane</div>
+                            <div class="font-semibold">
+                                {{ format_hours(month.summary.total_hours) }}
+                                <span class="text-xs text-base-content/50">
+                                    ({{ "%.2f"|format(month.summary.total_hours)|replace('.', ',') }}h)
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-base-content/50 mb-0.5">Wymagane</div>
+                            <div class="font-semibold">
+                                {{ format_hours(month.summary.expected_hours) }}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-base-content/50 mb-0.5">Nadgodziny</div>
+                            <div class="font-semibold {% if month.summary.overtime_hours > 0 %}text-success{% elif month.summary.overtime_hours < 0 %}text-error{% endif %}">
+                                {% if month.summary.overtime_hours >= 0 %}+{% endif %}{{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-base-content/50 mb-0.5">Wynagrodzenie</div>
+                            <div class="font-bold text-primary">
+                                {{ format_currency(month.summary.actual_salary) }}
+                                {% if month.summary.bonus > 0 %}
+                                <span class="block text-xs text-success font-medium">
+                                    + {{ format_currency(month.summary.bonus) }} premia
+                                </span>
+                                <span class="block text-xs text-base-content/70 font-semibold">
+                                    = {{ format_currency(month.summary.total_with_bonus) }} łącznie
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stawka i dni -->
+                    <div class="flex items-center justify-between mt-3 pt-3 border-t border-base-200">
+                        <div class="flex gap-4 text-xs text-base-content/50">
+                            <span>Stawka: <strong>{{ month.hourly_rate|round(2) }} PLN/h</strong></span>
+                            <span>Dni pracy: <strong>{{ month.summary.work_days }}</strong></span>
+                            {% if month.summary.vacation_days > 0 %}
+                            <span>Urlop: <strong>{{ month.summary.vacation_days }}</strong></span>
+                            {% endif %}
+                            {% if month.summary.remote_days > 0 %}
+                            <span>Zdalna: <strong>{{ month.summary.remote_days }}</strong></span>
+                            {% endif %}
+                        </div>
+                        <a href="{{ url_for('settings.month_config', year=month.year, month=month.month) }}"
+                           class="btn btn-ghost btn-xs text-base-content/50">
+                            ⚙ Edytuj ustawienia
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+{% if not months_data %}
+<div class="card bg-base-100 shadow-sm">
+    <div class="card-body items-center text-center py-16">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-base-content/20 mb-3" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h3 class="text-lg font-semibold text-base-content/60">Brak wpisów</h3>
+        <p class="text-base-content/40 text-sm mb-4">Dodaj pierwszy dzień pracy aby zacząć.</p>
+        <a href="{{ url_for('entries.add') }}" class="btn btn-primary">
+            Dodaj pierwszy dzień
+        </a>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
