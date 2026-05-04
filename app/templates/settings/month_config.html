@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Konfiguracja — {{ MONTH_NAMES.get(config.billing_month) }} {{ config.billing_year }}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{{ url_for('settings.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
+        <h1 class="text-xl font-bold">
+            {{ MONTH_NAMES.get(config.billing_month) }} {{ config.billing_year }}
+        </h1>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-5">
+            <form method="POST" class="flex flex-col gap-5">
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Stawka godzinowa (PLN/h)</span>
+                    </label>
+                    <input type="number" name="hourly_rate" step="0.01" min="0" required
+                           value="{{ config.hourly_rate }}"
+                           class="input input-bordered w-full"
+                           placeholder="np. 41.00"/>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Wymagane godziny w miesiącu</span>
+                        <span class="label-text-alt text-base-content/40">dni robocze × 8</span>
+                    </label>
+                    <input type="number" name="expected_hours" step="0.5" min="0"
+                           value="{{ config.expected_hours or '' }}"
+                           class="input input-bordered w-full"
+                           placeholder="np. 176"/>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Premia (PLN)</span>
+                        <span class="label-text-alt text-base-content/40">opcjonalne</span>
+                    </label>
+                    <input type="number" name="bonus" step="0.01" min="0"
+                           value="{{ config.bonus or '' }}"
+                           class="input input-bordered w-full"
+                           placeholder="np. 2000.00"/>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Notatki</span>
+                        <span class="label-text-alt text-base-content/40">opcjonalne</span>
+                    </label>
+                    <textarea name="notes" rows="2"
+                              class="textarea textarea-bordered resize-none"
+                              placeholder="np. podwyżka od tego miesiąca">{{ config.notes or '' }}</textarea>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="btn btn-primary flex-1">Zapisz</button>
+                    <a href="{{ url_for('settings.index') }}" class="btn btn-ghost">Anuluj</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
