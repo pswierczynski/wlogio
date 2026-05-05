@@ -5,8 +5,13 @@ load_dotenv()
 
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or '4f9d2c7a8e1b6f0c9d3a7e5b1c8f2d6a'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \ 'mysql://przemeks_wlogio:Przemek121!@hosting-206.host1.eu:3306/przemeks_wlogio'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-zmien-w-produkcji'
+    # Supabase daje URL z prefiksem 'postgres://' którego SQLAlchemy nie akceptuje
+    # Zamieniamy automatycznie na 'postgresql://'
+    db_url = os.environ.get('DATABASE_URL', '')
+    if db_url.startswith('postgres://'):
+        db_url = db_url.replace('postgres://', 'postgresql://', 1)
+    SQLALCHEMY_DATABASE_URI = db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Normy czasu pracy
