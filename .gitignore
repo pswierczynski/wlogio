@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+instance/
+.flask_session
+*.db
+.DS_Store
+venv/
+.venv/
+migrations/versions/
