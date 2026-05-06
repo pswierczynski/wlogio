@@ -19,187 +19,169 @@
     </div>
 
     <div class="card bg-base-100 shadow-sm">
-        <div class="card-body gap-5"
-             x-data="{
-                entryType: '{{ entry.entry_type if entry else 'work' }}',
-                calcResult: null,
-                timeStart: '{{ entry.time_start.strftime('%H:%M') if entry and entry.time_start else '' }}',
-                timeEnd: '{{ entry.time_end.strftime('%H:%M') if entry and entry.time_end else '' }}',
-                breakStart: '{{ entry.break_start.strftime('%H:%M') if entry and entry.break_start else '' }}',
-                breakEnd: '{{ entry.break_end.strftime('%H:%M') if entry and entry.break_end else '' }}',
+        <div class="card-body gap-5">
 
-                calcHours() {
-                    if (!this.timeStart || !this.timeEnd) { this.calcResult = null; return; }
-                    const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
-                    let raw = toMin(this.timeEnd) - toMin(this.timeStart);
-                    if (raw < 0) raw += 24*60;
-                    let breakMin = 0;
-                    if (this.breakStart && this.breakEnd) {
-                        breakMin = toMin(this.breakEnd) - toMin(this.breakStart);
-                        if (breakMin < 0) breakMin = 0;
+            <form method="POST"
+                  action="{% if entry %}{{ url_for('entries.edit', entry_id=entry.id) }}{% else %}{{ url_for('entries.add') }}{% endif %}"
+                  x-data="{
+                    entryType: '{% if entry %}{{ entry.entry_type }}{% else %}work{% endif %}',
+                    calcResult: null,
+                    timeStart: '{% if entry and entry.time_start %}{{ entry.time_start.strftime('%H:%M') }}{% endif %}',
+                    timeEnd: '{% if entry and entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% endif %}',
+                    breakStart: '{% if entry and entry.break_start %}{{ entry.break_start.strftime('%H:%M') }}{% endif %}',
+                    breakEnd: '{% if entry and entry.break_end %}{{ entry.break_end.strftime('%H:%M') }}{% endif %}',
+                    calcHours() {
+                        if (!this.timeStart || !this.timeEnd) { this.calcResult = null; return; }
+                        const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+                        let raw = toMin(this.timeEnd) - toMin(this.timeStart);
+                        if (raw < 0) raw += 24*60;
+                        let breakMin = 0;
+                        if (this.breakStart && this.breakEnd) {
+                            breakMin = toMin(this.breakEnd) - toMin(this.breakStart);
+                            if (breakMin < 0) breakMin = 0;
+                        }
+                        const extra = Math.max(0, breakMin - 15);
+                        const net = raw - extra;
+                        const hours = net / 60;
+                        const rounded = Math.round(hours * 4) / 4;
+                        this.calcResult = { hours: hours.toFixed(2), rounded: rounded.toFixed(2), extra };
                     }
-                    const extra = Math.max(0, breakMin - 15);
-                    const net = raw - extra;
-                    const hours = net / 60;
-                    const rounded = Math.round(hours * 4) / 4;
-                    this.calcResult = { hours: hours.toFixed(2), rounded: rounded.toFixed(2), extra };
-                }
-             }">
+                  }">
 
-            <!-- Data -->
-            {% if not entry %}
-            <div class="form-control">
-                <label class="label"><span class="label-text font-medium">Data</span></label>
-                <input type="date" name="date" required
-                       value="{{ today }}"
-                       class="input input-bordered w-full"/>
-            </div>
-            {% endif %}
-
-            <!-- Typ wpisu -->
-            <div class="form-control">
-                <label class="label"><span class="label-text font-medium">Typ dnia</span></label>
-                <div class="flex flex-wrap gap-2">
-                    {% for type_key, type_label in entry_types.items() %}
-                    <label class="cursor-pointer">
-                        <input type="radio" name="entry_type" value="{{ type_key }}"
-                               class="sr-only"
-                               x-model="entryType"
-                               {% if (entry and entry.entry_type == type_key) or (not entry and type_key == 'work') %}checked{% endif %}>
-                        <span class="btn btn-sm"
-                              :class="entryType === '{{ type_key }}' ? 'btn-primary' : 'btn-ghost'">
-                            {{ type_label }}
-                        </span>
-                    </label>
-                    {% endfor %}
+                <!-- Data -->
+                {% if not entry %}
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Data</span></label>
+                    <input type="date" name="date" required
+                           value="{{ today }}"
+                           class="input input-bordered w-full"/>
                 </div>
-            </div>
+                {% endif %}
 
-            <!-- Pola godzinowe (tylko dla 'work') -->
-            <div x-show="entryType === 'work'" x-cloak class="flex flex-col gap-4">
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-medium">Przyjście</span></label>
-                        <input type="time" name="time_start"
-                               x-model="timeStart"
-                               @change="calcHours()"
-                               class="input input-bordered w-full"/>
-                    </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-medium">Wyjście</span></label>
-                        <input type="time" name="time_end"
-                               x-model="timeEnd"
-                               @change="calcHours()"
-                               class="input input-bordered w-full"/>
+                <!-- Typ wpisu -->
+                <div class="form-control">
+                    <label class="label"><span class="label-text font-medium">Typ dnia</span></label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for type_key, type_label in entry_types.items() %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="entry_type" value="{{ type_key }}"
+                                   class="sr-only"
+                                   x-model="entryType"
+                                   {% if (entry and entry.entry_type == type_key) or (not entry and type_key == 'work') %}checked{% endif %}>
+                            <span class="btn btn-sm"
+                                  :class="entryType === '{{ type_key }}' ? 'btn-primary' : 'btn-ghost'">
+                                {{ type_label }}
+                            </span>
+                        </label>
+                        {% endfor %}
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
+                <!-- Pola godzinowe (tylko dla 'work') -->
+                <div x-show="entryType === 'work'" x-cloak class="flex flex-col gap-4">
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Przyjście</span></label>
+                            <input type="time" name="time_start"
+                                   x-model="timeStart"
+                                   @change="calcHours()"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Wyjście</span></label>
+                            <input type="time" name="time_end"
+                                   x-model="timeEnd"
+                                   @change="calcHours()"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Przerwa od</span>
+                                <span class="label-text-alt text-base-content/40">opcjonalne</span>
+                            </label>
+                            <input type="time" name="break_start"
+                                   x-model="breakStart"
+                                   @change="calcHours()"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Przerwa do</span>
+                                <span class="label-text-alt text-base-content/40">opcjonalne</span>
+                            </label>
+                            <input type="time" name="break_end"
+                                   x-model="breakEnd"
+                                   @change="calcHours()"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                    </div>
+
+                    <!-- Podgląd obliczonych godzin -->
+                    <div x-show="calcResult" x-cloak class="alert alert-info py-3">
+                        <div class="text-sm">
+                            <span>Godziny: <strong x-text="calcResult?.hours"></strong>h</span>
+                            <span class="mx-2 text-base-content/30">→</span>
+                            <span>Po zaokrągleniu: <strong x-text="calcResult?.rounded"></strong>h</span>
+                            <span x-show="calcResult?.extra > 0" class="ml-2 text-warning text-xs">
+                                (nadprogramowa przerwa: <span x-text="calcResult?.extra"></span> min)
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Praca zdalna -->
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" name="is_remote" class="checkbox checkbox-accent"
+                               {% if entry and entry.is_remote %}checked{% endif %}/>
+                        <span class="text-sm font-medium">Praca zdalna (PZ-KRK)</span>
+                        <input type="number" name="remote_trip_number" min="1"
+                               placeholder="Nr wyjazdu"
+                               value="{{ entry.remote_trip_number or '' }}"
+                               class="input input-bordered input-sm w-28"/>
+                    </div>
+
+                </div>
+
+                <!-- Numer dnia urlopowego (dla urlopów) -->
+                <div x-show="entryType === 'vacation' || entryType === 'on_demand'" x-cloak>
                     <div class="form-control">
                         <label class="label">
-                            <span class="label-text font-medium">Przerwa od</span>
+                            <span class="label-text font-medium">Numer dnia urlopowego w roku</span>
                             <span class="label-text-alt text-base-content/40">opcjonalne</span>
                         </label>
-                        <input type="time" name="break_start"
-                               x-model="breakStart"
-                               @change="calcHours()"
-                               class="input input-bordered w-full"/>
-                    </div>
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Przerwa do</span>
-                            <span class="label-text-alt text-base-content/40">opcjonalne</span>
-                        </label>
-                        <input type="time" name="break_end"
-                               x-model="breakEnd"
-                               @change="calcHours()"
-                               class="input input-bordered w-full"/>
+                        <input type="number" name="vacation_day_number" min="1"
+                               value="{{ entry.vacation_day_number or '' }}"
+                               class="input input-bordered w-40"
+                               placeholder="np. 5"/>
                     </div>
                 </div>
 
-                <!-- Podgląd obliczonych godzin -->
-                <div x-show="calcResult" x-cloak
-                     class="alert alert-info py-3">
-                    <div class="text-sm">
-                        <span>Godziny: <strong x-text="calcResult?.hours"></strong>h</span>
-                        <span class="mx-2 text-base-content/30">→</span>
-                        <span>Po zaokrągleniu: <strong x-text="calcResult?.rounded"></strong>h</span>
-                        <span x-show="calcResult?.extra > 0" class="ml-2 text-warning text-xs">
-                            (nadprogramowa przerwa: <span x-text="calcResult?.extra"></span> min)
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Praca zdalna -->
-                <div class="flex items-center gap-3">
-                    <input type="checkbox" name="is_remote" class="checkbox checkbox-accent"
-                           {% if entry and entry.is_remote %}checked{% endif %}/>
-                    <span class="text-sm font-medium">Praca zdalna (PZ-KRK)</span>
-                    <input type="number" name="remote_trip_number" min="1"
-                           placeholder="Nr wyjazdu"
-                           value="{{ entry.remote_trip_number or '' }}"
-                           class="input input-bordered input-sm w-28"/>
-                </div>
-
-            </div>
-
-            <!-- Numer dnia urlopowego (dla urlopów) -->
-            <div x-show="entryType === 'vacation' || entryType === 'on_demand'" x-cloak>
+                <!-- Notatki -->
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Numer dnia urlopowego w roku</span>
+                        <span class="label-text font-medium">Notatki</span>
                         <span class="label-text-alt text-base-content/40">opcjonalne</span>
                     </label>
-                    <input type="number" name="vacation_day_number" min="1"
-                           value="{{ entry.vacation_day_number or '' }}"
-                           class="input input-bordered w-40"
-                           placeholder="np. 5"/>
+                    <textarea name="notes" rows="2"
+                              class="textarea textarea-bordered w-full resize-none"
+                              placeholder="Dodatkowe informacje...">{{ entry.notes or '' }}</textarea>
                 </div>
-            </div>
 
-            <!-- Notatki -->
-            <div class="form-control">
-                <label class="label">
-                    <span class="label-text font-medium">Notatki</span>
-                    <span class="label-text-alt text-base-content/40">opcjonalne</span>
-                </label>
-                <textarea name="notes" rows="2"
-                          class="textarea textarea-bordered w-full resize-none"
-                          placeholder="Dodatkowe informacje...">{{ entry.notes or '' }}</textarea>
-            </div>
+                <!-- Przyciski -->
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="btn btn-primary flex-1">
+                        {% if entry %}Zapisz zmiany{% else %}Dodaj dzień{% endif %}
+                    </button>
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost">Anuluj</a>
+                </div>
 
-            <!-- Przyciski -->
-            <div class="flex gap-3 pt-2">
-                <button type="submit"
-                        form="entry-form"
-                        class="btn btn-primary flex-1">
-                    {% if entry %}Zapisz zmiany{% else %}Dodaj dzień{% endif %}
-                </button>
-                <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost">Anuluj</a>
-            </div>
+            </form>
 
         </div>
     </div>
-
-    <!-- Formularz (poza Alpine, ale z submit przez button powyżej) -->
-    <form id="entry-form" method="POST"
-          action="{% if entry %}{{ url_for('entries.edit', entry_id=entry.id) }}{% else %}{{ url_for('entries.add') }}{% endif %}"
-          style="display:none">
-    </form>
-
-    <!-- Faktyczny formularz wewnątrz Alpine -->
-    <script>
-        document.getElementById('entry-form').remove();
-    </script>
-
 </div>
-
-<script>
-    // Podłącz Alpine form do właściwego action
-    document.querySelector('form[method="POST"]').addEventListener('submit', function(e) {
-        // Formularz jest wewnątrz x-data, submit działa normalnie
-    });
-</script>
 
 {% endblock %}
