@@ -182,7 +182,7 @@
                                 </td>
                                 <td class="text-right text-primary font-medium">
                                     {% if month.hourly_rate > 0 %}
-                                        {{ format_currency(entry.hours_billed * month.hourly_rate) }}
+                                        {{ format_currency(entry.hours_billed|float * month.hourly_rate) }}
                                     {% else %}—{% endif %}
                                 </td>
                                 <td class="text-right">
