@@ -2,6 +2,7 @@ services:
   - type: web
     name: wlogio
     runtime: python
+    pythonVersion: "3.11.9"
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn run:app
     envVars:
@@ -10,4 +11,4 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        sync: false  # ustawiasz ręcznie w panelu Render
+        sync: false
