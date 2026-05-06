@@ -9,6 +9,7 @@ from app.calculator import (
     calculate_month_summary,
     calculate_vacation_used,
     get_billing_period,
+    get_working_days_in_billing_period,
     format_hours,
     format_currency,
 )
@@ -67,9 +68,15 @@ def index():
         entries = periods[key]
         config = configs.get(key)
 
-        hourly_rate = float(config.hourly_rate) if config else 0
-        expected_hours = float(config.expected_hours) if config and config.expected_hours else 0
-        bonus = float(config.bonus) if config and config.bonus else 0
+        hourly_rate = float(config.hourly_rate) if config else 0.0
+        # Expected hours zawsze z kalendarza (dni robocze 23→22 * 8)
+        working_days = get_working_days_in_billing_period(year, month)
+        expected_hours = working_days * 8
+        # Zapisz do config jeśli się różni
+        if config and float(config.expected_hours or 0) != expected_hours:
+            config.expected_hours = expected_hours
+            db.session.commit()
+        bonus = float(config.bonus) if config and config.bonus else 0.0
 
         summary = calculate_month_summary(entries, hourly_rate, expected_hours, bonus)
 

@@ -12,11 +12,41 @@ Zasady z wlogio.txt / examples.md:
 
 from datetime import datetime, date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
-import math
+import calendar as cal_module
 
 
-BREAK_MINUTES = 15          # programowa przerwa (zawsze odliczana)
-ROUND_TO = Decimal('0.25')  # zaokrąglenie godzin
+BREAK_MINUTES = 15
+ROUND_TO = Decimal('0.25')
+
+
+def get_working_days_in_billing_period(billing_year, billing_month):
+    """
+    Liczy dni robocze (pon-pt) w okresie rozliczeniowym 23→22.
+
+    Przykład: billing_month=4 (kwiecień) obejmuje 23.03 → 22.04.
+    Święta NIE są odejmowane — tylko weekendy.
+    Zwraca liczbę dni roboczych * 8 = expected_hours.
+    """
+    # Okres: 23 dnia poprzedniego miesiąca → 22 dnia bieżącego
+    if billing_month == 1:
+        start_month = 12
+        start_year = billing_year - 1
+    else:
+        start_month = billing_month - 1
+        start_year = billing_year
+
+    start_date = date(start_year, start_month, 23)
+    end_date = date(billing_year, billing_month, 22)
+
+    working_days = 0
+    current = start_date
+    while current <= end_date:
+        # weekday(): 0=pon, 6=nie; 0-4 = dni robocze
+        if current.weekday() < 5:
+            working_days += 1
+        current += timedelta(days=1)
+
+    return working_days
 
 
 def calculate_hours(time_start, time_end, break_start=None, break_end=None):
