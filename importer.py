@@ -189,6 +189,11 @@ def parse_wlogio(filepath):
         if current_section_year is None:
             continue
 
+        # Pomiń puste wpisy (np. "11) 07.05:" bez danych)
+        # Wpis jest pusty jeśli po dacie nie ma żadnych danych
+        if re.match(r'^\d+\)\s+\d{2}\.\d{2}:\s*$', line):
+            continue
+
         year = current_section_year
 
         # --- Urlop na żądanie (sprawdź przed zwykłym urlopem) ---
@@ -331,6 +336,29 @@ def parse_wlogio(filepath):
     return entries, summaries
 
 
+def clear_user_data(user_email):
+    """Czyści wszystkie wpisy i konfiguracje dla użytkownika przed re-importem."""
+    from app import create_app, db
+    from app.models import User, WorkEntry, MonthConfig, VacationBalance
+
+    app = create_app()
+    with app.app_context():
+        user = User.query.filter_by(email=user_email).first()
+        if not user:
+            print(f'[BŁĄD] Użytkownik {user_email} nie istnieje.')
+            return False
+
+        deleted_entries = WorkEntry.query.filter_by(user_id=user.id).delete()
+        deleted_configs = MonthConfig.query.filter_by(user_id=user.id).delete()
+        deleted_balances = VacationBalance.query.filter_by(user_id=user.id).delete()
+        db.session.commit()
+
+        print(f'[INFO] Usunięto: {deleted_entries} wpisów, '
+              f'{deleted_configs} konfiguracji, '
+              f'{deleted_balances} bilansów urlopowych.')
+        return True
+
+
 def import_to_db(filepath, user_email):
     """
     Główna funkcja importu — parsuje plik i zapisuje do bazy.
@@ -389,6 +417,16 @@ def import_to_db(filepath, user_email):
 
         # Importuj konfiguracje miesięcy z podsumowań
         print(f'[INFO] Importuję konfiguracje {len(summaries)} miesięcy...')
+
+        # Importuj też miesiące które mają wpisy ale nie mają podsumowań
+        all_billing_periods = set()
+        for data in entries:
+            all_billing_periods.add((data['billing_year'], data['billing_month']))
+
+        for year, month in all_billing_periods:
+            if (year, month) not in summaries:
+                summaries[(year, month)] = {}
+
         for (year, month), summary_data in summaries.items():
             config = MonthConfig.query.filter_by(
                 user_id=user.id,
@@ -397,7 +435,6 @@ def import_to_db(filepath, user_email):
             ).first()
 
             if not config:
-                # Dziedzicz stawkę z poprzedniego miesiąca
                 prev_m = month - 1
                 prev_y = year
                 if prev_m == 0:
@@ -410,7 +447,7 @@ def import_to_db(filepath, user_email):
                     billing_month=prev_m
                 ).first()
 
-                # Oblicz stawkę z podsumowania jeśli jest
+                # Oblicz stawkę z podsumowania
                 rate = Decimal('0')
                 if 'expected_hours' in summary_data and 'expected_salary' in summary_data:
                     eh = summary_data['expected_hours']
@@ -421,12 +458,17 @@ def import_to_db(filepath, user_email):
                 if rate == 0 and prev_config:
                     rate = prev_config.hourly_rate
 
+                # Expected hours zawsze z kalendarza
+                from app.calculator import get_working_days_in_billing_period
+                working_days = get_working_days_in_billing_period(year, month)
+                expected_h = working_days * 8
+
                 config = MonthConfig(
                     user_id=user.id,
                     billing_year=year,
                     billing_month=month,
                     hourly_rate=rate,
-                    expected_hours=Decimal(str(summary_data.get('expected_hours', 0))),
+                    expected_hours=Decimal(str(expected_h)),
                     bonus=Decimal(str(summary_data.get('bonus', 0))),
                 )
                 db.session.add(config)
@@ -468,9 +510,14 @@ if __name__ == '__main__':
                         help='Email użytkownika w bazie')
     parser.add_argument('--create-user', action='store_true',
                         help='Utwórz domyślnego użytkownika przed importem')
+    parser.add_argument('--clear-first', action='store_true',
+                        help='Usuń istniejące dane użytkownika przed importem')
     args = parser.parse_args()
 
     if args.create_user:
         create_default_user()
+
+    if args.clear_first:
+        clear_user_data(args.email)
 
     import_to_db(args.file, args.email)
