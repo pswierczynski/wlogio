@@ -2,46 +2,71 @@
 {% block title %}Ustawienia{% endblock %}
 
 {% block content %}
-
-<div class="max-w-4xl mx-auto">
+<div class="max-w-5xl mx-auto">
     <h1 class="text-xl font-bold mb-6">Ustawienia</h1>
 
-    <div class="grid md:grid-cols-2 gap-6">
+    <div class="flex flex-col gap-6">
+
+        <!-- Bilans urlopowy - jeden, bez roku -->
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4 sm:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="card-title text-base">Bilans urlopowy</h2>
+                    <a href="{{ url_for('settings.vacation_balance') }}"
+                       class="btn btn-outline btn-sm">Edytuj</a>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="text-center p-3 bg-base-200 rounded-xl">
+                        <div class="text-2xl font-bold text-primary">{{ balance.vacation_total }}</div>
+                        <div class="text-xs text-base-content/60 mt-1">Urlop (dni)</div>
+                    </div>
+                    <div class="text-center p-3 bg-base-200 rounded-xl">
+                        <div class="text-2xl font-bold text-secondary">{{ balance.on_demand_total }}</div>
+                        <div class="text-xs text-base-content/60 mt-1">Na żądanie (dni)</div>
+                    </div>
+                    <div class="text-center p-3 bg-base-200 rounded-xl">
+                        <div class="text-2xl font-bold text-accent">{{ balance.remote_total }}</div>
+                        <div class="text-xs text-base-content/60 mt-1">Praca zdalna (dni)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Konfiguracje miesięcy -->
         <div class="card bg-base-100 shadow-sm">
-            <div class="card-body">
+            <div class="card-body p-4 sm:p-6">
                 <h2 class="card-title text-base mb-4">Konfiguracje miesięcy</h2>
 
                 {% if configs %}
                 <div class="overflow-x-auto">
-                    <table class="table table-sm w-full">
+                    <table class="table w-full">
                         <thead>
-                            <tr class="text-xs text-base-content/50">
-                                <th>Miesiąc</th>
-                                <th class="text-right">Stawka</th>
-                                <th class="text-right">Wymagane h</th>
-                                <th class="text-right">Premia</th>
-                                <th></th>
+                            <tr class="text-xs text-base-content/50 bg-base-200/50">
+                                <th class="min-w-[140px]">Miesiąc</th>
+                                <th class="min-w-[100px] text-right">Stawka</th>
+                                <th class="min-w-[110px] text-right">Wymagane</th>
+                                <th class="min-w-[100px] text-right">Premia</th>
+                                <th class="min-w-[80px]"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for config in configs %}
-                            <tr>
-                                <td class="font-medium">
+                            <tr class="hover">
+                                <td class="font-medium whitespace-nowrap">
                                     {{ MONTH_NAMES.get(config.billing_month) }} {{ config.billing_year }}
                                 </td>
-                                <td class="text-right">{{ config.hourly_rate }} zł/h</td>
-                                <td class="text-right">
-                                    {{ config.expected_hours or '—' }}
-                                    {% if config.expected_hours %}h{% endif %}
+                                <td class="text-right whitespace-nowrap">
+                                    {{ config.hourly_rate }} zł/h
                                 </td>
-                                <td class="text-right text-success">
+                                <td class="text-right whitespace-nowrap">
+                                    {{ config.expected_hours or '—' }}{% if config.expected_hours %}h{% endif %}
+                                </td>
+                                <td class="text-right whitespace-nowrap">
                                     {% if config.bonus and config.bonus > 0 %}
-                                    +{{ config.bonus }} zł
+                                    <span class="text-success font-medium">+{{ config.bonus }} zł</span>
                                     {% else %}—{% endif %}
                                 </td>
-                                <td>
+                                <td class="whitespace-nowrap">
                                     <a href="{{ url_for('settings.month_config', year=config.billing_year, month=config.billing_month) }}"
                                        class="btn btn-ghost btn-xs">Edytuj</a>
                                 </td>
@@ -52,60 +77,12 @@
                 </div>
                 {% else %}
                 <p class="text-base-content/40 text-sm text-center py-4">
-                    Brak konfiguracji. Dodaj pierwszy wpis aby automatycznie utworzyć konfigurację miesiąca.
+                    Brak konfiguracji. Dodaj pierwszy wpis aby automatycznie je utworzyć.
                 </p>
                 {% endif %}
-            </div>
-        </div>
-
-        <!-- Bilans urlopowy -->
-        <div class="card bg-base-100 shadow-sm">
-            <div class="card-body">
-                <h2 class="card-title text-base mb-4">Bilans urlopowy</h2>
-
-                {% if balances %}
-                <div class="flex flex-col gap-3">
-                    {% for balance in balances %}
-                    <div class="border border-base-200 rounded-xl p-4">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="font-semibold">{{ balance.year }}</span>
-                            <a href="{{ url_for('settings.vacation_balance', year=balance.year) }}"
-                               class="btn btn-ghost btn-xs">Edytuj</a>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2 text-sm">
-                            <div>
-                                <div class="text-xs text-base-content/50">Urlop</div>
-                                <div class="font-medium">{{ balance.vacation_total }} dni</div>
-                            </div>
-                            <div>
-                                <div class="text-xs text-base-content/50">Na żądanie</div>
-                                <div class="font-medium">{{ balance.on_demand_total }} dni</div>
-                            </div>
-                            <div>
-                                <div class="text-xs text-base-content/50">Zdalna</div>
-                                <div class="font-medium">{{ balance.remote_total }} dni</div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-base-content/40 text-sm text-center py-4">
-                    Brak zapisanych bilansów.
-                </p>
-                {% endif %}
-
-                <!-- Dodaj nowy rok -->
-                <div class="mt-4 pt-4 border-t border-base-200">
-                    <a href="{{ url_for('settings.vacation_balance', year=current_year) }}"
-                       class="btn btn-outline btn-sm w-full">
-                        + Ustaw bilans na {{ current_year }}
-                    </a>
-                </div>
             </div>
         </div>
 
     </div>
 </div>
-
 {% endblock %}

@@ -24,26 +24,30 @@
                            placeholder="np. 41.00"/>
                 </div>
 
+                <!-- Godziny robocze - tylko do odczytu, z kalendarza -->
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Wymagane godziny w miesiącu</span>
-                        <span class="label-text-alt text-base-content/40">dni robocze × 8</span>
+                        <span class="label-text font-medium">Godziny robocze w miesiącu</span>
+                        <span class="label-text-alt text-base-content/40">obliczane automatycznie</span>
                     </label>
-                    <input type="number" name="expected_hours" step="0.5" min="0"
-                           value="{{ config.expected_hours or '' }}"
-                           class="input input-bordered w-full"
-                           placeholder="np. 176"/>
+                    <div class="input input-bordered w-full bg-base-200 flex items-center text-base-content/70">
+                        {{ expected_hours }}h
+                        <span class="ml-2 text-xs text-base-content/40">
+                            ({{ working_days }} dni roboczych × 8h)
+                        </span>
+                    </div>
+                    <input type="hidden" name="expected_hours" value="{{ expected_hours }}"/>
                 </div>
 
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-medium">Premia (PLN)</span>
-                        <span class="label-text-alt text-base-content/40">opcjonalne</span>
+                        <span class="label-text-alt text-base-content/40">0 jeśli brak</span>
                     </label>
                     <input type="number" name="bonus" step="0.01" min="0"
-                           value="{{ config.bonus or '' }}"
+                           value="{{ config.bonus or '0' }}"
                            class="input input-bordered w-full"
-                           placeholder="np. 2000.00"/>
+                           placeholder="0.00"/>
                 </div>
 
                 <div class="form-control">

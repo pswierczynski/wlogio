@@ -1,19 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Bilans urlopowy {{ year }}{% endblock %}
+{% block title %}Bilans urlopowy{% endblock %}
 
 {% block content %}
 <div class="max-w-lg mx-auto">
     <div class="flex items-center gap-3 mb-6">
         <a href="{{ url_for('settings.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
-        <h1 class="text-xl font-bold">Bilans urlopowy {{ year }}</h1>
+        <h1 class="text-xl font-bold">Bilans urlopowy</h1>
     </div>
 
     <div class="card bg-base-100 shadow-sm">
         <div class="card-body gap-5">
 
             <div class="alert alert-info text-sm">
-                Ustaw roczne pule dni. Liczba wykorzystanych dni obliczana jest automatycznie
-                z wpisów w roku <strong>{{ year }}</strong> i resetuje się z dniem 1 stycznia.
+                Pule są roczne i resetują się z dniem 1 stycznia.
+                Niewykorzystane urlopy przenoszą się na następny rok.
+                Urlop na żądanie pomniejsza też pulę urlopów zwykłych.
             </div>
 
             <form method="POST" class="flex flex-col gap-5">
@@ -22,7 +23,7 @@
                     <label class="label">
                         <span class="label-text font-medium">Pula urlopu wypoczynkowego (dni)</span>
                     </label>
-                    <input type="number" name="vacation_total" min="0" max="100" required
+                    <input type="number" name="vacation_total" min="0" max="365" required
                            value="{{ balance.vacation_total }}"
                            class="input input-bordered w-40"/>
                 </div>
@@ -31,7 +32,7 @@
                     <label class="label">
                         <span class="label-text font-medium">Pula urlopu na żądanie (dni)</span>
                     </label>
-                    <input type="number" name="on_demand_total" min="0" max="100" required
+                    <input type="number" name="on_demand_total" min="0" max="365" required
                            value="{{ balance.on_demand_total }}"
                            class="input input-bordered w-40"/>
                 </div>
