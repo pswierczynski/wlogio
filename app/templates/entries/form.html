@@ -2,25 +2,17 @@
 {% block title %}{% if entry %}Edytuj wpis{% else %}Dodaj dzień{% endif %}{% endblock %}
 
 {% block content %}
-
 <div class="max-w-2xl mx-auto">
     <div class="flex items-center gap-3 mb-6">
-        <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-sm gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                 viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-            </svg>
-            Wróć
-        </a>
-        <h1 class="text-xl font-bold">
-            {% if entry %}Edytuj wpis — {{ entry.date.strftime('%d.%m.%Y') }}
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
+        <h1 class="text-lg sm:text-xl font-bold">
+            {% if entry %}Edytuj — {{ entry.date.strftime('%d.%m.%Y') }}
             {% else %}Dodaj nowy dzień{% endif %}
         </h1>
     </div>
 
     <div class="card bg-base-100 shadow-sm">
-        <div class="card-body gap-5">
-
+        <div class="card-body gap-5 p-4 sm:p-8">
             <form method="POST"
                   action="{% if entry %}{{ url_for('entries.edit', entry_id=entry.id) }}{% else %}{{ url_for('entries.add') }}{% endif %}"
                   x-data="{
@@ -30,6 +22,7 @@
                     timeEnd: '{% if entry and entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% endif %}',
                     breakStart: '{% if entry and entry.break_start %}{{ entry.break_start.strftime('%H:%M') }}{% endif %}',
                     breakEnd: '{% if entry and entry.break_end %}{{ entry.break_end.strftime('%H:%M') }}{% endif %}',
+                    isRemote: {% if entry and entry.is_remote %}true{% else %}false{% endif %},
                     calcHours() {
                         if (!this.timeStart || !this.timeEnd) { this.calcResult = null; return; }
                         const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
@@ -52,8 +45,7 @@
                 {% if not entry %}
                 <div class="form-control">
                     <label class="label"><span class="label-text font-medium">Data</span></label>
-                    <input type="date" name="date" required
-                           value="{{ today }}"
+                    <input type="date" name="date" required value="{{ today }}"
                            class="input input-bordered w-full"/>
                 </div>
                 {% endif %}
@@ -65,8 +57,7 @@
                         {% for type_key, type_label in entry_types.items() %}
                         <label class="cursor-pointer">
                             <input type="radio" name="entry_type" value="{{ type_key }}"
-                                   class="sr-only"
-                                   x-model="entryType"
+                                   class="sr-only" x-model="entryType"
                                    {% if (entry and entry.entry_type == type_key) or (not entry and type_key == 'work') %}checked{% endif %}>
                             <span class="btn btn-sm"
                                   :class="entryType === '{{ type_key }}' ? 'btn-primary' : 'btn-ghost'">
@@ -77,23 +68,18 @@
                     </div>
                 </div>
 
-                <!-- Pola godzinowe (tylko dla 'work') -->
+                <!-- Godziny pracy (tylko work) -->
                 <div x-show="entryType === 'work'" x-cloak class="flex flex-col gap-4">
-
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-control">
                             <label class="label"><span class="label-text font-medium">Przyjście</span></label>
-                            <input type="time" name="time_start"
-                                   x-model="timeStart"
-                                   @change="calcHours()"
-                                   class="input input-bordered w-full"/>
+                            <input type="time" name="time_start" x-model="timeStart"
+                                   @change="calcHours()" class="input input-bordered w-full"/>
                         </div>
                         <div class="form-control">
                             <label class="label"><span class="label-text font-medium">Wyjście</span></label>
-                            <input type="time" name="time_end"
-                                   x-model="timeEnd"
-                                   @change="calcHours()"
-                                   class="input input-bordered w-full"/>
+                            <input type="time" name="time_end" x-model="timeEnd"
+                                   @change="calcHours()" class="input input-bordered w-full"/>
                         </div>
                     </div>
 
@@ -103,59 +89,62 @@
                                 <span class="label-text font-medium">Przerwa od</span>
                                 <span class="label-text-alt text-base-content/40">opcjonalne</span>
                             </label>
-                            <input type="time" name="break_start"
-                                   x-model="breakStart"
-                                   @change="calcHours()"
-                                   class="input input-bordered w-full"/>
+                            <input type="time" name="break_start" x-model="breakStart"
+                                   @change="calcHours()" class="input input-bordered w-full"/>
                         </div>
                         <div class="form-control">
                             <label class="label">
                                 <span class="label-text font-medium">Przerwa do</span>
                                 <span class="label-text-alt text-base-content/40">opcjonalne</span>
                             </label>
-                            <input type="time" name="break_end"
-                                   x-model="breakEnd"
-                                   @change="calcHours()"
-                                   class="input input-bordered w-full"/>
+                            <input type="time" name="break_end" x-model="breakEnd"
+                                   @change="calcHours()" class="input input-bordered w-full"/>
                         </div>
                     </div>
 
-                    <!-- Podgląd obliczonych godzin -->
+                    <!-- Podgląd -->
                     <div x-show="calcResult" x-cloak class="alert alert-info py-3">
-                        <div class="text-sm">
+                        <div class="text-sm flex flex-wrap gap-2">
                             <span>Godziny: <strong x-text="calcResult?.hours"></strong>h</span>
-                            <span class="mx-2 text-base-content/30">→</span>
-                            <span>Po zaokrągleniu: <strong x-text="calcResult?.rounded"></strong>h</span>
-                            <span x-show="calcResult?.extra > 0" class="ml-2 text-warning text-xs">
+                            <span class="text-base-content/30">→</span>
+                            <span>Zaokrąglone: <strong x-text="calcResult?.rounded"></strong>h</span>
+                            <span x-show="calcResult?.extra > 0" class="text-warning text-xs">
                                 (nadprogramowa przerwa: <span x-text="calcResult?.extra"></span> min)
                             </span>
                         </div>
                     </div>
 
-                    <!-- Praca zdalna -->
+                    <!-- Praca zdalna - bez PZ-KRK i nr wyjazdu -->
                     <div class="flex items-center gap-3">
                         <input type="checkbox" name="is_remote" class="checkbox checkbox-accent"
+                               x-model="isRemote"
                                {% if entry and entry.is_remote %}checked{% endif %}/>
-                        <span class="text-sm font-medium">Praca zdalna (PZ-KRK)</span>
-                        <input type="number" name="remote_trip_number" min="1"
-                               placeholder="Nr wyjazdu"
-                               value="{{ entry.remote_trip_number or '' }}"
-                               class="input input-bordered input-sm w-28"/>
+                        <div>
+                            <span class="text-sm font-medium">Praca zdalna</span>
+                            {% if next_remote %}
+                            <span class="text-xs text-base-content/40 ml-2">(dzień nr {{ next_remote }})</span>
+                            {% endif %}
+                        </div>
                     </div>
-
                 </div>
 
-                <!-- Numer dnia urlopowego (dla urlopów) -->
+                <!-- Numer urlopu - tylko informacyjny, nie edytowalny -->
                 <div x-show="entryType === 'vacation' || entryType === 'on_demand'" x-cloak>
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">Numer dnia urlopowego w roku</span>
-                            <span class="label-text-alt text-base-content/40">opcjonalne</span>
-                        </label>
-                        <input type="number" name="vacation_day_number" min="1"
-                               value="{{ entry.vacation_day_number or '' }}"
-                               class="input input-bordered w-40"
-                               placeholder="np. 5"/>
+                    <div class="alert alert-info py-3">
+                        <div class="text-sm">
+                            Numer dnia urlopowego:
+                            <strong>{{ next_vacation }}</strong>
+                            <span class="text-xs text-base-content/60 ml-1">(obliczany automatycznie)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info urlop bezpłatny -->
+                <div x-show="entryType === 'unpaid'" x-cloak>
+                    <div class="alert alert-warning py-3">
+                        <div class="text-sm">
+                            Urlop bezpłatny — 0 przepracowanych godzin, nie odlicza się od puli urlopów.
+                        </div>
                     </div>
                 </div>
 
@@ -170,7 +159,6 @@
                               placeholder="Dodatkowe informacje...">{{ entry.notes or '' }}</textarea>
                 </div>
 
-                <!-- Przyciski -->
                 <div class="flex gap-3 pt-2">
                     <button type="submit" class="btn btn-primary flex-1">
                         {% if entry %}Zapisz zmiany{% else %}Dodaj dzień{% endif %}
@@ -179,9 +167,7 @@
                 </div>
 
             </form>
-
         </div>
     </div>
 </div>
-
 {% endblock %}

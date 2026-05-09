@@ -5,6 +5,7 @@ from datetime import date
 
 from app import db
 from app.models import MonthConfig, VacationBalance
+from app.calculator import get_working_days_in_billing_period, get_or_create_vacation_balance
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -18,9 +19,6 @@ MONTH_NAMES = {
 @settings_bp.route('/')
 @login_required
 def index():
-    current_year = date.today().year
-
-    # Konfiguracje miesięcy
     configs = (
         MonthConfig.query
         .filter_by(user_id=current_user.id)
@@ -28,19 +26,12 @@ def index():
         .all()
     )
 
-    # Bilanse urlopowe
-    balances = (
-        VacationBalance.query
-        .filter_by(user_id=current_user.id)
-        .order_by(VacationBalance.year.desc())
-        .all()
-    )
+    balance = get_or_create_vacation_balance(current_user.id, db.session)
 
     return render_template(
         'settings/index.html',
         configs=configs,
-        balances=balances,
-        current_year=current_year,
+        balance=balance,
         MONTH_NAMES=MONTH_NAMES,
     )
 
@@ -54,59 +45,46 @@ def month_config(year, month):
         billing_month=month
     ).first_or_404()
 
+    working_days = get_working_days_in_billing_period(year, month)
+    expected_hours = working_days * 8
+
     if request.method == 'POST':
         try:
             config.hourly_rate = Decimal(request.form.get('hourly_rate', '0').replace(',', '.'))
-            config.expected_hours = Decimal(request.form.get('expected_hours', '0').replace(',', '.'))
-            config.bonus = Decimal(request.form.get('bonus', '0').replace(',', '.'))
+            # expected_hours zawsze z kalendarza - użytkownik nie może zmieniać
+            config.expected_hours = Decimal(str(expected_hours))
+            bonus_str = request.form.get('bonus', '0').replace(',', '.').strip()
+            config.bonus = Decimal(bonus_str) if bonus_str else Decimal('0')
             config.notes = request.form.get('notes', '').strip() or None
             db.session.commit()
             flash('Konfiguracja miesiąca zapisana.', 'success')
         except Exception as e:
             flash(f'Błąd: {e}', 'error')
-
         return redirect(url_for('settings.index'))
 
     return render_template(
         'settings/month_config.html',
         config=config,
+        expected_hours=expected_hours,
+        working_days=working_days,
         MONTH_NAMES=MONTH_NAMES,
     )
 
 
-@settings_bp.route('/vacation/<int:year>', methods=['GET', 'POST'])
+@settings_bp.route('/vacation', methods=['GET', 'POST'])
 @login_required
-def vacation_balance(year):
-    balance = VacationBalance.query.filter_by(
-        user_id=current_user.id,
-        year=year
-    ).first()
-
-    if not balance:
-        balance = VacationBalance(
-            user_id=current_user.id,
-            year=year,
-            vacation_total=26,
-            on_demand_total=4,
-            remote_total=0,
-        )
-        db.session.add(balance)
-        db.session.commit()
+def vacation_balance():
+    balance = get_or_create_vacation_balance(current_user.id, db.session)
 
     if request.method == 'POST':
         try:
             balance.vacation_total = int(request.form.get('vacation_total', 26))
             balance.on_demand_total = int(request.form.get('on_demand_total', 4))
-            balance.remote_total = int(request.form.get('remote_total', 0))
+            balance.remote_total = int(request.form.get('remote_total', 24))
             db.session.commit()
-            flash(f'Bilans urlopowy na {year} rok zapisany.', 'success')
+            flash('Bilans urlopowy zapisany.', 'success')
         except Exception as e:
             flash(f'Błąd: {e}', 'error')
-
         return redirect(url_for('settings.index'))
 
-    return render_template(
-        'settings/vacation_balance.html',
-        balance=balance,
-        year=year,
-    )
+    return render_template('settings/vacation_balance.html', balance=balance)

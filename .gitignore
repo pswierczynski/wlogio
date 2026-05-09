@@ -9,6 +9,3 @@ instance/
 venv/
 .venv/
 migrations/versions/
-wlogio.txt
-uwagi.txt
-core.md
