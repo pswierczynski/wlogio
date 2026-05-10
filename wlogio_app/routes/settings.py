@@ -1,7 +1,7 @@
 import os
 import random
 import string
-from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from decimal import Decimal
 from datetime import date
@@ -26,17 +26,55 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def get_supabase_client():
-    """Zwraca klienta Supabase Storage."""
-    try:
-        from supabase import create_client
-        url = os.environ.get('SUPABASE_URL')
-        key = os.environ.get('SUPABASE_SERVICE_KEY')
-        if url and key:
-            return create_client(url, key)
-    except Exception:
-        pass
-    return None
+def upload_avatar_to_supabase(file_data, filename, content_type):
+    """
+    Wgrywa plik do Supabase Storage przez REST API (bez SDK).
+    Zwraca publiczny URL lub None.
+    """
+    import requests
+
+    supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+    service_key = os.environ.get('SUPABASE_SERVICE_KEY', '')
+    bucket = 'avatars'
+
+    if not supabase_url or not service_key:
+        return None, 'Brak konfiguracji SUPABASE_URL lub SUPABASE_SERVICE_KEY'
+
+    headers = {
+        'Authorization': f'Bearer {service_key}',
+        'apikey': service_key,
+    }
+
+    # Usuń stary plik jeśli istnieje (ignoruj błąd 404)
+    requests.delete(
+        f'{supabase_url}/storage/v1/object/{bucket}/{filename}',
+        headers=headers
+    )
+
+    # Wgraj nowy przez PUT z upsert
+    upload_headers = {**headers, 'Content-Type': content_type, 'x-upsert': 'true'}
+    r = requests.put(
+        f'{supabase_url}/storage/v1/object/{bucket}/{filename}',
+        headers=upload_headers,
+        data=file_data
+    )
+
+    if r.status_code in (200, 201):
+        public_url = f'{supabase_url}/storage/v1/object/public/{bucket}/{filename}'
+        return public_url, None
+
+    # Jeśli PUT nie zadziałał, spróbuj POST
+    r2 = requests.post(
+        f'{supabase_url}/storage/v1/object/{bucket}/{filename}',
+        headers=upload_headers,
+        data=file_data
+    )
+
+    if r2.status_code in (200, 201):
+        public_url = f'{supabase_url}/storage/v1/object/public/{bucket}/{filename}'
+        return public_url, None
+
+    return None, f'HTTP {r2.status_code}: {r2.text[:200]}'
 
 
 @settings_bp.route('/')
@@ -61,7 +99,6 @@ def index():
 @settings_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    """Ustawienia konta: zdjęcie + PIN."""
     if request.method == 'POST':
         action = request.form.get('action')
 
@@ -71,7 +108,7 @@ def profile():
                 return redirect(url_for('settings.profile'))
 
             file = request.files['avatar']
-            if file.filename == '':
+            if not file or file.filename == '':
                 flash('Nie wybrano pliku.', 'error')
                 return redirect(url_for('settings.profile'))
 
@@ -84,36 +121,18 @@ def profile():
                 flash('Plik jest za duży (max 5MB).', 'error')
                 return redirect(url_for('settings.profile'))
 
-            # Wyślij do Supabase Storage
-            supabase = get_supabase_client()
-            if supabase:
-                try:
-                    ext = file.filename.rsplit('.', 1)[1].lower()
-                    filename = f'{current_user.id}.{ext}'
-                    bucket = 'avatars'
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            filename = f'{current_user.id}.{ext}'
+            content_type = file.content_type or f'image/{ext}'
 
-                    # Usuń stary avatar jeśli istnieje
-                    try:
-                        supabase.storage.from_(bucket).remove([filename])
-                    except Exception:
-                        pass
+            url, error = upload_avatar_to_supabase(file_data, filename, content_type)
 
-                    # Wgraj nowy (upsert=True nadpisuje istniejący)
-                    supabase.storage.from_(bucket).upload(
-                        path=filename,
-                        file=file_data,
-                        file_options={'content-type': file.content_type, 'upsert': 'true'}
-                    )
-
-                    # Pobierz publiczny URL
-                    url = supabase.storage.from_(bucket).get_public_url(filename)
-                    current_user.avatar = url
-                    db.session.commit()
-                    flash('Zdjęcie profilowe zaktualizowane.', 'success')
-                except Exception as e:
-                    flash(f'Błąd wgrywania zdjęcia: {e}', 'error')
+            if url:
+                current_user.avatar = url
+                db.session.commit()
+                flash('Zdjęcie profilowe zaktualizowane.', 'success')
             else:
-                flash('Supabase Storage nie jest skonfigurowane.', 'error')
+                flash(f'Błąd wgrywania zdjęcia: {error}', 'error')
 
         elif action == 'update_name':
             name = request.form.get('name', '').strip()
