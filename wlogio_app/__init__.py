@@ -11,7 +11,6 @@ migrate = Migrate()
 
 
 def create_app(config_name='default'):
-    # Explicite podajemy ścieżki do templates i static
     base_dir = os.path.dirname(os.path.abspath(__file__))
     app = Flask(
         __name__,
@@ -37,10 +36,12 @@ def create_app(config_name='default'):
     from wlogio_app.routes.dashboard import dashboard_bp
     from wlogio_app.routes.entries import entries_bp
     from wlogio_app.routes.settings import settings_bp
+    from wlogio_app.routes.welcome import welcome_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(dashboard_bp, url_prefix='/')
     app.register_blueprint(entries_bp, url_prefix='/entries')
     app.register_blueprint(settings_bp, url_prefix='/settings')
+    app.register_blueprint(welcome_bp, url_prefix='/welcome')
 
     return app
