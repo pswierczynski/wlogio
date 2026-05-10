@@ -89,7 +89,7 @@ def profile():
             if supabase:
                 try:
                     ext = file.filename.rsplit('.', 1)[1].lower()
-                    filename = f'avatars/{current_user.id}.{ext}'
+                    filename = f'{current_user.id}.{ext}'
                     bucket = 'avatars'
 
                     # Usuń stary avatar jeśli istnieje
@@ -98,11 +98,11 @@ def profile():
                     except Exception:
                         pass
 
-                    # Wgraj nowy
+                    # Wgraj nowy (upsert=True nadpisuje istniejący)
                     supabase.storage.from_(bucket).upload(
-                        filename,
-                        file_data,
-                        {'content-type': file.content_type, 'upsert': 'true'}
+                        path=filename,
+                        file=file_data,
+                        file_options={'content-type': file.content_type, 'upsert': 'true'}
                     )
 
                     # Pobierz publiczny URL
