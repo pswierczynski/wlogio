@@ -52,14 +52,21 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
-                <span class="truncate text-sm">
-                    {{ (current_user.name or current_user.email).split(' ')[0] }}
+                <span class="truncate text-sm hidden sm:inline">
+                    {{ current_user.name or current_user.email.split('@')[0] }}
                 </span>
             </label>
             <ul tabindex="0"
                 class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-300 w-48 p-1 mt-1 z-50">
                 <li>
-                    <a href="{{ url_for('settings.profile') }}">Moje konto</a>
+                    <a href="{{ url_for('settings.profile') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        Moje konto
+                    </a>
                     </li>
                     <li>
                     <a href="{{ url_for('settings.index') }}">
