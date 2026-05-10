@@ -124,6 +124,12 @@ def clock():
             return jsonify({'ok': False, 'error': 'Najpierw zarejestruj przyjście'}), 400
         if entry.clock_out:
             return jsonify({'ok': False, 'error': 'Już zarejestrowano wyjście'}), 400
+
+        # Jeśli przerwa aktywna (rozpoczęta ale niezakończona) - zakończ automatycznie
+        if entry.break_clock_start and not entry.break_clock_end:
+            entry.break_clock_end = now
+            entry.break_end = now
+
         entry.clock_out = now
         entry.time_end = now
 
