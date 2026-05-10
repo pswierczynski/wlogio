@@ -45,11 +45,12 @@ def upload_avatar_to_supabase(file_data, filename, content_type):
         'apikey': service_key,
     }
 
-    # Usuń stary plik jeśli istnieje (ignoruj błąd 404)
-    requests.delete(
-        f'{supabase_url}/storage/v1/object/{bucket}/{filename}',
-        headers=headers
-    )
+    # Usuń wszystkie możliwe stare pliki (różne rozszerzenia)
+    for old_ext in ('jpg', 'jpeg', 'png', 'gif', 'webp'):
+        requests.delete(
+            f'{supabase_url}/storage/v1/object/{bucket}/{current_user.id}.{old_ext}',
+            headers=headers
+        )
 
     # Wgraj nowy przez PUT z upsert
     upload_headers = {**headers, 'Content-Type': content_type, 'x-upsert': 'true'}
