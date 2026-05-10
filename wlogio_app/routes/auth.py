@@ -18,17 +18,18 @@ def login():
         password = request.form.get('password', '')
         remember = request.form.get('remember') == 'on'
 
-        # Ekran powitalny
-        if password == WELCOME_PASSWORD:
-            return redirect(url_for('welcome.index'))
-
+        # Najpierw sprawdź czy to normalny użytkownik
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password) and user.is_active:
             login_user(user, remember=remember)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('dashboard.index'))
-        else:
-            flash('Nieprawidłowy email lub hasło.', 'error')
+
+        # Dopiero potem sprawdź hasło ekranu powitalnego (bez emaila)
+        if not email and password == WELCOME_PASSWORD:
+            return redirect(url_for('welcome.index'))
+
+        flash('Nieprawidłowy email lub hasło.', 'error')
 
     return render_template('auth/login.html')
 
@@ -63,7 +64,6 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        # Utwórz domyślny bilans urlopowy
         from wlogio_app.models import VacationBalance
         from datetime import date
         balance = VacationBalance(
