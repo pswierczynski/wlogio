@@ -25,7 +25,7 @@
     {% endif %}
     {% endwith %}
 
-    <!-- Modal hasła ekranu powitalnego -->
+    <!-- Alpine tylko dla modalu ekranu powitalnego -->
     <div x-data="{
             showModal: false,
             password: '',
@@ -48,10 +48,13 @@
                 }
             }
          }"
-         @keydown.window.escape="showModal = false">
+         @keydown.window.escape="showModal = false"
+         class="w-full flex flex-col items-center">
 
+        <!-- Karta logowania -->
         <div class="card bg-base-100 shadow-xl w-full max-w-md">
             <div class="card-body gap-6 p-6 sm:p-8">
+
                 <div class="text-center">
                     <div class="flex items-center justify-center gap-2 mb-1">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none"
@@ -64,7 +67,8 @@
                     <p class="text-base-content/60 text-sm">Rejestr czasu pracy</p>
                 </div>
 
-                <form method="POST" class="flex flex-col gap-4">
+                <!-- Formularz logowania — czysty HTML, bez Alpine -->
+                <form method="POST" action="{{ url_for('auth.login') }}" class="flex flex-col gap-4">
                     <div class="form-control">
                         <label class="label"><span class="label-text font-medium">Adres email</span></label>
                         <input type="email" name="email" required autocomplete="email"
@@ -85,7 +89,9 @@
                 <div class="divider text-xs text-base-content/40">lub</div>
 
                 <div class="flex flex-col gap-3">
-                    <button @click="showModal = true"
+                    <!-- Przycisk ekranu powitalnego - otwiera modal, NIE wysyła formularza -->
+                    <button type="button"
+                            @click="showModal = true"
                             class="btn btn-outline btn-neutral w-full gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                              viewBox="0 0 24 24" stroke="currentColor">
@@ -102,18 +108,19 @@
                         </a>
                     </div>
                 </div>
+
             </div>
         </div>
 
-        <!-- Modal hasła -->
+        <!-- Modal hasła ekranu powitalnego -->
         <div x-show="showModal" x-cloak
              class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-             @click.self="showModal = false">
+             @click.self="showModal = false; password = ''; error = false">
             <div class="card bg-base-100 shadow-xl w-full max-w-sm"
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 scale-95"
                  x-transition:enter-end="opacity-100 scale-100">
-                <div class="card-body gap-4">
+                <div class="card-body gap-4 p-6">
                     <h3 class="font-bold text-lg">Ekran powitalny</h3>
                     <p class="text-sm text-base-content/60">Podaj hasło dostępu</p>
 
@@ -122,19 +129,21 @@
                                @keydown.enter="verify()"
                                class="input input-bordered w-full"
                                :class="error ? 'input-error' : ''"
-                               placeholder="Hasło..." autofocus/>
-                        <div x-show="error" class="label">
+                               placeholder="Hasło..."
+                               x-init="$nextTick(() => $el.focus())"/>
+                        <div x-show="error" x-cloak class="label">
                             <span class="label-text-alt text-error">Nieprawidłowe hasło</span>
                         </div>
                     </div>
 
                     <div class="flex gap-2">
-                        <button @click="verify()" :disabled="loading"
+                        <button type="button" @click="verify()" :disabled="loading"
                                 class="btn btn-primary flex-1">
                             <span x-show="!loading">Wejdź</span>
-                            <span x-show="loading" class="loading loading-spinner loading-sm"></span>
+                            <span x-show="loading" x-cloak class="loading loading-spinner loading-sm"></span>
                         </button>
-                        <button @click="showModal = false; password = ''; error = false"
+                        <button type="button"
+                                @click="showModal = false; password = ''; error = false"
                                 class="btn btn-ghost">Anuluj</button>
                     </div>
                 </div>
