@@ -22,13 +22,26 @@ WELCOME_PASSWORD = 'Przemek121!'
 @welcome_bp.route('/')
 def index():
     """Ekran powitalny z siatką avatarów."""
-    # Tylko użytkownicy z avatarem
     users = User.query.filter(
         User.is_active == True,
         User.avatar.isnot(None)
     ).all()
 
-    return render_template('welcome/index.html', users=users)
+    today = datetime.now(TIMEZONE).date()
+
+    # Status każdego użytkownika: idle / working / break
+    user_statuses = {}
+    for user in users:
+        entry = WorkEntry.query.filter_by(user_id=user.id, date=today).first()
+        if not entry or not entry.clock_in or entry.clock_out:
+            status = 'idle'
+        elif entry.break_clock_start and not entry.break_clock_end:
+            status = 'break'
+        else:
+            status = 'working'
+        user_statuses[user.id] = status
+
+    return render_template('welcome/index.html', users=users, user_statuses=user_statuses)
 
 
 @welcome_bp.route('/verify-password', methods=['POST'])
