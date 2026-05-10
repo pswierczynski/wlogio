@@ -6,6 +6,9 @@ Dostępny po wpisaniu hasła Przemek121! na ekranie logowania.
 from flask import Blueprint, render_template, request, jsonify, session, current_app
 from datetime import datetime, date
 from decimal import Decimal
+from zoneinfo import ZoneInfo
+
+TIMEZONE = ZoneInfo('Europe/Warsaw')
 
 from wlogio_app import db
 from wlogio_app.models import User, WorkEntry
@@ -51,7 +54,7 @@ def verify_pin():
     if not user or user.pin != pin:
         return jsonify({'ok': False}), 401
 
-    today = date.today()
+    today = datetime.now(TIMEZONE).date()
 
     # Znajdź lub utwórz wpis na dziś
     entry = WorkEntry.query.filter_by(
@@ -89,8 +92,8 @@ def clock():
     if not user or user.pin != pin:
         return jsonify({'ok': False, 'error': 'Nieautoryzowany'}), 401
 
-    now = datetime.now().time()
-    today = date.today()
+    now = datetime.now(TIMEZONE).time()
+    today = datetime.now(TIMEZONE).date()
 
     # Pobierz lub utwórz wpis
     entry = WorkEntry.query.filter_by(user_id=user.id, date=today).first()
