@@ -11,21 +11,19 @@
         [x-cloak] { display: none !important; }
 
         .avatar-btn {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease, filter 0.2s ease;
+            background: none;
+            border: none;
+            padding: 0;
         }
-        .avatar-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-        }
-        .avatar-btn:active {
-            transform: scale(0.97);
-        }
+        .avatar-btn:hover { transform: scale(1.06); }
+        .avatar-btn:active { transform: scale(0.97); }
 
-        /* Siatka avatarów zależna od liczby użytkowników */
-        .grid-1 { grid-template-columns: 1fr; max-width: 240px; }
-        .grid-2 { grid-template-columns: repeat(2, 1fr); max-width: 480px; }
-        .grid-3 { grid-template-columns: repeat(3, 1fr); max-width: 720px; }
-        .grid-4 { grid-template-columns: repeat(4, 1fr); max-width: 960px; }
+        /* Siatka avatarów */
+        .grid-1 { grid-template-columns: 1fr; max-width: 200px; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); max-width: 400px; }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); max-width: 600px; }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); max-width: 800px; }
         .grid-many { grid-template-columns: repeat(4, 1fr); }
 
         @keyframes slideUp {
@@ -39,6 +37,22 @@
         .animate-slide-up { animation: slideUp 0.4s ease forwards; }
         .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
 
+        /* Obramowania statusów */
+        .ring-status-working {
+            box-shadow: 0 0 0 4px #22c55e; /* green-500 = kolor btn-success */
+        }
+        .ring-status-break {
+            box-shadow: 0 0 0 4px #f59e0b; /* amber-500 = kolor btn-warning */
+        }
+        .ring-status-idle {
+            box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
+        }
+
+        /* Wygaszenie dla idle */
+        .avatar-idle { filter: brightness(0.55) saturate(0.4); }
+        .avatar-working { filter: none; }
+        .avatar-break { filter: none; }
+
         .pin-digit {
             width: 60px; height: 70px;
             font-size: 2rem; font-weight: bold;
@@ -48,14 +62,8 @@
             display: flex; align-items: center; justify-content: center;
             transition: border-color 0.2s, background 0.2s;
         }
-        .pin-digit.active {
-            border-color: oklch(var(--p));
-            background: oklch(var(--b1));
-        }
-        .pin-digit.filled {
-            background: oklch(var(--p) / 0.1);
-            border-color: oklch(var(--p));
-        }
+        .pin-digit.active { border-color: oklch(var(--p)); background: oklch(var(--b1)); }
+        .pin-digit.filled { background: oklch(var(--p) / 0.1); border-color: oklch(var(--p)); }
         .pin-digit.error {
             border-color: oklch(var(--er));
             background: oklch(var(--er) / 0.1);
@@ -76,11 +84,7 @@
             transition: all 0.2s ease;
             border: 3px solid transparent;
         }
-        .clock-btn:disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-            transform: none !important;
-        }
+        .clock-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
         .clock-btn:not(:disabled):hover { transform: scale(1.05); }
         .clock-btn:not(:disabled):active { transform: scale(0.95); }
     </style>
@@ -109,8 +113,8 @@
     <div x-show="screen === 'avatars'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-8 animate-fade-in">
 
-        <h1 class="text-2xl font-bold mb-2 text-center">Dobry dzień!</h1>
-        <p class="text-base-content/60 mb-10 text-center">Wybierz swój profil</p>
+        <h1 class="text-3xl font-bold mb-1 text-center">Dzień dobry!</h1>
+        <p class="text-base-content/50 text-sm mb-10 text-center">Wybierz swój profil</p>
 
         {% set user_count = users|length %}
         <div class="grid gap-8 mx-auto
@@ -121,24 +125,30 @@
             {% else %}grid-many{% endif %}">
 
             {% for user in users %}
-            <button class="avatar-btn flex flex-col items-center gap-3 p-4 rounded-2xl
-                           bg-base-100/60 hover:bg-base-100 backdrop-blur-sm"
-                    @click="selectUser({{ user.id }}, '{{ user.name or user.email.split('@')[0] }}', '{{ user.avatar or '' }}')">
-                <div class="avatar">
-                    <div class="w-24 h-24 rounded-full ring-4 ring-base-300 overflow-hidden">
-                        {% if user.avatar %}
-                        <img src="{{ user.avatar }}" alt="{{ user.name }}"
-                             class="w-full h-full object-cover"/>
-                        {% else %}
-                        <div class="w-full h-full bg-primary/10 flex items-center justify-center">
-                            <span class="text-3xl font-bold text-primary">
-                                {{ (user.name or user.email)[0].upper() }}
-                            </span>
-                        </div>
-                        {% endif %}
+            {% set status = user_statuses.get(user.id, 'idle') %}
+            <button class="avatar-btn flex flex-col items-center gap-3"
+                    @click="selectUser({{ user.id }}, '{{ (user.name or user.email.split('@')[0])|replace("'", "\\'") }}', '{{ user.avatar or '' }}')">
+
+                <!-- Zdjęcie - okrągłe, bez tła, z obramowaniem statusu -->
+                <div class="rounded-full overflow-hidden w-32 h-32 shrink-0
+                    {% if status == 'working' %}ring-status-working avatar-working
+                    {% elif status == 'break' %}ring-status-break avatar-break
+                    {% else %}ring-status-idle avatar-idle{% endif %}"
+                    style="border-radius: 50%;">
+                    {% if user.avatar %}
+                    <img src="{{ user.avatar }}" alt="{{ user.name }}"
+                         class="w-full h-full object-cover"/>
+                    {% else %}
+                    <div class="w-full h-full bg-primary/10 flex items-center justify-center">
+                        <span class="text-4xl font-bold text-primary">
+                            {{ (user.name or user.email)[0].upper() }}
+                        </span>
                     </div>
+                    {% endif %}
                 </div>
-                <span class="text-sm font-semibold text-center max-w-[120px] leading-tight">
+
+                <!-- Imię pod zdjęciem -->
+                <span class="text-xs font-medium text-center max-w-[140px] leading-tight text-base-content/80">
                     {{ user.name or user.email.split('@')[0] }}
                 </span>
             </button>
@@ -148,13 +158,13 @@
 
         {% if not users %}
         <div class="text-center text-base-content/40 mt-8">
-            <p class="text-lg mb-2">Brak użytkowników z zdjęciem profilowym</p>
+            <p class="text-lg mb-2">Brak użytkowników ze zdjęciem profilowym</p>
             <p class="text-sm">Wgraj zdjęcie w ustawieniach konta</p>
         </div>
         {% endif %}
 
         <a href="{{ url_for('auth.login') }}"
-           class="mt-10 btn btn-ghost btn-sm text-base-content/40">
+           class="mt-10 btn btn-ghost btn-sm text-base-content/30">
             ← Wróć do logowania
         </a>
     </div>
@@ -163,25 +173,21 @@
     <div x-show="screen === 'pin'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
 
-        <!-- Avatar wybranego użytkownika -->
-        <div class="avatar mb-6">
-            <div class="w-20 h-20 rounded-full ring-4 ring-primary/30 overflow-hidden">
-                <template x-if="selectedAvatar">
-                    <img :src="selectedAvatar" class="w-full h-full object-cover"/>
-                </template>
-                <template x-if="!selectedAvatar">
-                    <div class="w-full h-full bg-primary/10 flex items-center justify-center">
-                        <span class="text-2xl font-bold text-primary"
-                              x-text="selectedName[0]?.toUpperCase()"></span>
-                    </div>
-                </template>
-            </div>
+        <div class="rounded-full overflow-hidden w-20 h-20 mb-6 ring-status-idle">
+            <template x-if="selectedAvatar">
+                <img :src="selectedAvatar" class="w-full h-full object-cover"/>
+            </template>
+            <template x-if="!selectedAvatar">
+                <div class="w-full h-full bg-primary/10 flex items-center justify-center">
+                    <span class="text-2xl font-bold text-primary"
+                          x-text="selectedName[0]?.toUpperCase()"></span>
+                </div>
+            </template>
         </div>
 
         <h2 class="text-xl font-bold mb-1" x-text="selectedName"></h2>
         <p class="text-base-content/60 text-sm mb-8">Wpisz swój PIN (4 cyfry)</p>
 
-        <!-- Wskaźniki cyfr PIN -->
         <div class="flex gap-3 mb-8">
             <template x-for="i in 4" :key="i">
                 <div class="pin-digit"
@@ -195,7 +201,6 @@
             </template>
         </div>
 
-        <!-- Klawiatura numeryczna -->
         <div class="grid grid-cols-3 gap-3 mb-6">
             <template x-for="key in ['1','2','3','4','5','6','7','8','9','','0','⌫']" :key="key">
                 <button @click="pressKey(key)"
@@ -207,7 +212,7 @@
             </template>
         </div>
 
-        <div x-show="pinError" class="text-error text-sm mb-4 animate-fade-in">
+        <div x-show="pinError" x-cloak class="text-error text-sm mb-4 animate-fade-in">
             Nieprawidłowy PIN. Spróbuj ponownie.
         </div>
 
@@ -221,32 +226,30 @@
     <div x-show="screen === 'clock'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
 
-        <div class="avatar mb-4">
-            <div class="w-16 h-16 rounded-full ring-4 ring-success/30 overflow-hidden">
-                <template x-if="selectedAvatar">
-                    <img :src="selectedAvatar" class="w-full h-full object-cover"/>
-                </template>
-                <template x-if="!selectedAvatar">
-                    <div class="w-full h-full bg-primary/10 flex items-center justify-center">
-                        <span class="text-xl font-bold text-primary"
-                              x-text="selectedName[0]?.toUpperCase()"></span>
-                    </div>
-                </template>
-            </div>
+        <div class="rounded-full overflow-hidden w-16 h-16 mb-4"
+             :class="clockOut ? 'ring-status-idle' : (breakStart && !breakEnd ? 'ring-status-break' : (clockIn ? 'ring-status-working' : 'ring-status-idle'))">
+            <template x-if="selectedAvatar">
+                <img :src="selectedAvatar" class="w-full h-full object-cover"/>
+            </template>
+            <template x-if="!selectedAvatar">
+                <div class="w-full h-full bg-primary/10 flex items-center justify-center">
+                    <span class="text-xl font-bold text-primary"
+                          x-text="selectedName[0]?.toUpperCase()"></span>
+                </div>
+            </template>
         </div>
 
         <h2 class="text-xl font-bold mb-1" x-text="selectedName"></h2>
         <p class="text-base-content/60 text-sm mb-8" x-text="clockDate"></p>
 
-        <!-- Przyciski zegarowe -->
         <div class="flex flex-wrap gap-8 justify-center mb-8">
 
             <!-- Przyjście / Wyjście -->
             <div class="flex flex-col items-center gap-3">
                 <button @click="clockAction('clock_in')"
                         :disabled="!!clockIn"
-                        class="clock-btn bg-success text-white"
-                        x-show="!clockIn">
+                        x-show="!clockIn"
+                        class="clock-btn bg-success text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -256,8 +259,8 @@
                 </button>
                 <button @click="clockAction('clock_out')"
                         :disabled="!clockIn || !!clockOut"
-                        class="clock-btn bg-error text-white"
-                        x-show="clockIn">
+                        x-show="clockIn"
+                        class="clock-btn bg-error text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -265,9 +268,9 @@
                     </svg>
                     Wyjście
                 </button>
-                <div class="text-sm font-medium text-center">
-                    <span x-show="clockIn" x-text="'Przyjście: ' + clockIn" class="text-success"></span>
-                    <span x-show="clockOut" x-text="' → Wyjście: ' + clockOut" class="text-error"></span>
+                <div class="text-sm font-medium text-center leading-relaxed">
+                    <span x-show="clockIn" x-text="'Przyjście: ' + clockIn" class="text-success block"></span>
+                    <span x-show="clockOut" x-text="'Wyjście: ' + clockOut" class="text-error block"></span>
                 </div>
             </div>
 
@@ -275,8 +278,8 @@
             <div class="flex flex-col items-center gap-3">
                 <button @click="clockAction('break_start')"
                         :disabled="!clockIn || !!breakStart || !!clockOut"
-                        class="clock-btn bg-warning text-white"
-                        x-show="!breakStart">
+                        x-show="!breakStart"
+                        class="clock-btn bg-warning text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -286,8 +289,8 @@
                 </button>
                 <button @click="clockAction('break_end')"
                         :disabled="!breakStart || !!breakEnd"
-                        class="clock-btn bg-info text-white"
-                        x-show="breakStart">
+                        x-show="breakStart"
+                        class="clock-btn bg-info text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -297,15 +300,14 @@
                     </svg>
                     Koniec przerwy
                 </button>
-                <div class="text-sm font-medium text-center text-warning">
-                    <span x-show="breakStart" x-text="'Przerwa: ' + breakStart"></span>
-                    <span x-show="breakEnd" x-text="' → ' + breakEnd"></span>
+                <div class="text-sm font-medium text-center text-warning leading-relaxed">
+                    <span x-show="breakStart" x-text="'Przerwa od: ' + breakStart" class="block"></span>
+                    <span x-show="breakEnd" x-text="'do: ' + breakEnd" class="block"></span>
                 </div>
             </div>
 
         </div>
 
-        <!-- Komunikat po akcji -->
         <div x-show="lastAction" x-cloak
              class="alert alert-success mb-6 py-2 px-4 text-sm"
              x-transition>
