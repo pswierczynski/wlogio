@@ -45,9 +45,8 @@ def calculate_hours(time_start, time_end, break_start=None, break_end=None):
     extra_break_minutes = max(0, break_minutes - BREAK_MINUTES)
     net_minutes = raw_minutes - extra_break_minutes
     hours_worked = net_minutes / 60.0
-    hours_billed = float(
-        Decimal(str(hours_worked)).quantize(ROUND_TO, rounding=ROUND_HALF_UP)
-    )
+    # Zaokrąglenie do wielokrotności 0.25: mnożymy przez 4, zaokrąglamy, dzielimy przez 4
+    hours_billed = round(hours_worked * 4) / 4
     return {
         'raw_minutes': raw_minutes,
         'break_minutes': break_minutes,
