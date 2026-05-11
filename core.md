@@ -35,16 +35,28 @@ Logika i wyświetlanie:
 * Podczas ustawiania Urlopów i Urlopów na żądanie użytkownik nie ustawia numeru dnia urlopowego w roku. Liczba ta wyświetla się przy dodawaniu urlopu ale nie można jej edytować i obliczana jest automatycznie na podstawie wykorzystanych już urlopów z danego rocznego bilansu.
 * Przy przycisku pracy zdalnej usuń napis (PZ-KRK) oraz możliwość wpisania nr. wyjazdu. Nie jest to potrzebne, niech to się wyświetla i wylicza na podstawie wykorzystanych już dni pracy zdalnej z danego rocznego bilansu.
 * Kolumny list miesięcy i dni wyświetlają się nierówno kiedy jakieś dane są dłuższe od innych lub ich brakuje. Popraw to proszę.
-
-
-Dodatkowe funkcje:
-
 * W oknie do logowania możliwość wyboru zalogowania się do "Ekranu powitalnego" hasłem Przemek121!. To będzie prosty panel z wgranymi zdjęciami użytkowników i ładnymi animacjami przejść w JavaScript. Ekran składać będzie się tylko z okrągłych klikanych zdjęć pracowników ułożonych w siatce zależnej od ilości wgranych użytkowników. 1 użytkownik to siatka z 1 kolumny z jednym wierszem, 2 użytkowników to 2 kolumny z jednym wierszem, 3 użytkowników to 3 kolumny z jednym wierszem i 4 użytkowników to 4 kolumny z jednym wierszem. Powyżej 4 użytkowników zdjęcia układają się w siatce 4 kolumn z wieloma wierszami z możliwością pionowego przewijania.
 * Jeżeli użytkownik nie ma wgranego swojego zdjęcia nie wyświetlaj go na Ekranie powitalnym.
-* Po kliknięciu w obrazek pracownika pojawia się poprzez animacje ekran wpisania kodu PIN z 4 liczb, a następnie po wpisaniu poprawnego PIN dwa okrągłe przyciski: Rozpoczęcie pracy i Rozpoczęcie przerwy. Po kliknięciu przycisku Rozpoczęcie pracy, przycisk podmienia się na przycisk Zakończenie pracy. Po kliknięciu przycisku Rozpoczęcie przerwy, przycisk podmienia się na przycisk Zakończenie przerwy. kliknięcie przycisków nadpisuje dane w bazie danych aktualną godziną oraz zaokrągloną wartością dla hours_billing.
+* Po kliknięciu w obrazek pracownika pojawia się poprzez animacje ekran wpisania kodu PIN z 4 liczb, a następnie po wpisaniu poprawnego PIN dwa okrągłe przyciski: Rozpoczęcie pracy i Rozpoczęcie przerwy. Po kliknięciu przycisku Rozpoczęcie pracy, przycisk podmienia się na przycisk Zakończenie pracy. Po kliknięciu przycisku Rozpoczęcie przerwy, przycisk podmienia się na przycisk Zakończenie przerwy. Kliknięcie przycisków nadpisuje dane w bazie danych aktualną godziną oraz zaokrągloną wartością dla hours_billing.
 * Kazdy przycisk można przycisnąć tylko raz w ciągu dnia. Przyciski Zakończenia aktywują się z dopiero po kliknięciu przycisków Rozpoczęcia.
 * Po kliknięciu Zakończenia pracy, możliwość kliknięcia przycisku Rozpoczęcie przerwy wyłącza się.
-* Jeżeli podczas kliknięcia Zakończenia pracy, przerwa jest aktywna - przerwa również kończy się.
+* Jeżeli podczas kliknięcia Zakończenia pracy, przerwa jest aktywna - przerwa również kończy się i zapisuje godzinę.
 * Użytkownik w ustawieniach swojego konta ma możliwość wgrania swojego zdjęcia z ograniczeniami jak przy tego typu panelach.
+* Podczas podmieniania przez użytkownika wgranego wcześniej zdjęcia, poprzednie zdjęcie usuwa się z miejsca gdzie jest przechowywane zwalniając miejsce.
 * Użytkownik w ustawieniach swojego konta może wyświetlić swój numer PIN, który potrzebny mu będzie w Ekranie powitalnym. Numer PIN składa się z 4 liczb i generowany jest losowo podczas rejestracji użytkownika.
 * Ekran powitalny to uproszczony system wlogio do obsługi na wspólnym ekranie dotykowym przez pracowników przy wejściu do biura. Korzysta z tej samej bazy danych co aplikacja wlogio i nadpisuje te same dane u wybranego użytkownika.
+* Na Ekranie powitalnym zdjęcia użytkowników niech wyświetlają się trochę większe i bez białego pola w okół nich. Same zdjęcia a pod spodem tak jak jest teraz imię i nazwisko ale trochę mniejszą czcionką.
+* Jeżeli u danego użytkownika przycisk Rozpoczęcie pracy jest aktywny, na Ekranie powitalnym jego okrągłe zdjęcie niech posiada zielone obramowanie. Kolor obramowania taki sam jak przycisku.
+* Jeżeli danego użytkownika przycisk Rozpoczęcie przerwy jest aktywny, na Ekranie powitalnym jego okrągłe zdjęcie niech posiada pomarańczowe obramowanie. Kolor obramowania taki sam jak przycisku.
+* Jeżeli u danego użytkownika nie została jeszcze rozpoczęta praca lub została zakończona na Ekranie powitalnym wygaś jego zdjęcie.
+* Na Ekranie powitalnym zmień tekst Dobry Dzień! Na Dzień dobry! Tekst Wybierz swój profil mniejszą czcionką.
+* W dashboard na desktop wyświetlaj u góry po prawej imię i nazwisko użytkownika - nie tylko same imię jak jest teraz. Na telefonach wyświetlaj tylko samą ikonkę profilu, bez imienia.
+* W rozwinięciu menu dodaj odpowiednią ikonkę przy Moje konto, tak jak jest to zrobione przy Ustawienia.
+
+Poprawki:
+
+* Na desktop imię i nazwisko u góry po prawej stronie nie mieści się i wychodzi poza ekran. Zrób tak żeby się mieściło.
+* Zielone i pomarańczowe obramowania okrągłych zdjęć niech pojawiają się też na ogólnym, zbiorczym Ekranie powitalnym, nie tylko na tym po wpisaniu kodu PIN.
+* Wygaszenie zdjęcia użytkownika niech będzie wykonane  poprzez 50% przeźroczystości. Nie parametrami jasności i saturacji.
+* Na Ekranie powitalnym imię i nazwisko pod zdjęciem użytkownika rozdzielaj na dwa wiersze.
+* Jeżeli użytkownik rozpocznie pracę np. o 23:00, a skończy o 2:00 kolejnego dnia - praca ta niech będzie przypisana do dnia rozpoczęcia. To samo tyczy się przerwy. Przyciski Rozpoczęcia i zakończenia pracy i przerwy  nie restartują z przekroczeniem północy jeżeli praca użytkownika nadal trwa.
