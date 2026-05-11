@@ -16,33 +16,45 @@
                 <h2 class="font-semibold">Zdjęcie profilowe</h2>
 
                 <div class="flex items-center gap-6">
-                    <div class="avatar">
-                        <div class="w-20 h-20 rounded-full ring-4 ring-base-300 overflow-hidden">
-                            {% if current_user.avatar %}
+                    <div class="shrink-0">
+                        {% if current_user.avatar %}
+                        <div class="w-20 h-20 rounded-full overflow-hidden ring-2 ring-base-300">
                             <img src="{{ current_user.avatar }}" alt="Avatar"
                                  class="w-full h-full object-cover"/>
-                            {% else %}
-                            <div class="w-full h-full bg-primary/10 flex items-center justify-center">
-                                <span class="text-2xl font-bold text-primary">
-                                    {{ (current_user.name or current_user.email)[0].upper() }}
-                                </span>
-                            </div>
-                            {% endif %}
                         </div>
+                        {% else %}
+                        <div class="w-20 h-20 rounded-full bg-neutral flex items-center justify-center ring-2 ring-base-300">
+                            <span class="text-2xl font-bold text-white">
+                                {% set parts = (current_user.name or current_user.email).split(' ') %}
+                                {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
                     </div>
-
                     <div class="text-sm text-base-content/60">
                         <p>Zdjęcie wyświetlane na ekranie powitalnym.</p>
-                        <p class="mt-1">Max 5MB, format: JPG, PNG, WebP, GIF</p>
+                        <p class="mt-1">Max 5MB · JPG, PNG, WebP, GIF</p>
                     </div>
                 </div>
 
+                <!-- Wgraj zdjęcie -->
                 <form method="POST" enctype="multipart/form-data" class="flex gap-3 items-center">
                     <input type="hidden" name="action" value="upload_avatar"/>
                     <input type="file" name="avatar" accept="image/*"
                            class="file-input file-input-bordered file-input-sm flex-1"/>
-                    <button type="submit" class="btn btn-primary btn-sm">Wgraj</button>
+                    <button type="submit" class="btn btn-primary btn-sm shrink-0">Wgraj</button>
                 </form>
+
+                <!-- Usuń zdjęcie -->
+                {% if current_user.avatar %}
+                <form method="POST"
+                      onsubmit="return confirm('Usunąć zdjęcie profilowe?')">
+                    <input type="hidden" name="action" value="delete_avatar"/>
+                    <button type="submit" class="btn btn-ghost btn-sm text-error">
+                        Usuń zdjęcie
+                    </button>
+                </form>
+                {% endif %}
             </div>
         </div>
 
@@ -50,22 +62,20 @@
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body gap-4">
                 <h2 class="font-semibold">PIN do ekranu powitalnego</h2>
-                <div class="flex items-center gap-4">
-                    <div class="flex gap-2">
-                        {% if current_user.pin %}
-                        {% for digit in current_user.pin %}
-                        <div class="w-10 h-12 bg-base-200 rounded-lg flex items-center justify-center
-                                    text-xl font-bold border-2 border-base-300">
-                            {{ digit }}
-                        </div>
-                        {% endfor %}
-                        {% else %}
-                        <p class="text-base-content/40 text-sm">Brak PIN — skontaktuj się z administratorem</p>
-                        {% endif %}
+                <div class="flex items-center gap-2">
+                    {% if current_user.pin %}
+                    {% for digit in current_user.pin %}
+                    <div class="w-10 h-12 bg-base-200 rounded-lg flex items-center justify-center
+                                text-xl font-bold border-2 border-base-300">
+                        {{ digit }}
                     </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-base-content/40 text-sm">Brak PIN</p>
+                    {% endif %}
                 </div>
                 <p class="text-xs text-base-content/40">
-                    PIN jest generowany automatycznie podczas rejestracji i służy do autoryzacji na ekranie powitalnym.
+                    Generowany automatycznie przy rejestracji. Służy do logowania na ekranie powitalnym.
                 </p>
             </div>
         </div>
@@ -80,7 +90,7 @@
                            value="{{ current_user.name or '' }}"
                            class="input input-bordered flex-1"
                            placeholder="Jan Kowalski"/>
-                    <button type="submit" class="btn btn-primary btn-sm">Zapisz</button>
+                    <button type="submit" class="btn btn-primary btn-sm shrink-0">Zapisz</button>
                 </form>
             </div>
         </div>
