@@ -1,10 +1,7 @@
 import os
-import random
-import string
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from decimal import Decimal
-from datetime import date
 
 from wlogio_app import db
 from wlogio_app.models import MonthConfig, VacationBalance, User
@@ -26,13 +23,8 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def upload_avatar_to_supabase(file_data, filename, content_type):
-    """
-    Wgrywa plik do Supabase Storage przez REST API (bez SDK).
-    Zwraca publiczny URL lub None.
-    """
+def upload_avatar_to_supabase(file_data, user_id, filename, content_type):
     import requests
-
     supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
     service_key = os.environ.get('SUPABASE_SERVICE_KEY', '')
     bucket = 'avatars'
@@ -45,37 +37,51 @@ def upload_avatar_to_supabase(file_data, filename, content_type):
         'apikey': service_key,
     }
 
-    # Usuń wszystkie możliwe stare pliki (różne rozszerzenia)
-    for old_ext in ('jpg', 'jpeg', 'png', 'gif', 'webp'):
+    # Usuń stare pliki we wszystkich rozszerzeniach
+    for ext in ('jpg', 'jpeg', 'png', 'gif', 'webp'):
         requests.delete(
-            f'{supabase_url}/storage/v1/object/{bucket}/{current_user.id}.{old_ext}',
+            f'{supabase_url}/storage/v1/object/{bucket}/{user_id}.{ext}',
             headers=headers
         )
 
-    # Wgraj nowy przez PUT z upsert
     upload_headers = {**headers, 'Content-Type': content_type, 'x-upsert': 'true'}
-    r = requests.put(
-        f'{supabase_url}/storage/v1/object/{bucket}/{filename}',
-        headers=upload_headers,
-        data=file_data
-    )
 
-    if r.status_code in (200, 201):
-        public_url = f'{supabase_url}/storage/v1/object/public/{bucket}/{filename}'
-        return public_url, None
+    # Próbuj PUT, fallback POST
+    for method in ('PUT', 'POST'):
+        r = getattr(requests, method.lower())(
+            f'{supabase_url}/storage/v1/object/{bucket}/{filename}',
+            headers=upload_headers,
+            data=file_data
+        )
+        if r.status_code in (200, 201):
+            return f'{supabase_url}/storage/v1/object/public/{bucket}/{filename}', None
 
-    # Jeśli PUT nie zadziałał, spróbuj POST
-    r2 = requests.post(
-        f'{supabase_url}/storage/v1/object/{bucket}/{filename}',
-        headers=upload_headers,
-        data=file_data
-    )
+    return None, f'HTTP {r.status_code}: {r.text[:200]}'
 
-    if r2.status_code in (200, 201):
-        public_url = f'{supabase_url}/storage/v1/object/public/{bucket}/{filename}'
-        return public_url, None
 
-    return None, f'HTTP {r2.status_code}: {r2.text[:200]}'
+def delete_avatar_from_supabase(user_id):
+    import requests
+    supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+    service_key = os.environ.get('SUPABASE_SERVICE_KEY', '')
+    bucket = 'avatars'
+
+    if not supabase_url or not service_key:
+        return False
+
+    headers = {
+        'Authorization': f'Bearer {service_key}',
+        'apikey': service_key,
+    }
+
+    deleted = False
+    for ext in ('jpg', 'jpeg', 'png', 'gif', 'webp'):
+        r = requests.delete(
+            f'{supabase_url}/storage/v1/object/{bucket}/{user_id}.{ext}',
+            headers=headers
+        )
+        if r.status_code in (200, 204):
+            deleted = True
+    return deleted
 
 
 @settings_bp.route('/')
@@ -88,13 +94,7 @@ def index():
         .all()
     )
     balance = get_or_create_vacation_balance(current_user.id, db.session)
-
-    return render_template(
-        'settings/index.html',
-        configs=configs,
-        balance=balance,
-        MONTH_NAMES=MONTH_NAMES,
-    )
+    return render_template('settings/index.html', configs=configs, balance=balance, MONTH_NAMES=MONTH_NAMES)
 
 
 @settings_bp.route('/profile', methods=['GET', 'POST'])
@@ -126,7 +126,7 @@ def profile():
             filename = f'{current_user.id}.{ext}'
             content_type = file.content_type or f'image/{ext}'
 
-            url, error = upload_avatar_to_supabase(file_data, filename, content_type)
+            url, error = upload_avatar_to_supabase(file_data, current_user.id, filename, content_type)
 
             if url:
                 current_user.avatar = url
@@ -134,6 +134,15 @@ def profile():
                 flash('Zdjęcie profilowe zaktualizowane.', 'success')
             else:
                 flash(f'Błąd wgrywania zdjęcia: {error}', 'error')
+
+        elif action == 'delete_avatar':
+            if current_user.avatar:
+                delete_avatar_from_supabase(current_user.id)
+                current_user.avatar = None
+                db.session.commit()
+                flash('Zdjęcie profilowe usunięte.', 'success')
+            else:
+                flash('Brak zdjęcia do usunięcia.', 'error')
 
         elif action == 'update_name':
             name = request.form.get('name', '').strip()
@@ -167,9 +176,7 @@ def profile():
 @login_required
 def month_config(year, month):
     config = MonthConfig.query.filter_by(
-        user_id=current_user.id,
-        billing_year=year,
-        billing_month=month
+        user_id=current_user.id, billing_year=year, billing_month=month
     ).first_or_404()
 
     working_days = get_working_days_in_billing_period(year, month)
@@ -188,13 +195,9 @@ def month_config(year, month):
             flash(f'Błąd: {e}', 'error')
         return redirect(url_for('settings.index'))
 
-    return render_template(
-        'settings/month_config.html',
-        config=config,
-        expected_hours=expected_hours,
-        working_days=working_days,
-        MONTH_NAMES=MONTH_NAMES,
-    )
+    return render_template('settings/month_config.html', config=config,
+                           expected_hours=expected_hours, working_days=working_days,
+                           MONTH_NAMES=MONTH_NAMES)
 
 
 @settings_bp.route('/vacation', methods=['GET', 'POST'])

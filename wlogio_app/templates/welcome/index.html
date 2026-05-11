@@ -11,90 +11,94 @@
         [x-cloak] { display: none !important; }
 
         .avatar-btn {
-            transition: transform 0.2s ease, filter 0.2s ease;
-            background: none;
-            border: none;
-            padding: 0;
+            transition: transform 0.2s ease;
+            background: none; border: none; padding: 0;
         }
         .avatar-btn:hover { transform: scale(1.06); }
-        .avatar-btn:active { transform: scale(0.97); }
+        .avatar-btn:active { transform: scale(0.96); }
 
-        /* Siatka avatarów */
-        .grid-1 { grid-template-columns: 1fr; max-width: 200px; }
-        .grid-2 { grid-template-columns: repeat(2, 1fr); max-width: 400px; }
-        .grid-3 { grid-template-columns: repeat(3, 1fr); max-width: 600px; }
-        .grid-4 { grid-template-columns: repeat(4, 1fr); max-width: 800px; }
-        .grid-many { grid-template-columns: repeat(4, 1fr); }
+        /* Siatka - max 4 kolumny, responsywna */
+        .users-grid {
+            display: grid;
+            gap: 2rem;
+            justify-items: center;
+        }
+        @media (max-width: 479px)  { .users-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 480px)  { .users-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 640px)  { .users-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 860px)  { .users-grid { grid-template-columns: repeat(4, 1fr); } }
+
+        /* Ograniczenie siatki do rzeczywistej liczby użytkowników */
+        .users-grid.count-1 { grid-template-columns: 1fr; max-width: 160px; }
+        .users-grid.count-2 { grid-template-columns: repeat(2, 1fr); max-width: 340px; }
+        .users-grid.count-3 { grid-template-columns: repeat(3, 1fr); max-width: 520px; }
+
+        /* Statusy - obramowania */
+        .avatar-ring {
+            border-radius: 50%;
+            transition: box-shadow 0.4s ease, opacity 0.4s ease;
+        }
+        .ring-working { box-shadow: 0 0 0 4px #22c55e; }  /* success */
+        .ring-break   { box-shadow: 0 0 0 4px #f59e0b; }  /* warning */
+        .ring-idle    { box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+
+        /* Wygaszenie */
+        .dim-idle     { opacity: 0.5; }
+        .dim-active   { opacity: 1; }
 
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
         @keyframes fadeIn {
             from { opacity: 0; }
-            to { opacity: 1; }
+            to   { opacity: 1; }
         }
-        .animate-slide-up { animation: slideUp 0.4s ease forwards; }
-        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+        .animate-slide-up { animation: slideUp 0.35s ease forwards; }
+        .animate-fade-in  { animation: fadeIn 0.25s ease forwards; }
 
-        /* Obramowania statusów */
-        .ring-status-working {
-            box-shadow: 0 0 0 4px #22c55e; /* green-500 = kolor btn-success */
-        }
-        .ring-status-break {
-            box-shadow: 0 0 0 4px #f59e0b; /* amber-500 = kolor btn-warning */
-        }
-        .ring-status-idle {
-            box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
-        }
-
-        /* Wygaszenie dla idle - 50% przezroczystość */
-        .avatar-idle { opacity: 0.5; }
-        .avatar-working { opacity: 1; }
-        .avatar-break { opacity: 1; }
-
+        /* PIN */
         .pin-digit {
-            width: 60px; height: 70px;
-            font-size: 2rem; font-weight: bold;
-            border: 2px solid oklch(var(--bc) / 0.2);
-            border-radius: 12px;
+            width: 60px; height: 70px; font-size: 2rem; font-weight: 700;
+            border: 2px solid oklch(var(--bc)/0.2); border-radius: 12px;
             background: oklch(var(--b2));
             display: flex; align-items: center; justify-content: center;
             transition: border-color 0.2s, background 0.2s;
         }
-        .pin-digit.active { border-color: oklch(var(--p)); background: oklch(var(--b1)); }
-        .pin-digit.filled { background: oklch(var(--p) / 0.1); border-color: oklch(var(--p)); }
-        .pin-digit.error {
-            border-color: oklch(var(--er));
-            background: oklch(var(--er) / 0.1);
-            animation: shake 0.4s ease;
-        }
+        .pin-digit.filled  { background: oklch(var(--p)/0.1); border-color: oklch(var(--p)); }
+        .pin-digit.active  { border-color: oklch(var(--p)); background: oklch(var(--b1)); }
+        .pin-digit.error   { border-color: oklch(var(--er)); background: oklch(var(--er)/0.1);
+                             animation: shake 0.4s ease; }
         @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
+            0%,100% { transform: translateX(0); }
+            25%      { transform: translateX(-8px); }
+            75%      { transform: translateX(8px); }
         }
 
+        /* Przyciski zegara */
         .clock-btn {
-            width: 140px; height: 140px;
-            border-radius: 50%;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 8px; font-size: 0.85rem; font-weight: 600;
-            transition: all 0.2s ease;
-            border: 3px solid transparent;
+            width: 140px; height: 140px; border-radius: 50%;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 8px;
+            font-size: 0.85rem; font-weight: 600;
+            transition: all 0.2s ease; border: 3px solid transparent;
         }
         .clock-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
-        .clock-btn:not(:disabled):hover { transform: scale(1.05); }
+        .clock-btn:not(:disabled):hover  { transform: scale(1.05); }
         .clock-btn:not(:disabled):active { transform: scale(0.95); }
     </style>
 </head>
 <body class="bg-gradient-to-br from-base-200 to-base-300 min-h-screen">
 
+<!-- Inicjalne statusy z backendu -->
+<script>
+    const INITIAL_STATUSES = {{ user_statuses | tojson }};
+</script>
+
 <div x-data="welcomeApp()" x-init="init()" class="min-h-screen flex flex-col">
 
     <!-- Nagłówek -->
-    <div class="flex items-center justify-between px-6 py-4">
+    <div class="flex items-center justify-between px-6 py-4 shrink-0">
         <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none"
                  viewBox="0 0 24 24" stroke="currentColor">
@@ -111,51 +115,46 @@
 
     <!-- Ekran 1: Siatka avatarów -->
     <div x-show="screen === 'avatars'" x-cloak
-         class="flex-1 flex flex-col items-center justify-center p-8 animate-fade-in">
+         class="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto animate-fade-in">
 
         <h1 class="text-3xl font-bold mb-1 text-center">Dzień dobry!</h1>
-        <p class="text-base-content/50 text-sm mb-10 text-center">Wybierz swój profil</p>
+        <p class="text-base-content/50 text-sm mb-8 text-center">Wybierz swój profil</p>
 
-        {% set user_count = users|length %}
-        <div class="grid gap-8 mx-auto
-            {% if user_count == 1 %}grid-1
-            {% elif user_count == 2 %}grid-2
-            {% elif user_count == 3 %}grid-3
-            {% elif user_count == 4 %}grid-4
-            {% else %}grid-many{% endif %}">
+        <div class="users-grid w-full max-w-4xl mx-auto
+            {% set n = users|length %}
+            {% if n == 1 %}count-1{% elif n == 2 %}count-2{% elif n == 3 %}count-3{% endif %}">
 
             {% for user in users %}
-            {% set status = user_statuses.get(user.id, 'idle') %}
+            {% set uid = user.id|string %}
             <button class="avatar-btn flex flex-col items-center gap-3"
-                    @click="selectUser({{ user.id }}, '{{ (user.name or user.email.split('@')[0])|replace("'", "\\'") }}', '{{ user.avatar or '' }}')">
+                    @click="selectUser({{ user.id }}, {{ (user.name or user.email.split('@')[0])|tojson }}, {{ (user.avatar or '')|tojson }})">
 
-                <!-- Zdjęcie - okrągłe, bez tła, z obramowaniem statusu -->
-                <div class="rounded-full overflow-hidden w-32 h-32 shrink-0
-                    {% if status == 'working' %}ring-status-working avatar-working
-                    {% elif status == 'break' %}ring-status-break avatar-break
-                    {% else %}ring-status-idle avatar-idle{% endif %}"
-                    style="border-radius: 50%;">
+                <!-- Avatar z reaktywnym obramowaniem -->
+                <div class="avatar-ring w-28 h-28 shrink-0 overflow-hidden"
+                     :class="{
+                         'ring-working dim-active': statuses['{{ uid }}'] === 'working',
+                         'ring-break dim-active':   statuses['{{ uid }}'] === 'break',
+                         'ring-idle dim-idle':      statuses['{{ uid }}'] === 'idle' || !statuses['{{ uid }}']
+                     }">
                     {% if user.avatar %}
-                    <img src="{{ user.avatar }}" alt="{{ user.name }}"
-                         class="w-full h-full object-cover"/>
+                    <img src="{{ user.avatar }}" alt="{{ user.name or user.email }}"
+                         class="w-full h-full object-cover" loading="lazy"/>
                     {% else %}
-                    <div class="w-full h-full bg-primary/10 flex items-center justify-center">
-                        <span class="text-4xl font-bold text-primary">
-                            {{ (user.name or user.email)[0].upper() }}
+                    <!-- Brak avatara - szare kółko z inicjałami -->
+                    <div class="w-full h-full bg-neutral flex items-center justify-center">
+                        <span class="text-3xl font-bold text-white select-none">
+                            {% set parts = (user.name or user.email.split('@')[0]).split(' ') %}
+                            {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
                         </span>
                     </div>
                     {% endif %}
                 </div>
 
-                <!-- Imię pod zdjęciem -->
-                <div class="text-xs font-medium text-center max-w-[140px] leading-snug text-base-content/80">
+                <!-- Imię na dwa wiersze -->
+                <div class="text-xs font-medium text-center leading-snug text-base-content/80 max-w-[120px]">
                     {% set parts = (user.name or user.email.split('@')[0]).split(' ') %}
-                    {% if parts|length > 1 %}
                     <div>{{ parts[0] }}</div>
-                    <div>{{ parts[1:] | join(' ') }}</div>
-                    {% else %}
-                    <div>{{ parts[0] }}</div>
-                    {% endif %}
+                    {% if parts|length > 1 %}<div>{{ parts[1:] | join(' ') }}</div>{% endif %}
                 </div>
             </button>
             {% endfor %}
@@ -164,8 +163,7 @@
 
         {% if not users %}
         <div class="text-center text-base-content/40 mt-8">
-            <p class="text-lg mb-2">Brak użytkowników ze zdjęciem profilowym</p>
-            <p class="text-sm">Wgraj zdjęcie w ustawieniach konta</p>
+            <p class="mb-2">Brak użytkowników</p>
         </div>
         {% endif %}
 
@@ -175,18 +173,19 @@
         </a>
     </div>
 
-    <!-- Ekran 2: Wpisywanie PIN -->
+    <!-- Ekran 2: PIN -->
     <div x-show="screen === 'pin'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
 
-        <div class="rounded-full overflow-hidden w-20 h-20 mb-6 ring-status-idle">
+        <div class="avatar-ring w-20 h-20 mb-6 overflow-hidden"
+             :class="selectedAvatar ? 'ring-idle' : 'ring-idle'">
             <template x-if="selectedAvatar">
                 <img :src="selectedAvatar" class="w-full h-full object-cover"/>
             </template>
             <template x-if="!selectedAvatar">
-                <div class="w-full h-full bg-primary/10 flex items-center justify-center">
-                    <span class="text-2xl font-bold text-primary"
-                          x-text="selectedName[0]?.toUpperCase()"></span>
+                <div class="w-full h-full bg-neutral flex items-center justify-center">
+                    <span class="text-xl font-bold text-white"
+                          x-text="getInitials(selectedName)"></span>
                 </div>
             </template>
         </div>
@@ -197,11 +196,7 @@
         <div class="flex gap-3 mb-8">
             <template x-for="i in 4" :key="i">
                 <div class="pin-digit"
-                     :class="{
-                         'filled': pin.length >= i,
-                         'active': pin.length === i - 1,
-                         'error': pinError
-                     }">
+                     :class="{ filled: pin.length >= i, active: pin.length === i-1, error: pinError }">
                     <span x-text="pin.length >= i ? '•' : ''"></span>
                 </div>
             </template>
@@ -219,28 +214,29 @@
         </div>
 
         <div x-show="pinError" x-cloak class="text-error text-sm mb-4 animate-fade-in">
-            Nieprawidłowy PIN. Spróbuj ponownie.
+            Nieprawidłowy PIN.
         </div>
 
         <button @click="screen = 'avatars'; pin = ''; pinError = false"
-                class="btn btn-ghost btn-sm text-base-content/40">
-            ← Wróć
-        </button>
+                class="btn btn-ghost btn-sm text-base-content/40">← Wróć</button>
     </div>
 
     <!-- Ekran 3: Przyciski czasu pracy -->
     <div x-show="screen === 'clock'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
 
-        <div class="rounded-full overflow-hidden w-16 h-16 mb-4"
-             :class="clockOut ? 'ring-status-idle' : (breakStart && !breakEnd ? 'ring-status-break' : (clockIn ? 'ring-status-working' : 'ring-status-idle'))">
+        <div class="avatar-ring w-16 h-16 mb-4 overflow-hidden"
+             :class="{
+                 'ring-working dim-active': clockStatus === 'working',
+                 'ring-break dim-active':   clockStatus === 'break',
+                 'ring-idle dim-idle':      clockStatus === 'idle'
+             }">
             <template x-if="selectedAvatar">
                 <img :src="selectedAvatar" class="w-full h-full object-cover"/>
             </template>
             <template x-if="!selectedAvatar">
-                <div class="w-full h-full bg-primary/10 flex items-center justify-center">
-                    <span class="text-xl font-bold text-primary"
-                          x-text="selectedName[0]?.toUpperCase()"></span>
+                <div class="w-full h-full bg-neutral flex items-center justify-center">
+                    <span class="text-xl font-bold text-white" x-text="getInitials(selectedName)"></span>
                 </div>
             </template>
         </div>
@@ -252,10 +248,8 @@
 
             <!-- Przyjście / Wyjście -->
             <div class="flex flex-col items-center gap-3">
-                <button @click="clockAction('clock_in')"
-                        :disabled="!!clockIn"
-                        x-show="!clockIn"
-                        class="clock-btn bg-success text-white">
+                <button @click="clockAction('clock_in')" :disabled="!!clockIn"
+                        x-show="!clockIn" class="clock-btn bg-success text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -263,10 +257,8 @@
                     </svg>
                     Przyjście
                 </button>
-                <button @click="clockAction('clock_out')"
-                        :disabled="!clockIn || !!clockOut"
-                        x-show="clockIn"
-                        class="clock-btn bg-error text-white">
+                <button @click="clockAction('clock_out')" :disabled="!clockIn || !!clockOut"
+                        x-show="clockIn" class="clock-btn bg-error text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -274,7 +266,7 @@
                     </svg>
                     Wyjście
                 </button>
-                <div class="text-sm font-medium text-center leading-relaxed">
+                <div class="text-sm text-center leading-relaxed">
                     <span x-show="clockIn" x-text="'Przyjście: ' + clockIn" class="text-success block"></span>
                     <span x-show="clockOut" x-text="'Wyjście: ' + clockOut" class="text-error block"></span>
                 </div>
@@ -284,8 +276,7 @@
             <div class="flex flex-col items-center gap-3">
                 <button @click="clockAction('break_start')"
                         :disabled="!clockIn || !!breakStart || !!clockOut"
-                        x-show="!breakStart"
-                        class="clock-btn bg-warning text-white">
+                        x-show="!breakStart" class="clock-btn bg-warning text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -293,10 +284,8 @@
                     </svg>
                     Przerwa
                 </button>
-                <button @click="clockAction('break_end')"
-                        :disabled="!breakStart || !!breakEnd"
-                        x-show="breakStart"
-                        class="clock-btn bg-info text-white">
+                <button @click="clockAction('break_end')" :disabled="!breakStart || !!breakEnd"
+                        x-show="breakStart" class="clock-btn bg-info text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -306,7 +295,7 @@
                     </svg>
                     Koniec przerwy
                 </button>
-                <div class="text-sm font-medium text-center text-warning leading-relaxed">
+                <div class="text-sm text-center leading-relaxed text-warning">
                     <span x-show="breakStart" x-text="'Przerwa od: ' + breakStart" class="block"></span>
                     <span x-show="breakEnd" x-text="'do: ' + breakEnd" class="block"></span>
                 </div>
@@ -314,16 +303,11 @@
 
         </div>
 
-        <div x-show="lastAction" x-cloak
-             class="alert alert-success mb-6 py-2 px-4 text-sm"
-             x-transition>
+        <div x-show="lastAction" x-cloak class="alert alert-success mb-6 py-2 px-4 text-sm" x-transition>
             <span x-text="lastAction"></span>
         </div>
 
-        <button @click="logout()"
-                class="btn btn-ghost btn-sm text-base-content/40">
-            Gotowe →
-        </button>
+        <button @click="logout()" class="btn btn-ghost btn-sm text-base-content/40">Gotowe →</button>
     </div>
 
 </div>
@@ -332,29 +316,49 @@
 function welcomeApp() {
     return {
         screen: 'avatars',
+        statuses: {...INITIAL_STATUSES},  // reaktywne statusy
         selectedUserId: null,
         selectedName: '',
         selectedAvatar: '',
         pin: '',
         pinError: false,
-        clockIn: null,
-        clockOut: null,
-        breakStart: null,
-        breakEnd: null,
-        clockDate: '',
+        clockIn: null, clockOut: null, breakStart: null, breakEnd: null,
+        clockDate: '', clockStatus: 'idle',
         lastAction: '',
-        currentTime: '',
-        currentDate: '',
+        currentTime: '', currentDate: '',
+        pollInterval: null,
 
         init() {
             this.updateClock();
             setInterval(() => this.updateClock(), 1000);
+            // Polling statusów co 10 sekund
+            this.pollInterval = setInterval(() => this.fetchStatuses(), 10000);
         },
 
         updateClock() {
             const now = new Date();
             this.currentTime = now.toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit'});
             this.currentDate = now.toLocaleDateString('pl-PL', {weekday: 'long', day: 'numeric', month: 'long'});
+        },
+
+        async fetchStatuses() {
+            try {
+                const r = await fetch('/welcome/statuses');
+                if (r.ok) {
+                    const data = await r.json();
+                    this.statuses = data;
+                    // Aktualizuj też status na ekranie zegarowym
+                    if (this.selectedUserId && this.screen === 'clock') {
+                        this.clockStatus = data[String(this.selectedUserId)] || 'idle';
+                    }
+                }
+            } catch (e) { /* ignoruj błędy sieciowe */ }
+        },
+
+        getInitials(name) {
+            const parts = (name || '').trim().split(' ');
+            if (parts.length >= 2) return parts[0][0].toUpperCase() + parts[1][0].toUpperCase();
+            return (parts[0][0] || '?').toUpperCase();
         },
 
         selectUser(userId, name, avatar) {
@@ -372,9 +376,7 @@ function welcomeApp() {
                 this.pinError = false;
             } else if (key && this.pin.length < 4) {
                 this.pin += key;
-                if (this.pin.length === 4) {
-                    this.verifyPin();
-                }
+                if (this.pin.length === 4) this.verifyPin();
             }
         },
 
@@ -392,13 +394,11 @@ function welcomeApp() {
                 this.breakStart = data.break_start;
                 this.breakEnd = data.break_end;
                 this.clockDate = data.date;
+                this.clockStatus = this.statuses[String(this.selectedUserId)] || 'idle';
                 this.screen = 'clock';
             } else {
                 this.pinError = true;
-                setTimeout(() => {
-                    this.pin = '';
-                    this.pinError = false;
-                }, 1000);
+                setTimeout(() => { this.pin = ''; this.pinError = false; }, 1000);
             }
         },
 
@@ -406,11 +406,7 @@ function welcomeApp() {
             const r = await fetch('/welcome/clock', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    user_id: this.selectedUserId,
-                    pin: this.pin,
-                    action: action
-                })
+                body: JSON.stringify({user_id: this.selectedUserId, pin: this.pin, action})
             });
 
             const data = await r.json();
@@ -421,6 +417,9 @@ function welcomeApp() {
                 this.breakEnd = data.break_end;
                 this.lastAction = data.label;
                 setTimeout(() => this.lastAction = '', 3000);
+                // Natychmiast odśwież statusy po akcji
+                await this.fetchStatuses();
+                this.clockStatus = this.statuses[String(this.selectedUserId)] || 'idle';
             }
         },
 
@@ -428,11 +427,11 @@ function welcomeApp() {
             this.screen = 'avatars';
             this.selectedUserId = null;
             this.pin = '';
-            this.clockIn = null;
-            this.clockOut = null;
-            this.breakStart = null;
-            this.breakEnd = null;
+            this.clockIn = null; this.clockOut = null;
+            this.breakStart = null; this.breakEnd = null;
             this.lastAction = '';
+            this.clockStatus = 'idle';
+            this.fetchStatuses(); // Odśwież po wylogowaniu
         }
     }
 }
