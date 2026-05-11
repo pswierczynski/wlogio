@@ -48,10 +48,10 @@
             box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
         }
 
-        /* Wygaszenie dla idle */
-        .avatar-idle { filter: brightness(0.55) saturate(0.4); }
-        .avatar-working { filter: none; }
-        .avatar-break { filter: none; }
+        /* Wygaszenie dla idle - 50% przezroczystość */
+        .avatar-idle { opacity: 0.5; }
+        .avatar-working { opacity: 1; }
+        .avatar-break { opacity: 1; }
 
         .pin-digit {
             width: 60px; height: 70px;
@@ -148,9 +148,15 @@
                 </div>
 
                 <!-- Imię pod zdjęciem -->
-                <span class="text-xs font-medium text-center max-w-[140px] leading-tight text-base-content/80">
-                    {{ user.name or user.email.split('@')[0] }}
-                </span>
+                <div class="text-xs font-medium text-center max-w-[140px] leading-snug text-base-content/80">
+                    {% set parts = (user.name or user.email.split('@')[0]).split(' ') %}
+                    {% if parts|length > 1 %}
+                    <div>{{ parts[0] }}</div>
+                    <div>{{ parts[1:] | join(' ') }}</div>
+                    {% else %}
+                    <div>{{ parts[0] }}</div>
+                    {% endif %}
+                </div>
             </button>
             {% endfor %}
 

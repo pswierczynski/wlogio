@@ -38,6 +38,8 @@ def calculate_hours(time_start, time_end, break_start=None, break_end=None):
     if break_start and break_end:
         bs_min = break_start.hour * 60 + break_start.minute
         be_min = break_end.hour * 60 + break_end.minute
+        if be_min < bs_min:
+            be_min += 24 * 60
         break_minutes = max(0, be_min - bs_min)
     else:
         break_minutes = 0
