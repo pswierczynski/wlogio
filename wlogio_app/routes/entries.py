@@ -212,8 +212,24 @@ def _fill_work_entry(entry, form):
 
     if break_start_str and break_end_str:
         try:
-            entry.break_start = datetime.strptime(break_start_str, '%H:%M').time()
-            entry.break_end = datetime.strptime(break_end_str, '%H:%M').time()
+            bs = datetime.strptime(break_start_str, '%H:%M').time()
+            be = datetime.strptime(break_end_str, '%H:%M').time()
+            # Walidacja: przerwa musi mieścić się między godziną pracy
+            ts_min = entry.time_start.hour * 60 + entry.time_start.minute
+            te_min = entry.time_end.hour * 60 + entry.time_end.minute
+            if te_min <= ts_min:
+                te_min += 24 * 60
+            bs_min = bs.hour * 60 + bs.minute
+            be_min = be.hour * 60 + be.minute
+            if be_min <= bs_min:
+                be_min += 24 * 60
+            if bs_min < ts_min or be_min > te_min:
+                flash("Godziny przerwy muszą mieścić się w czasie pracy.", "error")
+                entry.break_start = None
+                entry.break_end = None
+            else:
+                entry.break_start = bs
+                entry.break_end = be
         except ValueError:
             entry.break_start = None
             entry.break_end = None
