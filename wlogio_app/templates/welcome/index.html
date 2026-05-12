@@ -139,7 +139,7 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
             {% for user in users %}
             {% set uid = user.id %}
             {% set status = user_statuses.get(uid, 'idle') %}
-            <button class="avatar-btn" onclick="selectUser({{ uid }}, {{ (user.name or user.email.split('@')[0])|tojson }}, {{ (user.avatar or '')|tojson }})">
+            <button class="avatar-btn" onclick='selectUser({{ uid }}, {{ (user.name or user.email.split("@")[0])|tojson }}, {{ (user.avatar or "")|tojson }})'>
                 <div id="av-{{ uid }}" class="av-circle av-{{ status }}">
                     {% if user.avatar %}
                     <img src="{{ user.avatar }}" alt="" loading="lazy"/>
