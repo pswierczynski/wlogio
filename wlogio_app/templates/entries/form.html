@@ -23,15 +23,29 @@
                     breakStart: '{% if entry and entry.break_start %}{{ entry.break_start.strftime('%H:%M') }}{% endif %}',
                     breakEnd: '{% if entry and entry.break_end %}{{ entry.break_end.strftime('%H:%M') }}{% endif %}',
                     isRemote: {% if entry and entry.is_remote %}true{% else %}false{% endif %},
+                    breakError: null,
                     calcHours() {
                         if (!this.timeStart || !this.timeEnd) { this.calcResult = null; return; }
                         const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
                         let raw = toMin(this.timeEnd) - toMin(this.timeStart);
                         if (raw < 0) raw += 24*60;
                         let breakMin = 0;
+                        this.breakError = null;
                         if (this.breakStart && this.breakEnd) {
-                            breakMin = toMin(this.breakEnd) - toMin(this.breakStart);
-                            if (breakMin < 0) breakMin = 0;
+                            const bs = toMin(this.breakStart);
+                            let be = toMin(this.breakEnd);
+                            if (be < bs) be += 24*60;
+                            const ws = toMin(this.timeStart);
+                            let we = toMin(this.timeEnd);
+                            if (we < ws) we += 24*60;
+                            if (bs < ws || be > we) {
+                                this.breakError = 'Przerwa musi mieścić się w czasie pracy.';
+                            }
+                            breakMin = be - bs;
+                        } else if (this.breakStart || this.breakEnd) {
+                            if (!this.timeStart || !this.timeEnd) {
+                                this.breakError = 'Ustaw godziny pracy przed przerwą.';
+                            }
                         }
                         const extra = Math.max(0, breakMin - 15);
                         const net = raw - extra;
@@ -100,6 +114,11 @@
                             <input type="time" name="break_end" x-model="breakEnd"
                                    @change="calcHours()" class="input input-bordered w-full"/>
                         </div>
+                    </div>
+
+                    <!-- Błąd przerwy -->
+                    <div x-show="breakError" x-cloak class="alert alert-error py-2 text-sm">
+                        <span x-text="breakError"></span>
                     </div>
 
                     <!-- Podgląd -->
