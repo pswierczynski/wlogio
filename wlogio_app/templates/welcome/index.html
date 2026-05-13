@@ -325,16 +325,19 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
 </div>
 
 <script>
-// Podłącz przyciski avatarów po załadowaniu DOM (data-* zamiast onclick - unika problemów z cudzysłowami)
+// Globalna funkcja wywoływana z Alpine przez x-init
+window._welcomeSelectUser = null;
+
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.avatar-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            const uid    = parseInt(this.dataset.uid);
-            const name   = this.dataset.name;
-            const avatar = this.dataset.avatar;
-            // Wywołaj metodę Alpine na elemencie nadrzędnym
-            const app = document.querySelector('[x-data]').__x.$data;
-            app.selectUser(uid, name, avatar);
+            if (window._welcomeSelectUser) {
+                window._welcomeSelectUser(
+                    parseInt(this.dataset.uid),
+                    this.dataset.name,
+                    this.dataset.avatar
+                );
+            }
         });
     });
 });
@@ -358,6 +361,8 @@ function welcomeApp() {
         currentDate: '',
 
         init() {
+            // Udostępnij selectUser globalnie dla event listenerów spoza Alpine
+            window._welcomeSelectUser = (uid, name, avatar) => this.selectUser(uid, name, avatar);
             this.updateClock();
             setInterval(() => this.updateClock(), 1000);
             // Polling statusów co 10 sekund
