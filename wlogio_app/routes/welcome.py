@@ -1,13 +1,12 @@
 """
 welcome.py - Ekran powitalny
 
-Logika statusów (TYLKO na podstawie time_start/time_end/break_start/break_end z WorkEntry):
+Logika statusów (na podstawie time_start/time_end/break_start/break_end):
 
-'working' = aktualna godzina >= time_start ORAZ < time_end (obie muszą być ustawione)
-'break'   = warunek 'working' spełniony ORAZ aktualna godzina >= break_start ORAZ < break_end
+'working' = time_start ustawiony ORAZ (brak time_end LUB aktualna godzina < time_end)
+'break'   = warunek 'working' spełniony ORAZ break_start ustawiony
+            ORAZ (brak break_end LUB aktualna godzina < break_end)
 'idle'    = wszystkie pozostałe przypadki
-
-clock_in/clock_out z ekranu powitalnego nadpisuje time_start/time_end.
 """
 
 from flask import Blueprint, render_template, request, jsonify, session
@@ -43,42 +42,47 @@ def compute_status(entry):
     Oblicza status na podstawie wpisu WorkEntry i aktualnej godziny.
     Zwraca: 'idle' | 'working' | 'break'
 
-    Priorytet: clock_* (ekran powitalny) > time_* (dashboard)
+    Reguły:
+    - Brak time_start                          → idle
+    - time_start, brak time_end                → working bezterminowo (do odwołania)
+    - time_start + time_end, now >= time_end   → idle
+    - working + break_start, brak break_end    → break bezterminowo (do odwołania)
+    - working + break_start + break_end        → break tylko gdy now < break_end
     """
     if entry is None:
         return 'idle'
 
     now = now_minutes()
+    start_min = to_min(entry.time_start)
+    end_min   = to_min(entry.time_end)
+    bs_min    = to_min(entry.break_start)
+    be_min    = to_min(entry.break_end)
 
-    # Użyj clock_in/clock_out jeśli ustawione, inaczej time_start/time_end
-    start = entry.clock_in or entry.time_start
-    end   = entry.clock_out or entry.time_end
-    bs    = entry.break_clock_start or entry.break_start
-    be    = entry.break_clock_end or entry.break_end
-
-    start_min = to_min(start)
-    end_min   = to_min(end)
-    bs_min    = to_min(bs)
-    be_min    = to_min(be)
-
-    # Obie godziny (start i end) muszą być ustawione
-    if start_min is None or end_min is None:
+    # Brak godziny przyjścia → idle
+    if start_min is None:
         return 'idle'
 
     # Obsługa pracy przez północ
-    if end_min <= start_min:
+    if end_min is not None and end_min <= start_min:
         end_min += 24 * 60
 
-    # Czy jesteśmy w czasie pracy?
-    in_work = start_min <= now < end_min
-    if not in_work:
+    # Przed przyjściem → idle
+    if now < start_min:
         return 'idle'
 
-    # Czy jesteśmy w czasie przerwy?
-    if bs_min is not None and be_min is not None:
-        if be_min <= bs_min:
+    # Po wyjściu (jeśli ustawione) → idle
+    if end_min is not None and now >= end_min:
+        return 'idle'
+
+    # Jesteśmy w czasie pracy — sprawdź przerwę
+    if bs_min is not None:
+        if be_min is not None and be_min <= bs_min:
             be_min += 24 * 60
-        if bs_min <= now < be_min:
+
+        after_break_start = now >= bs_min
+        before_break_end  = (be_min is None) or (now < be_min)
+
+        if after_break_start and before_break_end:
             return 'break'
 
     return 'working'
@@ -86,22 +90,17 @@ def compute_status(entry):
 
 def get_today_entry(user_id):
     """Pobiera wpis na dziś lub wczoraj (dla pracy przez północ)."""
-    today = datetime.now(TIMEZONE).date()
+    today     = datetime.now(TIMEZONE).date()
     yesterday = today - timedelta(days=1)
 
-    # Sprawdź czy wczorajszy wpis jest nadal aktywny (praca przez północ)
     entry_yesterday = WorkEntry.query.filter_by(user_id=user_id, date=yesterday).first()
-    if entry_yesterday:
-        s = to_min(entry_yesterday.clock_in or entry_yesterday.time_start)
-        e = to_min(entry_yesterday.clock_out or entry_yesterday.time_end)
-        if s is not None and e is not None:
-            e_adj = e if e > s else e + 24 * 60
-            now = now_minutes()
-            # Praca przez północ: now < e_adj - 24*60 + 24*60 = e_adj gdy now < s
-            if now < e_adj - 24 * 60 + 24 * 60 and s > now:
-                pass  # nie aktywna już w nowym dniu
-            elif s > e_adj % (24 * 60):
-                return entry_yesterday
+    if entry_yesterday and entry_yesterday.time_start:
+        s = to_min(entry_yesterday.time_start)
+        e = to_min(entry_yesterday.time_end)
+        now = now_minutes()
+        # Praca przez północ: start wieczorem, end rano (e < s)
+        if e is not None and e <= s and now < e:
+            return entry_yesterday
 
     return WorkEntry.query.filter_by(user_id=user_id, date=today).first()
 
@@ -121,7 +120,7 @@ def index():
 
 @welcome_bp.route('/statuses')
 def statuses():
-    """Polling endpoint - zwraca aktualne statusy wszystkich użytkowników."""
+    """Polling endpoint — zwraca aktualne statusy wszystkich użytkowników."""
     today = datetime.now(TIMEZONE).date()
     users = User.query.filter(User.is_active == True).all()
     result = {}
@@ -153,19 +152,15 @@ def verify_pin():
     today = datetime.now(TIMEZONE).date()
     entry = get_today_entry(user_id)
 
-    clock_in   = entry.clock_in or entry.time_start if entry else None
-    clock_out  = entry.clock_out or entry.time_end if entry else None
-    break_start = entry.break_clock_start or entry.break_start if entry else None
-    break_end   = entry.break_clock_end or entry.break_end if entry else None
-
     return jsonify({
         'ok': True,
         'user_name': user.name or user.email,
+        'status': compute_status(entry),
         'date': (entry.date if entry else today).strftime('%d.%m.%Y'),
-        'clock_in':    clock_in.strftime('%H:%M') if clock_in else None,
-        'clock_out':   clock_out.strftime('%H:%M') if clock_out else None,
-        'break_start': break_start.strftime('%H:%M') if break_start else None,
-        'break_end':   break_end.strftime('%H:%M') if break_end else None,
+        'clock_in':    entry.time_start.strftime('%H:%M')  if entry and entry.time_start  else None,
+        'clock_out':   entry.time_end.strftime('%H:%M')    if entry and entry.time_end    else None,
+        'break_start': entry.break_start.strftime('%H:%M') if entry and entry.break_start else None,
+        'break_end':   entry.break_end.strftime('%H:%M')   if entry and entry.break_end   else None,
     })
 
 
@@ -187,7 +182,7 @@ def clock():
     entry = get_today_entry(user_id)
 
     if action == 'clock_in':
-        if entry and entry.clock_in:
+        if entry and entry.time_start:
             return jsonify({'ok': False, 'error': 'Już zarejestrowano przyjście'}), 400
         if not entry:
             by, bm = get_billing_period(today)
@@ -198,45 +193,40 @@ def clock():
                 hours_worked=Decimal('0'), hours_billed=Decimal('0'),
             )
             db.session.add(entry)
-        entry.clock_in = now
         entry.time_start = now
         label = f'Przyjście: {now.strftime("%H:%M")}'
 
     elif action == 'clock_out':
-        if not entry or not entry.clock_in:
+        if not entry or not entry.time_start:
             return jsonify({'ok': False, 'error': 'Najpierw zarejestruj przyjście'}), 400
-        if entry.clock_out:
+        if entry.time_end:
             return jsonify({'ok': False, 'error': 'Już zarejestrowano wyjście'}), 400
-        # Zakończ aktywną przerwę
-        if entry.break_clock_start and not entry.break_clock_end:
-            entry.break_clock_end = now
+        # Zakończ aktywną przerwę jeśli trwa
+        if entry.break_start and not entry.break_end:
             entry.break_end = now
-        entry.clock_out = now
-        entry.time_end  = now
-        if entry.time_start:
-            from wlogio_app.calculator import calculate_hours
-            calc = calculate_hours(entry.time_start, entry.time_end,
-                                   entry.break_clock_start, entry.break_clock_end)
-            entry.hours_worked = Decimal(str(calc['hours_worked']))
-            entry.hours_billed = Decimal(str(calc['hours_billed']))
-            entry.extra_break_minutes = calc['extra_break_minutes']
+        entry.time_end = now
+        # Przelicz godziny
+        from wlogio_app.calculator import calculate_hours
+        calc = calculate_hours(entry.time_start, entry.time_end,
+                               entry.break_start, entry.break_end)
+        entry.hours_worked        = Decimal(str(calc['hours_worked']))
+        entry.hours_billed        = Decimal(str(calc['hours_billed']))
+        entry.extra_break_minutes = calc['extra_break_minutes']
         label = f'Wyjście: {now.strftime("%H:%M")}'
 
     elif action == 'break_start':
-        if not entry or not entry.clock_in:
+        if not entry or not entry.time_start:
             return jsonify({'ok': False, 'error': 'Najpierw zarejestruj przyjście'}), 400
-        if entry.break_clock_start:
+        if entry.break_start:
             return jsonify({'ok': False, 'error': 'Przerwa już rozpoczęta'}), 400
-        entry.break_clock_start = now
         entry.break_start = now
         label = f'Przerwa od: {now.strftime("%H:%M")}'
 
     elif action == 'break_end':
-        if not entry or not entry.break_clock_start:
+        if not entry or not entry.break_start:
             return jsonify({'ok': False, 'error': 'Najpierw rozpocznij przerwę'}), 400
-        if entry.break_clock_end:
+        if entry.break_end:
             return jsonify({'ok': False, 'error': 'Przerwa już zakończona'}), 400
-        entry.break_clock_end = now
         entry.break_end = now
         label = f'Przerwa do: {now.strftime("%H:%M")}'
 
@@ -246,9 +236,11 @@ def clock():
     db.session.commit()
 
     return jsonify({
-        'ok': True, 'label': label,
-        'clock_in':    entry.clock_in.strftime('%H:%M') if entry.clock_in else None,
-        'clock_out':   entry.clock_out.strftime('%H:%M') if entry.clock_out else None,
-        'break_start': entry.break_clock_start.strftime('%H:%M') if entry.break_clock_start else None,
-        'break_end':   entry.break_clock_end.strftime('%H:%M') if entry.break_clock_end else None,
+        'ok': True,
+        'label': label,
+        'status': compute_status(entry),
+        'clock_in':    entry.time_start.strftime('%H:%M')  if entry.time_start  else None,
+        'clock_out':   entry.time_end.strftime('%H:%M')    if entry.time_end    else None,
+        'break_start': entry.break_start.strftime('%H:%M') if entry.break_start else None,
+        'break_end':   entry.break_end.strftime('%H:%M')   if entry.break_end   else None,
     })
