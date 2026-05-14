@@ -13,8 +13,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
-    pin = db.Column(db.String(4), nullable=True)      # 4-cyfrowy PIN do ekranu powitalnego
-    avatar = db.Column(db.Text, nullable=True)         # URL do Supabase Storage
+    pin = db.Column(db.String(4), nullable=True)
+    avatar = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     work_entries = db.relationship('WorkEntry', backref='user', lazy='dynamic',
@@ -33,7 +33,6 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def generate_pin(self):
-        """Generuje losowy 4-cyfrowy PIN."""
         self.pin = str(random.randint(1000, 9999))
         return self.pin
 
@@ -55,17 +54,11 @@ class WorkEntry(db.Model):
     billing_month = db.Column(db.Integer, nullable=False)
     entry_type = db.Column(db.String(20), nullable=False, default='work')
 
-    # Godziny z formularza (ręcznie)
+    # Wspólne kolumny dla dashboardu i ekranu powitalnego
     time_start = db.Column(db.Time, nullable=True)
     time_end = db.Column(db.Time, nullable=True)
     break_start = db.Column(db.Time, nullable=True)
     break_end = db.Column(db.Time, nullable=True)
-
-    # Godziny z ekranu powitalnego (automatyczne)
-    clock_in = db.Column(db.Time, nullable=True)
-    clock_out = db.Column(db.Time, nullable=True)
-    break_clock_start = db.Column(db.Time, nullable=True)
-    break_clock_end = db.Column(db.Time, nullable=True)
 
     extra_break_minutes = db.Column(db.Integer, default=0)
     hours_worked = db.Column(db.Numeric(5, 2), nullable=False, default=0)
