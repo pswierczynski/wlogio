@@ -1,62 +1,235 @@
-Logika i wyświetlanie:
+# Wlogio — Dokumentacja projektu (stan na 14.05.2026)
 
-* Ładny, nowoczesny i przejrzysty wygląd aplikacji z nie za dużą ilością różnych kolorów.
-* Rejestrowanie nowych użytkowników i logowanie przez adres email i hasło.
-* Miesiąc pracy liczony od 23 dnia miesiąca do 22 dnia kolejnego miesiąca.
-* Użytkownik dodając nowy dzień uzupełnia godzinę przyjścia i wyjścia oraz godziny ewentualnej przerwy.
-* Grupuj dodawane dni w miesiące. Dodawać nowy dzień użytkownik może we wszystkich minionych miesiącach do 22 dnia aktualnego miesiąca.
-* Oddzielaj zakładki miesięcy informacją z jakiego są roku.
-* Możliwość ustawienia, że dany dzień jest dniem urlopowym, urlopem na żądanie, urlopem bezpłatnym, świątecznym lub na dany dzień ma się zwolnienie lekarskie lub pracuje się zdalnie.
-* Wyświetlanie miesięcy od najnowszego do najstarszego w tabelach sortowanych od góry do dołu, gdzie aktualny miesiąc jest zawsze na samej górze.
-* Dni miesiąca sortowane od góry do dołu gdzie na samej dole jest najbardziej aktualny dzień.
-* Struktura harmonijki gdzie aktualny miesiąc jest rozwinięty, a minione zwinięte z możliwością rozwinięcia.
-* Możliwy tylko jeden rozwinięty miesiąc w tym samym czasie.
-* Widoczne podsumowanie każdego minionego miesiąca bez konieczności rozwijania.
-* Każdy miesiąc aby miał widoczne i wyróżnione nagłówki dla kolumn.
-* Dni robocze miesięcy jako kolejne wiersze w tabeli.
-* Możliwość edycji każdego dnia i jego danych w dowolnym miesiącu.
-* Podsumowanie dla każdego miesiąca aktualizowane po zmianie danych.
-* Stawka godzinowa możliwa do modyfikacji dla każdego miesiąca. Nowy miesiąc niech przyjmuje automatycznie wysokość stawki z poprzedniego miesiąca.
-* Możliwość ustawienia dodatkowej premii dla każdego miesiąca. Jeżeli brak premii ustaw 0.
-* Parametry suma dni urlopowych, urlopów na żądanie i pracy zdalnej do ręcznego ustawiania w bilansie miesiąca. Urlopy i prace zdalne wykorzystane i pozostałe niech obliczają się automatycznie z wpisywanych dni ale jedynie dla aktualnego roku. Czyli z dniem 1 stycznia kolejnego roku liczba odejmowanych dni od tych sum resetuje się.
-* Dodaj możliwość dodawania i wyświetlania dnia jako Urlop bezpłatny. Urlopy bezpłatne nie odliczają się od bilansu urlopów i dają 0 przepracowanych godzin.
-* Dodawać nowe dni można we wszystkich minionych miesiącach do 22 dnia aktualnego miesiąca. Możliwość edytowania dodanych dni zostaje bez zmian.
-* Zaokrąglenia godzin pracy są o wielokrotność liczby 0,25 czyli np. 7, 7,25, 7,5, 7,75, 8, 8,25, 8,5, 8,75, 9, 9,25 itp.
-* W podsumowaniu dla każdego miesiąca ustaw wartości: Przepracowane (suma przepracowanych zaokrąglonych godzin obliczana z dni dodanych przez użytkownika), Wymagane (ilość dni od 23 dnia miesiąca do 22 dnia kolejnego miesiąca z pominięciem sobót i niedziel), Nadgodziny (suma odchyleń do liczby 8 z zaokrąglonych przepracowanych godzin z dni dodanych przez użytkownika. Np. jeden dzień ma 6,5 godzin, drugi ma 8,25 to suma Nadgodzin wynosi -1,25), Stawka (podawaj ją z ustawień miesiąca), Wynagrodzenie (Wylicz przez pomnożenie Stawki przez zaokrągloną liczbę przepracowanych godzin), Dni pracy (ilość wszystkich dni dodanych w miesiącu przez użytkownika uwzględniająca również Urlopy, Urlopy na żądanie, Urlopy bezpłatne, Zwolnienia i Pracę zdalną), Urlop (ilość dni urlopowych wykorzystanych w danym miesiącu w tym również Urlopów na żądanie i Urlopy bezpłatne).
-* Bilas urlopowy niech będzie tylko jeden, bez dodawania kolejnych i bez wyświetlania roku ale z możliwością edycji. Standardowo pule niech posiadają 26 dni Urlopu, 4 dni Urlopu na żądanie i 24 dni pracy zdalnej. Wraz z 1 stycznia kolejnego roku wykorzystane Urlopy na żądanie i wykorzystane Dni pracy zdalnej resetują się do 0 i odejmowane są od pul na nowo. Same urlopy natomiast również się restartują ale jeżeli pozostała jakaś liczba niewykorzystanych urlopów z poprzedniego roku dodają się one do nowej puli Urlopów. (np. zostało 5 urlopów z roku 2026, to 1 stycznia 2027 pula Urlopów zostanie zresetowana do liczby 31).
-* Suma nadgodzin dla każdego miesiąca niech zlicza się jedynie z dodanych przez użytkownika dni w miesiącu i niech będzie wyliczana jedynie z odchyleń dla każdego dnia od 8 godzin.
-* Nie można dodać konfiguracji miesiąca jeżeli nie poda się ilości godzin roboczych w miesiącu oraz wartości premii. Liczba godzin roboczych w miesiącu powinna być obliczana automatycznie na podstawie dni od 23 dnia miesiąca do 22 dnia kolejnego miesiąca z pominięciem sobót i niedziel pomnożona przez 8 godzin. Użytkownik nie może tego zmieniać. Natomiast wartość premii jeżeli nie zostanie ustawiona, ustawiaj ją na 0.
-* Na telefonie niektóre teksty wychodzą poza ramkę min. tekst "na żądanie" na liście dni, Imię i nazwisko użytkownika na górnym pasku, słowo wykorz. u góry aplikacji. Popraw wyświetlanie na telefonie.
-* Aplikacja na telefonie czasem wyświetla się niepoprawnie min. zakładka ustawienia wychodzi poza szerokość ekranu telefonu.
-* Ekran logowania wyśrodkuj w pionie na ekranie telefonu.
-* Zakładka ustawienia wyświetla się niepoprawnie również na desktop, kolumny są za wąskie i dane nie mieszczą się na szerokość. Poszerz je odpowiednio.
-* Bilans urlopowy niech będzie ustawiony z możliwością edycji. Dla nowych użytkowników niech będzie ustawiony ze standardowymi wartościami (Urlopy: 26, Na żądanie 4, Praca zdalna 24).
-* Wykorzystanie urlopu na żądanie pomniejsza swoją pulę ale również pomniejsza pulę Urlopów.
-* Podczas ustawiania Urlopów i Urlopów na żądanie użytkownik nie ustawia numeru dnia urlopowego w roku. Liczba ta wyświetla się przy dodawaniu urlopu ale nie można jej edytować i obliczana jest automatycznie na podstawie wykorzystanych już urlopów z danego rocznego bilansu.
-* Przy przycisku pracy zdalnej usuń napis (PZ-KRK) oraz możliwość wpisania nr. wyjazdu. Nie jest to potrzebne, niech to się wyświetla i wylicza na podstawie wykorzystanych już dni pracy zdalnej z danego rocznego bilansu.
-* Kolumny list miesięcy i dni wyświetlają się nierówno kiedy jakieś dane są dłuższe od innych lub ich brakuje. Popraw to proszę.
-* W oknie do logowania możliwość wyboru zalogowania się do "Ekranu powitalnego" hasłem Przemek121!. To będzie prosty panel z wgranymi zdjęciami użytkowników i ładnymi animacjami przejść w JavaScript. Ekran składać będzie się tylko z okrągłych klikanych zdjęć pracowników ułożonych w siatce zależnej od ilości wgranych użytkowników. 1 użytkownik to siatka z 1 kolumny z jednym wierszem, 2 użytkowników to 2 kolumny z jednym wierszem, 3 użytkowników to 3 kolumny z jednym wierszem i 4 użytkowników to 4 kolumny z jednym wierszem. Powyżej 4 użytkowników zdjęcia układają się w siatce 4 kolumn z wieloma wierszami z możliwością pionowego przewijania.
-* Jeżeli użytkownik nie ma wgranego swojego zdjęcia nie wyświetlaj go na Ekranie powitalnym.
-* Po kliknięciu w obrazek pracownika pojawia się poprzez animacje ekran wpisania kodu PIN z 4 liczb, a następnie po wpisaniu poprawnego PIN dwa okrągłe przyciski: Rozpoczęcie pracy i Rozpoczęcie przerwy. Po kliknięciu przycisku Rozpoczęcie pracy, przycisk podmienia się na przycisk Zakończenie pracy. Po kliknięciu przycisku Rozpoczęcie przerwy, przycisk podmienia się na przycisk Zakończenie przerwy. Kliknięcie przycisków nadpisuje dane w bazie danych aktualną godziną oraz zaokrągloną wartością dla hours_billing.
-* Kazdy przycisk można przycisnąć tylko raz w ciągu dnia. Przyciski Zakończenia aktywują się z dopiero po kliknięciu przycisków Rozpoczęcia.
-* Po kliknięciu Zakończenia pracy, możliwość kliknięcia przycisku Rozpoczęcie przerwy wyłącza się.
-* Jeżeli podczas kliknięcia Zakończenia pracy, przerwa jest aktywna - przerwa również kończy się i zapisuje godzinę.
-* Użytkownik w ustawieniach swojego konta ma możliwość wgrania swojego zdjęcia z ograniczeniami jak przy tego typu panelach.
-* Podczas podmieniania przez użytkownika wgranego wcześniej zdjęcia, poprzednie zdjęcie usuwa się z miejsca gdzie jest przechowywane zwalniając miejsce.
-* Użytkownik w ustawieniach swojego konta może wyświetlić swój numer PIN, który potrzebny mu będzie w Ekranie powitalnym. Numer PIN składa się z 4 liczb i generowany jest losowo podczas rejestracji użytkownika.
-* Ekran powitalny to uproszczony system wlogio do obsługi na wspólnym ekranie dotykowym przez pracowników przy wejściu do biura. Korzysta z tej samej bazy danych co aplikacja wlogio i nadpisuje te same dane u wybranego użytkownika.
-* Na Ekranie powitalnym zdjęcia użytkowników niech wyświetlają się trochę większe i bez białego pola w okół nich. Same zdjęcia a pod spodem tak jak jest teraz imię i nazwisko ale trochę mniejszą czcionką.
-* Jeżeli u danego użytkownika przycisk Rozpoczęcie pracy jest aktywny, na Ekranie powitalnym jego okrągłe zdjęcie niech posiada zielone obramowanie. Kolor obramowania taki sam jak przycisku.
-* Jeżeli danego użytkownika przycisk Rozpoczęcie przerwy jest aktywny, na Ekranie powitalnym jego okrągłe zdjęcie niech posiada pomarańczowe obramowanie. Kolor obramowania taki sam jak przycisku.
-* Jeżeli u danego użytkownika nie została jeszcze rozpoczęta praca lub została zakończona na Ekranie powitalnym wygaś jego zdjęcie.
-* Na Ekranie powitalnym zmień tekst Dobry Dzień! Na Dzień dobry! Tekst Wybierz swój profil mniejszą czcionką.
-* W dashboard na desktop wyświetlaj u góry po prawej imię i nazwisko użytkownika - nie tylko same imię jak jest teraz. Na telefonach wyświetlaj tylko samą ikonkę profilu, bez imienia.
-* W rozwinięciu menu dodaj odpowiednią ikonkę przy Moje konto, tak jak jest to zrobione przy Ustawienia.
+## Stack technologiczny
 
-Poprawki:
+* **Backend:** Python 3.11+ / Flask
+* **Baza danych:** PostgreSQL na Supabase (darmowy tier, połączenie przez Transaction Pooler port 6543)
+* **ORM:** SQLAlchemy + Flask-SQLAlchemy
+* **Hosting:** Render.com (darmowy tier, Python 3.14, gunicorn)
+* **Frontend:** Tailwind CSS + DaisyUI + Alpine.js
+* **Storage avatarów:** Supabase Storage (bucket: `avatars`, publiczny)
+* **Autoryzacja:** Flask-Login, hasła hashowane przez pbkdf2:sha256 (nie scrypt - niekompatybilny z Python 3.9 na macOS)
+* **Repozytorium:** https://github.com/pswierczynski/wlogio
+* **Aplikacja:** https://wlogio.onrender.com
 
-* Na desktop imię i nazwisko u góry po prawej stronie nie mieści się i wychodzi poza ekran. Zrób tak żeby się mieściło.
-* Zielone i pomarańczowe obramowania okrągłych zdjęć niech pojawiają się też na ogólnym, zbiorczym Ekranie powitalnym, nie tylko na tym po wpisaniu kodu PIN.
-* Wygaszenie zdjęcia użytkownika niech będzie wykonane  poprzez 50% przeźroczystości. Nie parametrami jasności i saturacji.
-* Na Ekranie powitalnym imię i nazwisko pod zdjęciem użytkownika rozdzielaj na dwa wiersze.
-* Jeżeli użytkownik rozpocznie pracę np. o 23:00, a skończy o 2:00 kolejnego dnia - praca ta niech będzie przypisana do dnia rozpoczęcia. To samo tyczy się przerwy. Przyciski Rozpoczęcia i zakończenia pracy i przerwy  nie restartują z przekroczeniem północy jeżeli praca użytkownika nadal trwa.
+## Struktura projektu
+
+```
+wlogio/
+├── run.py                          # punkt startowy, sys.path.insert dla Render
+├── config.py                       # konfiguracja z .env, postgres:// → postgresql+psycopg://
+├── requirements.txt                # psycopg[binary]==3.2.10 (nie psycopg2 - Python 3.14)
+├── render.yaml
+├── reimport_xlsx.py                # importer danych z pliku xlsx
+├── wlogio_app/                     # główny moduł (NIE app/ - konflikt z paczką na Render)
+│   ├── __init__.py                 # create_app(), explicite template_folder i static_folder
+│   ├── models.py
+│   ├── calculator.py
+│   ├── routes/
+│   │   ├── auth.py
+│   │   ├── dashboard.py
+│   │   ├── entries.py
+│   │   ├── settings.py
+│   │   └── welcome.py
+│   └── templates/
+│       ├── base.html
+│       ├── auth/
+│       ├── dashboard/
+│       ├── entries/
+│       ├── settings/
+│       └── welcome/
+```
+
+**Ważne:** Folder główny nazywa się `wlogio_app/` (nie `app/`) — Render ma zainstalowaną paczkę o nazwie `app` która koliduje z lokalnym folderem. `run.py` używa `sys.path.insert(0, ...)`.
+
+## Zmienne środowiskowe
+
+```env
+SECRET_KEY=...                      # losowy string min 32 znaki
+DATABASE_URL=postgresql://postgres.[ref]:[HASLO]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres
+FLASK_ENV=production
+SUPABASE_URL=https://[ref].supabase.co
+SUPABASE_SERVICE_KEY=...            # service_role key z Supabase → Project Settings → API
+```
+
+Upload avatarów przez REST API (`requests` biblioteka), nie przez supabase-py SDK.
+
+## Modele bazy danych
+
+### User
+- `id`, `email` (unique), `password_hash`, `name`, `is_active`
+- `pin` (VARCHAR 4) — 4-cyfrowy PIN do ekranu powitalnego, generowany losowo przy rejestracji
+- `avatar` (TEXT) — publiczny URL do Supabase Storage
+
+### WorkEntry
+- `id`, `user_id`, `date`, `billing_year`, `billing_month`, `entry_type`
+- `time_start`, `time_end`, `break_start`, `break_end` — godziny z formularza dashboard
+- `clock_in`, `clock_out`, `break_clock_start`, `break_clock_end` — godziny z ekranu powitalnego
+- `extra_break_minutes`, `hours_worked`, `hours_billed` (zaokrąglone do 0.25)
+- `vacation_day_number`, `is_remote`, `remote_trip_number`, `notes`
+
+**Migracja SQL (Supabase):**
+```sql
+ALTER TABLE users ADD COLUMN IF NOT EXISTS pin VARCHAR(4);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
+ALTER TABLE work_entries ADD COLUMN IF NOT EXISTS clock_in TIME;
+ALTER TABLE work_entries ADD COLUMN IF NOT EXISTS clock_out TIME;
+ALTER TABLE work_entries ADD COLUMN IF NOT EXISTS break_clock_start TIME;
+ALTER TABLE work_entries ADD COLUMN IF NOT EXISTS break_clock_end TIME;
+```
+
+### MonthConfig
+- `user_id`, `billing_year`, `billing_month`
+- `hourly_rate`, `expected_hours` (tylko do odczytu — z kalendarza), `bonus`, `notes`
+
+### VacationBalance
+- `user_id`, `year`, `vacation_total` (26), `on_demand_total` (4), `remote_total` (24)
+
+### HourlyRate
+- Historia zmian stawek (do audytu)
+
+## Logika biznesowa
+
+### Okres rozliczeniowy
+- Miesiąc liczony od **23 dnia poprzedniego** do **22 dnia bieżącego**
+- Wpis z 24.03 → `billing_month=4` (kwiecień)
+- Wpis z 22.04 → `billing_month=4` (kwiecień)
+- Wpis z 23.04 → `billing_month=5` (maj)
+
+### Typy wpisów (entry_type)
+- `work` — normalny dzień pracy
+- `vacation` — urlop (odlicza od puli urlopów)
+- `on_demand` — urlop na żądanie (odlicza od puli on_demand ORAZ puli urlopów)
+- `unpaid` — urlop bezpłatny (0h, nie odlicza od puli urlopów)
+- `holiday` — święto ustawowe
+- `sick_leave` — zwolnienie lekarskie
+
+### Obliczanie godzin (calculator.py)
+- Przerwa programowa: 15 min (odliczana gdy jest przerwa > 15 min)
+- Nadprogramowa przerwa = czas przerwy - 15 min
+- Zaokrąglenie: `round(hours * 4) / 4` (do wielokrotności 0.25) — NIE quantize Decimal
+- Obsługa pracy przez północ: `end_min < start_min → end_min += 24*60`
+- Strefa czasowa: `Europe/Warsaw` przez `zoneinfo.ZoneInfo`
+
+### Nadgodziny
+- Suma odchyleń każdego dnia od 8h (nie od sumy miesięcznej)
+- Przykład: 6.5h → -1.5, 8.25h → +0.25, suma = -1.25
+
+### Wymagane godziny (expected_hours)
+- Obliczane z kalendarza: dni robocze (pon-pt) w okresie 23→22 × 8
+- Użytkownik nie może zmieniać tej wartości
+
+### Bilans urlopowy
+- Jeden globalny bilans (bez podziału na lata w UI)
+- Reset 1 stycznia: on_demand i remote zerują się, urlopy przenoszą nadwyżkę
+- Przykład: zostało 5 urlopów z 2026 → pula 2027 = 26 + 5 = 31
+
+### Walidacja przerwy
+- Przerwa musi mieścić się w przedziale godzin pracy
+- Bez ustawionej godziny pracy nie można ustawić przerwy
+- Walidacja w backend (entries.py) i frontend (Alpine.js w form.html)
+
+## Ekran powitalny (/welcome/)
+
+### Dostęp
+- Przycisk "Ekran powitalny" na ekranie logowania → modal z hasłem `Przemek121!`
+- Weryfikacja przez `/welcome/verify-password` (POST JSON)
+
+### Siatka avatarów
+- Wyświetla WSZYSTKICH aktywnych użytkowników (z i bez avatara)
+- Bez avatara: szare kółko (`bg-neutral`) z białymi inicjałami (imię + nazwisko)
+- Siatka: 2 kolumny mobile, 3 tablet (640px+), 4 desktop (900px+)
+- Dla 1-3 użytkowników: wyśrodkowana z ograniczoną szerokością
+
+### Statusy użytkowników (polling co 10s)
+Endpoint `/welcome/statuses` zwraca `{user_id: status}` gdzie status to:
+- `'working'` — `now >= time_start AND now < time_end` (obie muszą być ustawione)
+- `'break'` — warunek working spełniony AND `now >= break_start AND now < break_end`
+- `'idle'` — wszystkie pozostałe
+
+Priorytet: `clock_*` (ekran powitalny) > `time_*` (dashboard)
+
+### Obramowania i przeźroczystość
+- `working` → zielone obramowanie (`box-shadow: 0 0 0 4px #22c55e`), pełna widoczność
+- `break` → pomarańczowe obramowanie (`box-shadow: 0 0 0 4px #f59e0b`), pełna widoczność
+- `idle` → szare obramowanie, 50% przeźroczystości (`opacity: 0.5`)
+- Klasy CSS: `ring-status-working/break/idle` + `avatar-working/break/idle`
+- Obramowania aktualizowane w czasie rzeczywistym bez odświeżania (DOM manipulation w fetchStatuses())
+
+### Przepływ użytkownika
+1. Kliknięcie avatara → animacja → ekran PIN
+2. PIN (4 cyfry, klawiatura numeryczna) → weryfikacja `/welcome/verify-pin`
+3. Poprawny PIN → ekran z przyciskami zegarowymi + status użytkownika
+
+### Przyciski zegarowe
+- Przyjście → clock_in, time_start (tylko raz dziennie)
+- Wyjście → clock_out, time_end (aktywny dopiero po Przyjście)
+- Przy Wyjściu: jeśli przerwa aktywna → automatycznie ją kończy
+- Przerwa → aktywna gdy `clockStatus === 'working'`
+- Koniec przerwy → aktywna gdy `clockStatus === 'break'`
+- Po Wyjściu: przycisk Przerwa wyłącza się
+
+### Obsługa pracy przez północ
+- `clock_in` zawsze tworzy wpis na dzień ROZPOCZĘCIA
+- `clock_out` i przerwy szukają aktywnego wpisu (clock_in bez clock_out) z dziś lub wczoraj
+- Przyciski nie restartują o północy gdy praca trwa
+
+### Ważna uwaga techniczna (Alpine.js)
+Przyciski avatarów używają `data-uid`, `data-name`, `data-avatar` zamiast `onclick` — unika problemów z escapowaniem cudzysłowów w Jinja2. Event listenery w `DOMContentLoaded`. Dostęp do Alpine przez `window._welcomeSelectUser` zarejestrowany w `init()`.
+
+## Ustawienia konta (/settings/profile)
+
+- Wgrywanie avatara → Supabase Storage przez REST API (PUT + fallback POST)
+- Usuwanie avatara (usuwa wszystkie rozszerzenia: jpg/jpeg/png/gif/webp)
+- Wyświetlanie PIN (4 cyfry)
+- Zmiana imienia i nazwiska
+- Zmiana hasła
+
+## Dashboard
+
+### Navbar
+- Desktop: pełne imię i nazwisko (`max-w-[180px] truncate`)
+- Mobile: tylko ikona profilu bez tekstu
+- Dropdown: Moje konto (ikona person) + Ustawienia (ikona gear) + Wyloguj
+
+### Harmonijka miesięcy
+- Aktualny miesiąc zawsze rozwinięty, minione zwinięte
+- Tylko jeden miesiąc rozwinięty naraz (Alpine.js `openMonth`)
+- Separator roku między miesiącami różnych lat
+- Podsumowanie widoczne bez rozwijania
+
+### Tabela wpisów
+- Stałe szerokości kolumn (col-date, col-type, col-time, col-break, col-hours, col-salary, col-actions)
+- Badge dla typów: Praca/Urlop/Na żąd./Bezpłatny/Święto/Zwolnienie
+- Numer urlopu w badge (np. "Urlop (5)")
+- Oznaczenie PZ dla pracy zdalnej
+
+### Podsumowanie miesiąca
+- Przepracowane, Wymagane (z kalendarza), Nadgodziny, Wynagrodzenie + premia
+- Stawka, liczba dni, urlop, zdalna
+
+## Import danych (reimport_xlsx.py)
+
+- Parsuje plik xlsx z ewidencją pracy
+- Dedukuje rok wpisu z miesiąca sekcji (np. STYCZEŃ_2026 + wpis 23.12 → rok 2025)
+- Czyści dane użytkownika przed importem (`--clear-first`)
+- Expected_hours z kalendarza (nie z pliku)
+- Stawka dziedziczona z poprzedniego miesiąca jeśli nie można wyliczyć
+
+## Znane rozwiązania technicznie ważne
+
+1. **psycopg3** zamiast psycopg2 — Render używa Python 3.14 gdzie psycopg2 nie działa. Używamy `psycopg[binary]==3.2.10`. Connection string musi zaczynać się od `postgresql+psycopg://`.
+
+2. **config.py** — automatycznie zamienia `postgres://` i `postgresql://` na `postgresql+psycopg://`.
+
+3. **Hashowanie haseł** — `method='pbkdf2:sha256'` zamiast domyślnego scrypt (niekompatybilny z macOS Python 3.9).
+
+4. **Strefa czasowa** — wszystkie operacje czasowe przez `datetime.now(ZoneInfo('Europe/Warsaw'))`.
+
+5. **Supabase pooler** — używaj Transaction Pooler (port 6543), nie Direct Connection (port 5432 — zablokowany na darmowym tierze).
+
+6. **Zaokrąglenie godzin** — `round(hours * 4) / 4`, nie `Decimal.quantize('0.25')` (to zaokrągla do 2 miejsc po przecinku, nie do wielokrotności 0.25).
+
+7. **Folder wlogio_app** — NIE app/ (konflikt z zainstalowaną paczką na Render).
+
+8. **Alpine.js i onclick** — nigdy nie używaj `onclick="func('{{ var }}')"` z Jinja2 — problem z cudzysłowami. Używaj `data-*` atrybutów i event listenerów w JS.
