@@ -230,7 +230,7 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
          class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
 
         <div class="rounded-full overflow-hidden w-16 h-16 mb-4"
-             :class="clockOut ? 'ring-status-idle' : (breakStart && !breakEnd ? 'ring-status-break' : (clockIn ? 'ring-status-working' : 'ring-status-idle'))">
+             :class="'ring-status-' + clockStatus + ' avatar-' + clockStatus">
             <template x-if="selectedAvatar">
                 <img :src="selectedAvatar" class="w-full h-full object-cover"/>
             </template>
@@ -279,7 +279,7 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
             <!-- Przerwa -->
             <div class="flex flex-col items-center gap-3">
                 <button @click="clockAction('break_start')"
-                        :disabled="!clockIn || !!breakStart || !!clockOut"
+                        :disabled="clockStatus !== 'working' || !!breakStart"
                         x-show="!breakStart"
                         class="clock-btn bg-warning text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
@@ -290,7 +290,7 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
                     Przerwa
                 </button>
                 <button @click="clockAction('break_end')"
-                        :disabled="!breakStart || !!breakEnd"
+                        :disabled="clockStatus !== 'break' || !!breakEnd"
                         x-show="breakStart"
                         class="clock-btn bg-info text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
@@ -356,6 +356,7 @@ function welcomeApp() {
         breakStart: null,
         breakEnd: null,
         clockDate: '',
+        clockStatus: 'idle',
         lastAction: '',
         currentTime: '',
         currentDate: '',
@@ -428,12 +429,13 @@ function welcomeApp() {
 
             if (r.ok) {
                 const data = await r.json();
-                this.clockIn    = data.clock_in;
-                this.clockOut   = data.clock_out;
-                this.breakStart = data.break_start;
-                this.breakEnd   = data.break_end;
-                this.clockDate  = data.date;
-                this.screen     = 'clock';
+                this.clockIn     = data.clock_in;
+                this.clockOut    = data.clock_out;
+                this.breakStart  = data.break_start;
+                this.breakEnd    = data.break_end;
+                this.clockDate   = data.date;
+                this.clockStatus = this.statuses[String(this.selectedUserId)] || 'idle';
+                this.screen      = 'clock';
             } else {
                 this.pinError = true;
                 setTimeout(() => { this.pin = ''; this.pinError = false; }, 1000);
@@ -461,6 +463,7 @@ function welcomeApp() {
                 setTimeout(() => this.lastAction = '', 3000);
                 // Natychmiastowe odświeżenie statusów po akcji
                 await this.fetchStatuses();
+                this.clockStatus = this.statuses[String(this.selectedUserId)] || 'idle';
             }
         },
 
@@ -473,6 +476,7 @@ function welcomeApp() {
             this.breakStart = null;
             this.breakEnd = null;
             this.lastAction = '';
+            this.clockStatus = 'idle';
             this.fetchStatuses();
         }
     }
