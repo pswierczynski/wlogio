@@ -11,7 +11,6 @@ następnie importuje dane z wlogio.txt od nowa.
 import sys
 import os
 
-# Upewnij się że jesteśmy w katalogu projektu
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 EMAIL = 'przemyslaw.swierczynski@apaka.com.pl'
@@ -19,9 +18,9 @@ WLOGIO_FILE = 'wlogio.txt'
 
 
 def main():
-    from app import create_app, db
-    from app.models import User, WorkEntry, MonthConfig, VacationBalance, HourlyRate
-    from app.calculator import get_working_days_in_billing_period
+    from wlogio_app import create_app, db
+    from wlogio_app.models import User, WorkEntry, MonthConfig, VacationBalance
+    from wlogio_app.calculator import get_working_days_in_billing_period
     from importer import parse_wlogio
     from decimal import Decimal
 
@@ -42,10 +41,8 @@ def main():
         we = WorkEntry.query.filter_by(user_id=user.id).delete()
         mc = MonthConfig.query.filter_by(user_id=user.id).delete()
         vb = VacationBalance.query.filter_by(user_id=user.id).delete()
-        hr = HourlyRate.query.filter_by(user_id=user.id).delete()
         db.session.commit()
-        print(f'[INFO] Usunięto: {we} wpisów, {mc} konfiguracji miesięcy, '
-              f'{vb} bilansów, {hr} stawek')
+        print(f'[INFO] Usunięto: {we} wpisów, {mc} konfiguracji miesięcy, {vb} bilansów')
 
         # --- Krok 3: Parsuj plik ---
         if not os.path.exists(WLOGIO_FILE):
@@ -54,11 +51,10 @@ def main():
 
         entries, summaries = parse_wlogio(WLOGIO_FILE)
 
-        # Filtruj puste wpisy (bez godzin / bez sensu)
+        # Filtruj nieprawidłowe wpisy
         valid_entries = []
         skipped = 0
         for e in entries:
-            # Pomiń wpisy z datą która generuje billing_year > aktualny rok + 1
             import datetime
             if e['billing_year'] > datetime.date.today().year + 1:
                 print(f'[WARN] Pomijam wpis z nieprawidłowym rokiem: '
@@ -110,21 +106,17 @@ def main():
         for data in valid_entries:
             all_periods.add((data['billing_year'], data['billing_month']))
 
-        # Dodaj okresy z podsumowań
         for (y, m) in summaries:
             all_periods.add((y, m))
 
         print(f'[INFO] Tworzę konfiguracje dla {len(all_periods)} okresów...')
 
-        # Posortuj chronologicznie żeby stawka dziedziczyła poprawnie
         sorted_periods = sorted(all_periods)
-
         prev_rate = Decimal('0')
 
         for (year, month) in sorted_periods:
             summary_data = summaries.get((year, month), {})
 
-            # Oblicz stawkę z podsumowania "Powinno być"
             rate = Decimal('0')
             if 'expected_hours' in summary_data and 'expected_salary' in summary_data:
                 eh = summary_data['expected_hours']
@@ -133,16 +125,13 @@ def main():
                     computed = round(es / eh, 2)
                     rate = Decimal(str(computed))
 
-            # Jeśli nie udało się wyliczyć — dziedzicz poprzednią
             if rate == 0 and prev_rate > 0:
                 rate = prev_rate
 
             prev_rate = rate if rate > 0 else prev_rate
 
-            # Expected hours z kalendarza (dni robocze pon-pt, 23→22)
             working_days = get_working_days_in_billing_period(year, month)
             expected_hours = working_days * 8
-
             bonus = Decimal(str(summary_data.get('bonus', 0)))
 
             config = MonthConfig(
@@ -155,11 +144,8 @@ def main():
             )
             db.session.add(config)
 
-        # --- Krok 6: Bilans urlopowy z nagłówka pliku ---
-        # Dane z wlogio.txt: "Dni urlopowych zostało: 18 (wykorzystane 8 z 26)"
+        # --- Krok 6: Bilans urlopowy ---
         import datetime
-        current_year = datetime.date.today().year
-
         balance_2026 = VacationBalance(
             user_id=user.id,
             year=2026,
