@@ -48,6 +48,9 @@ def compute_status(entry):
     - time_start + time_end, now >= time_end   → idle
     - working + break_start, brak break_end    → break bezterminowo (do odwołania)
     - working + break_start + break_end        → break tylko gdy now < break_end
+
+    Uwaga: warunek "przez północ" to ŚCIŚLE end < start (nie <=).
+    Równe godziny (np. break_start == break_end) oznaczają zerową przerwę → working.
     """
     if entry is None:
         return 'idle'
@@ -62,8 +65,8 @@ def compute_status(entry):
     if start_min is None:
         return 'idle'
 
-    # Obsługa pracy przez północ
-    if end_min is not None and end_min <= start_min:
+    # Obsługa pracy przez północ (ŚCIŚLE end < start)
+    if end_min is not None and end_min < start_min:
         end_min += 24 * 60
 
     # Przed przyjściem → idle
@@ -76,13 +79,17 @@ def compute_status(entry):
 
     # Jesteśmy w czasie pracy — sprawdź przerwę
     if bs_min is not None:
-        if be_min is not None and be_min <= bs_min:
+        # Obsługa przerwy przez północ (ŚCIŚLE be < bs)
+        if be_min is not None and be_min < bs_min:
             be_min += 24 * 60
 
+        # Równe godziny (break_start == break_end) = zerowa przerwa = working
         after_break_start = now >= bs_min
         before_break_end  = (be_min is None) or (now < be_min)
 
         if after_break_start and before_break_end:
+            # Jeśli be_min == bs_min (zerowa przerwa) — before_break_end = (now < bs_min) = False
+            # bo now >= bs_min → poprawnie nie wchodzimy w break
             return 'break'
 
     return 'working'
@@ -99,7 +106,7 @@ def get_today_entry(user_id):
         e = to_min(entry_yesterday.time_end)
         now = now_minutes()
         # Praca przez północ: start wieczorem, end rano (e < s)
-        if e is not None and e <= s and now < e:
+        if e is not None and e < s and now < e:
             return entry_yesterday
 
     return WorkEntry.query.filter_by(user_id=user_id, date=today).first()
