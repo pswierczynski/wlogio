@@ -18,42 +18,131 @@
                   x-data="{
                     entryType: '{% if entry %}{{ entry.entry_type }}{% else %}work{% endif %}',
                     calcResult: null,
-                    timeStart: '{% if entry and entry.time_start %}{{ entry.time_start.strftime('%H:%M') }}{% endif %}',
-                    timeEnd: '{% if entry and entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% endif %}',
+                    timeStart:  '{% if entry and entry.time_start %}{{ entry.time_start.strftime('%H:%M') }}{% endif %}',
+                    timeEnd:    '{% if entry and entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% endif %}',
                     breakStart: '{% if entry and entry.break_start %}{{ entry.break_start.strftime('%H:%M') }}{% endif %}',
-                    breakEnd: '{% if entry and entry.break_end %}{{ entry.break_end.strftime('%H:%M') }}{% endif %}',
+                    breakEnd:   '{% if entry and entry.break_end %}{{ entry.break_end.strftime('%H:%M') }}{% endif %}',
                     isRemote: {% if entry and entry.is_remote %}true{% else %}false{% endif %},
-                    breakError: null,
-                    calcHours() {
-                        if (!this.timeStart || !this.timeEnd) { this.calcResult = null; return; }
-                        const toMin = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
-                        let raw = toMin(this.timeEnd) - toMin(this.timeStart);
-                        if (raw < 0) raw += 24*60;
-                        let breakMin = 0;
-                        this.breakError = null;
-                        if (this.breakStart && this.breakEnd) {
-                            const bs = toMin(this.breakStart);
-                            let be = toMin(this.breakEnd);
-                            if (be < bs) be += 24*60;
-                            const ws = toMin(this.timeStart);
-                            let we = toMin(this.timeEnd);
-                            if (we < ws) we += 24*60;
-                            if (bs < ws || be > we) {
-                                this.breakError = 'Przerwa musi mieścić się w czasie pracy.';
-                            }
-                            breakMin = be - bs;
-                        } else if (this.breakStart || this.breakEnd) {
-                            if (!this.timeStart || !this.timeEnd) {
-                                this.breakError = 'Ustaw godziny pracy przed przerwą.';
+                    validationError: null,
+
+                    toMin(t) {
+                        if (!t) return null;
+                        const [h, m] = t.split(':').map(Number);
+                        return h * 60 + m;
+                    },
+
+                    validate() {
+                        const ts = this.toMin(this.timeStart);
+                        const te = this.toMin(this.timeEnd);
+                        const bs = this.toMin(this.breakStart);
+                        const be = this.toMin(this.breakEnd);
+
+                        // time_start wymagany
+                        if (ts === null) {
+                            this.validationError = 'Godzina przyjścia jest wymagana.';
+                            this.calcResult = null;
+                            return false;
+                        }
+
+                        // time_end opcjonalny — jeśli ustawiony musi być różny od time_start
+                        if (te !== null) {
+                            let teAdj = te <= ts ? te + 24 * 60 : te;
+                            if (teAdj === ts) {
+                                this.validationError = 'Godzina wyjścia musi być różna od godziny przyjścia.';
+                                this.calcResult = null;
+                                return false;
                             }
                         }
+
+                        // break_start opcjonalny — jeśli ustawiony musi być >= time_start
+                        if (bs !== null) {
+                            if (bs < ts) {
+                                this.validationError = 'Godzina rozpoczęcia przerwy musi być równa lub późniejsza niż godzina przyjścia.';
+                                this.calcResult = null;
+                                return false;
+                            }
+                            // jeśli time_end ustawiony: break_start < time_end
+                            if (te !== null) {
+                                let teAdj = te <= ts ? te + 24 * 60 : te;
+                                if (bs >= teAdj) {
+                                    this.validationError = 'Godzina rozpoczęcia przerwy musi być wcześniejsza niż godzina wyjścia.';
+                                    this.calcResult = null;
+                                    return false;
+                                }
+                            }
+                        }
+
+                        // break_end wymaga break_start
+                        if (be !== null) {
+                            if (bs === null) {
+                                this.validationError = 'Aby ustawić koniec przerwy, najpierw ustaw godzinę rozpoczęcia przerwy.';
+                                this.calcResult = null;
+                                return false;
+                            }
+                            let beAdj = be <= bs ? be + 24 * 60 : be;
+                            if (beAdj === bs) {
+                                this.validationError = 'Godzina końca przerwy musi być różna od godziny rozpoczęcia przerwy.';
+                                this.calcResult = null;
+                                return false;
+                            }
+                            // break_end <= time_end jeśli time_end ustawiony
+                            if (te !== null) {
+                                let tsMin = ts;
+                                let teAdj = te <= tsMin ? te + 24 * 60 : te;
+                                if (beAdj > teAdj) {
+                                    this.validationError = 'Godzina końca przerwy nie może być późniejsza niż godzina wyjścia.';
+                                    this.calcResult = null;
+                                    return false;
+                                }
+                            }
+                        }
+
+                        this.validationError = null;
+                        return true;
+                    },
+
+                    calcHours() {
+                        if (!this.validate()) return;
+
+                        const ts = this.toMin(this.timeStart);
+                        const te = this.toMin(this.timeEnd);
+                        const bs = this.toMin(this.breakStart);
+                        const be = this.toMin(this.breakEnd);
+
+                        // Podgląd tylko gdy mamy kompletny czas pracy
+                        if (ts === null || te === null) {
+                            this.calcResult = null;
+                            return;
+                        }
+
+                        let teAdj = te <= ts ? te + 24 * 60 : te;
+                        let raw = teAdj - ts;
+
+                        let breakMin = 0;
+                        if (bs !== null && be !== null) {
+                            let beAdj = be <= bs ? be + 24 * 60 : be;
+                            breakMin = beAdj - bs;
+                        }
+
                         const extra = Math.max(0, breakMin - 15);
                         const net = raw - extra;
                         const hours = net / 60;
                         const rounded = Math.round(hours * 4) / 4;
-                        this.calcResult = { hours: hours.toFixed(2), rounded: rounded.toFixed(2), extra };
+                        this.calcResult = {
+                            hours: hours.toFixed(2),
+                            rounded: rounded.toFixed(2),
+                            extra
+                        };
+                    },
+
+                    submitForm(event) {
+                        if (this.entryType !== 'work') return;
+                        if (!this.validate()) {
+                            event.preventDefault();
+                        }
                     }
-                  }">
+                  }"
+                  @submit="submitForm($event)">
 
                 <!-- Data -->
                 {% if not entry %}
@@ -84,17 +173,35 @@
 
                 <!-- Godziny pracy (tylko work) -->
                 <div x-show="entryType === 'work'" x-cloak class="flex flex-col gap-4">
+
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-control">
-                            <label class="label"><span class="label-text font-medium">Przyjście</span></label>
+                            <label class="label">
+                                <span class="label-text font-medium">Przyjście</span>
+                                <span class="label-text-alt text-error">wymagane</span>
+                            </label>
                             <input type="time" name="time_start" x-model="timeStart"
                                    @change="calcHours()" class="input input-bordered w-full"/>
                         </div>
                         <div class="form-control">
-                            <label class="label"><span class="label-text font-medium">Wyjście</span></label>
+                            <label class="label">
+                                <span class="label-text font-medium">Wyjście</span>
+                                <span class="label-text-alt text-base-content/40">opcjonalne</span>
+                            </label>
                             <input type="time" name="time_end" x-model="timeEnd"
                                    @change="calcHours()" class="input input-bordered w-full"/>
                         </div>
+                    </div>
+
+                    <!-- Info: brak wyjścia -->
+                    <div x-show="timeStart && !timeEnd" x-cloak
+                         class="alert py-2 text-sm bg-base-200 border-base-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-base-content/50" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-base-content/60">Praca trwa do odwołania — uzupełnij wyjście gdy skończysz.</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -116,12 +223,28 @@
                         </div>
                     </div>
 
-                    <!-- Błąd przerwy -->
-                    <div x-show="breakError" x-cloak class="alert alert-error py-2 text-sm">
-                        <span x-text="breakError"></span>
+                    <!-- Info: brak końca przerwy -->
+                    <div x-show="breakStart && !breakEnd" x-cloak
+                         class="alert py-2 text-sm bg-base-200 border-base-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-base-content/50" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-base-content/60">Przerwa trwa do odwołania — uzupełnij koniec przerwy gdy wrócisz.</span>
                     </div>
 
-                    <!-- Podgląd -->
+                    <!-- Błąd walidacji -->
+                    <div x-show="validationError" x-cloak class="alert alert-error py-2 text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span x-text="validationError"></span>
+                    </div>
+
+                    <!-- Podgląd godzin (tylko gdy mamy pełny czas pracy) -->
                     <div x-show="calcResult" x-cloak class="alert alert-info py-3">
                         <div class="text-sm flex flex-wrap gap-2">
                             <span>Godziny: <strong x-text="calcResult?.hours"></strong>h</span>
@@ -133,7 +256,7 @@
                         </div>
                     </div>
 
-                    <!-- Praca zdalna - bez PZ-KRK i nr wyjazdu -->
+                    <!-- Praca zdalna -->
                     <div class="flex items-center gap-3">
                         <input type="checkbox" name="is_remote" class="checkbox checkbox-accent"
                                x-model="isRemote"
@@ -147,7 +270,7 @@
                     </div>
                 </div>
 
-                <!-- Numer urlopu - tylko informacyjny, nie edytowalny -->
+                <!-- Numer urlopu -->
                 <div x-show="entryType === 'vacation' || entryType === 'on_demand'" x-cloak>
                     <div class="alert alert-info py-3">
                         <div class="text-sm">
@@ -175,11 +298,12 @@
                     </label>
                     <textarea name="notes" rows="2"
                               class="textarea textarea-bordered w-full resize-none"
-                              placeholder="Dodatkowe informacje...">{{ entry.notes or '' }}</textarea>
+                              placeholder="Dodatkowe informacje...">{{ entry.notes if entry and entry.notes else '' }}</textarea>
                 </div>
 
                 <div class="flex gap-3 pt-2">
-                    <button type="submit" class="btn btn-primary flex-1">
+                    <button type="submit" class="btn btn-primary flex-1"
+                            :class="entryType === 'work' && validationError ? 'btn-disabled' : ''">
                         {% if entry %}Zapisz zmiany{% else %}Dodaj dzień{% endif %}
                     </button>
                     <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost">Anuluj</a>

@@ -94,21 +94,22 @@ def add():
         )
 
         if entry_type == 'work':
-            _fill_work_entry(entry, request.form)
+            ok, msg = _fill_work_entry(entry, request.form)
+            if not ok:
+                flash(msg, 'error')
+                return redirect(url_for('entries.add'))
             entry.is_remote = request.form.get('is_remote') == 'on'
             if entry.is_remote:
                 entry.remote_trip_number = get_next_remote_number(
                     current_user.id, entry_date.year, db.session
                 )
         elif entry_type == 'unpaid':
-            # Urlop bezpłatny = 0h
             entry.hours_worked = Decimal('0')
             entry.hours_billed = Decimal('0')
         else:
             entry.hours_worked = Decimal('8')
             entry.hours_billed = Decimal('8')
 
-        # Numer urlopu - automatyczny
         if entry_type in ('vacation', 'on_demand'):
             entry.vacation_day_number = get_next_vacation_number(
                 current_user.id, entry_date.year, db.session
@@ -122,7 +123,6 @@ def add():
         flash(f'Dodano wpis dla {entry_date.strftime("%d.%m.%Y")}.', 'success')
         return redirect(url_for('dashboard.index'))
 
-    # Podpowiedź numeru urlopu i pracy zdalnej
     next_vacation = get_next_vacation_number(current_user.id, today.year, db.session)
     next_remote = get_next_remote_number(current_user.id, today.year, db.session)
 
@@ -146,7 +146,10 @@ def edit(entry_id):
         entry.entry_type = entry_type
 
         if entry_type == 'work':
-            _fill_work_entry(entry, request.form)
+            ok, msg = _fill_work_entry(entry, request.form)
+            if not ok:
+                flash(msg, 'error')
+                return redirect(url_for('entries.edit', entry_id=entry_id))
             entry.is_remote = request.form.get('is_remote') == 'on'
         elif entry_type == 'unpaid':
             entry.time_start = None
@@ -197,50 +200,106 @@ def delete(entry_id):
 
 
 def _fill_work_entry(entry, form):
-    time_start_str = form.get('time_start', '')
-    time_end_str = form.get('time_end', '')
+    """
+    Wypełnia pola czasowe wpisu z danych formularza.
 
-    try:
-        entry.time_start = datetime.strptime(time_start_str, '%H:%M').time()
-        entry.time_end = datetime.strptime(time_end_str, '%H:%M').time()
-    except ValueError:
-        flash('Podaj poprawne godziny pracy.', 'error')
-        return
+    Reguły walidacji:
+    - time_start jest wymagany
+    - time_end jest opcjonalny (brak = praca do odwołania)
+    - jeśli oba ustawione: time_end musi być różny od time_start
+    - break_start jest opcjonalny, ale wymaga time_start
+    - break_start musi być >= time_start
+    - break_end jest opcjonalny (brak = przerwa do odwołania), ale wymaga break_start
+    - jeśli break_start i break_end oba ustawione: break_end > break_start
+    - jeśli time_end ustawiony: break_start < time_end
+    - jeśli time_end i break_end oba ustawione: break_end <= time_end
 
-    break_start_str = form.get('break_start', '')
-    break_end_str = form.get('break_end', '')
+    Zwraca (True, None) gdy OK, (False, komunikat) gdy błąd.
+    """
 
-    if break_start_str and break_end_str:
+    def parse_time(val):
+        """Parsuje 'HH:MM' → datetime.time lub None."""
+        if not val or not val.strip():
+            return None
         try:
-            bs = datetime.strptime(break_start_str, '%H:%M').time()
-            be = datetime.strptime(break_end_str, '%H:%M').time()
-            # Walidacja: przerwa musi mieścić się między godziną pracy
-            ts_min = entry.time_start.hour * 60 + entry.time_start.minute
-            te_min = entry.time_end.hour * 60 + entry.time_end.minute
-            if te_min <= ts_min:
-                te_min += 24 * 60
-            bs_min = bs.hour * 60 + bs.minute
-            be_min = be.hour * 60 + be.minute
-            if be_min <= bs_min:
-                be_min += 24 * 60
-            if bs_min < ts_min or be_min > te_min:
-                flash("Godziny przerwy muszą mieścić się w czasie pracy.", "error")
-                entry.break_start = None
-                entry.break_end = None
-            else:
-                entry.break_start = bs
-                entry.break_end = be
+            return datetime.strptime(val.strip(), '%H:%M').time()
         except ValueError:
-            entry.break_start = None
-            entry.break_end = None
-    else:
-        entry.break_start = None
-        entry.break_end = None
+            return None
 
-    calc = calculate_hours(
-        entry.time_start, entry.time_end,
-        entry.break_start, entry.break_end,
-    )
-    entry.extra_break_minutes = calc['extra_break_minutes']
-    entry.hours_worked = Decimal(str(calc['hours_worked']))
-    entry.hours_billed = Decimal(str(calc['hours_billed']))
+    def to_min(t):
+        if t is None:
+            return None
+        return t.hour * 60 + t.minute
+
+    time_start = parse_time(form.get('time_start', ''))
+    time_end   = parse_time(form.get('time_end', ''))
+    break_start = parse_time(form.get('break_start', ''))
+    break_end   = parse_time(form.get('break_end', ''))
+
+    # --- Walidacja time_start ---
+    if time_start is None:
+        return False, 'Godzina przyjścia jest wymagana.'
+
+    # --- Walidacja time_end (opcjonalny) ---
+    if time_end is not None:
+        ts = to_min(time_start)
+        te = to_min(time_end)
+        # Obsługa pracy przez północ
+        if te <= ts:
+            te += 24 * 60
+        if te == ts:
+            return False, 'Godzina wyjścia musi być różna od godziny przyjścia.'
+
+    # --- Walidacja break_start (opcjonalny) ---
+    if break_start is not None:
+        ts = to_min(time_start)
+        bs = to_min(break_start)
+        # break_start musi być >= time_start
+        if bs < ts:
+            return False, 'Godzina rozpoczęcia przerwy musi być równa lub późniejsza niż godzina przyjścia.'
+        # jeśli time_end ustawiony: break_start < time_end
+        if time_end is not None:
+            te = to_min(time_end)
+            if te <= ts:
+                te += 24 * 60
+            if bs >= te:
+                return False, 'Godzina rozpoczęcia przerwy musi być wcześniejsza niż godzina wyjścia.'
+
+    # --- Walidacja break_end (wymaga break_start) ---
+    if break_end is not None:
+        if break_start is None:
+            return False, 'Aby ustawić koniec przerwy, najpierw ustaw godzinę rozpoczęcia przerwy.'
+        bs = to_min(break_start)
+        be = to_min(break_end)
+        if be <= bs:
+            be += 24 * 60
+        if be == bs:
+            return False, 'Godzina końca przerwy musi być różna od godziny rozpoczęcia przerwy.'
+        # jeśli time_end ustawiony: break_end <= time_end
+        if time_end is not None:
+            ts = to_min(time_start)
+            te = to_min(time_end)
+            if te <= ts:
+                te += 24 * 60
+            if be > te:
+                return False, 'Godzina końca przerwy nie może być późniejsza niż godzina wyjścia.'
+
+    # --- Zapis ---
+    entry.time_start  = time_start
+    entry.time_end    = time_end
+    entry.break_start = break_start
+    entry.break_end   = break_end
+
+    # Oblicz godziny tylko jeśli mamy kompletny czas pracy
+    if time_start and time_end:
+        calc = calculate_hours(time_start, time_end, break_start, break_end)
+        entry.extra_break_minutes = calc['extra_break_minutes']
+        entry.hours_worked = Decimal(str(calc['hours_worked']))
+        entry.hours_billed = Decimal(str(calc['hours_billed']))
+    else:
+        # Brak time_end — godziny nieznane do momentu wyjścia
+        entry.extra_break_minutes = 0
+        entry.hours_worked = Decimal('0')
+        entry.hours_billed = Decimal('0')
+
+    return True, None
