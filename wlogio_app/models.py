@@ -23,8 +23,6 @@ class User(UserMixin, db.Model):
                                     cascade='all, delete-orphan')
     vacation_balances = db.relationship('VacationBalance', backref='user', lazy='dynamic',
                                         cascade='all, delete-orphan')
-    hourly_rates = db.relationship('HourlyRate', backref='user', lazy='dynamic',
-                                   cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
@@ -99,18 +97,6 @@ class MonthConfig(db.Model):
         db.UniqueConstraint('user_id', 'billing_year', 'billing_month',
                             name='uq_user_billing_period'),
     )
-
-
-class HourlyRate(db.Model):
-    __tablename__ = 'hourly_rates'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    rate = db.Column(db.Numeric(8, 2), nullable=False)
-    valid_from = db.Column(db.Date, nullable=False)
-    valid_to = db.Column(db.Date, nullable=True)
-    notes = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class VacationBalance(db.Model):
