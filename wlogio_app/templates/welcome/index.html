@@ -177,7 +177,10 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
     <div x-show="screen === 'pin'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
 
-        <div class="rounded-full overflow-hidden w-20 h-20 mb-6 ring-status-idle">
+        <!-- Avatar z dynamicznym statusem -->
+        <div class="rounded-full overflow-hidden w-20 h-20 mb-6"
+             :class="'ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
+             style="border-radius: 50%;">
             <template x-if="selectedAvatar">
                 <img :src="selectedAvatar" class="w-full h-full object-cover"/>
             </template>
@@ -230,7 +233,8 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
          class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
 
         <div class="rounded-full overflow-hidden w-16 h-16 mb-4"
-             :class="'ring-status-' + clockStatus + ' avatar-' + clockStatus">
+             :class="'ring-status-' + clockStatus + ' avatar-' + clockStatus"
+             style="border-radius: 50%;">
             <template x-if="selectedAvatar">
                 <img :src="selectedAvatar" class="w-full h-full object-cover"/>
             </template>
@@ -271,8 +275,8 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
                     Wyjście
                 </button>
                 <div class="text-sm font-medium text-center leading-relaxed">
-                    <span x-show="clockIn" x-text="'Przyjście: ' + clockIn" class="text-success block"></span>
-                    <span x-show="clockOut" x-text="'Wyjście: ' + clockOut" class="text-error block"></span>
+                    <span x-show="clockIn"  x-text="'Przyjście: ' + clockIn"  class="text-success block"></span>
+                    <span x-show="clockOut" x-text="'Wyjście: '  + clockOut" class="text-error block"></span>
                 </div>
             </div>
 
@@ -304,7 +308,7 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
                 </button>
                 <div class="text-sm font-medium text-center text-warning leading-relaxed">
                     <span x-show="breakStart" x-text="'Przerwa od: ' + breakStart" class="block"></span>
-                    <span x-show="breakEnd" x-text="'do: ' + breakEnd" class="block"></span>
+                    <span x-show="breakEnd"   x-text="'do: ' + breakEnd"           class="block"></span>
                 </div>
             </div>
 
@@ -325,7 +329,6 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
 </div>
 
 <script>
-// Globalna funkcja wywoływana z Alpine przez x-init
 window._welcomeSelectUser = null;
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -362,11 +365,9 @@ function welcomeApp() {
         currentDate: '',
 
         init() {
-            // Udostępnij selectUser globalnie dla event listenerów spoza Alpine
             window._welcomeSelectUser = (uid, name, avatar) => this.selectUser(uid, name, avatar);
             this.updateClock();
             setInterval(() => this.updateClock(), 1000);
-            // Polling statusów co 10 sekund
             setInterval(() => this.fetchStatuses(), 10000);
         },
 
@@ -391,6 +392,10 @@ function welcomeApp() {
                                 .replace(/avatar-\w+/g, 'avatar-' + status);
                         }
                     });
+                    // Jeśli jesteśmy na ekranie clock — odśwież clockStatus
+                    if (this.screen === 'clock' && this.selectedUserId) {
+                        this.clockStatus = data[String(this.selectedUserId)] || 'idle';
+                    }
                 }
             } catch (e) { /* ignoruj błędy sieciowe */ }
         },
@@ -403,16 +408,16 @@ function welcomeApp() {
 
         selectUser(userId, name, avatar) {
             this.selectedUserId = userId;
-            this.selectedName = name;
+            this.selectedName   = name;
             this.selectedAvatar = avatar;
-            this.pin = '';
-            this.pinError = false;
-            this.screen = 'pin';
+            this.pin            = '';
+            this.pinError       = false;
+            this.screen         = 'pin';
         },
 
         pressKey(key) {
             if (key === '⌫') {
-                this.pin = this.pin.slice(0, -1);
+                this.pin      = this.pin.slice(0, -1);
                 this.pinError = false;
             } else if (key && this.pin.length < 4) {
                 this.pin += key;
@@ -428,13 +433,16 @@ function welcomeApp() {
             });
 
             if (r.ok) {
-                const data = await r.json();
+                const data    = await r.json();
                 this.clockIn     = data.clock_in;
                 this.clockOut    = data.clock_out;
                 this.breakStart  = data.break_start;
                 this.breakEnd    = data.break_end;
                 this.clockDate   = data.date;
-                this.clockStatus = this.statuses[String(this.selectedUserId)] || 'idle';
+                // Status bezpośrednio z serwera — pewny i aktualny
+                this.clockStatus = data.status || 'idle';
+                // Zaktualizuj też lokalny słownik statusów
+                this.statuses[String(this.selectedUserId)] = this.clockStatus;
                 this.screen      = 'clock';
             } else {
                 this.pinError = true;
@@ -448,8 +456,8 @@ function welcomeApp() {
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     user_id: this.selectedUserId,
-                    pin: this.pin,
-                    action: action
+                    pin:     this.pin,
+                    action:  action
                 })
             });
 
@@ -460,23 +468,25 @@ function welcomeApp() {
                 this.breakStart = data.break_start;
                 this.breakEnd   = data.break_end;
                 this.lastAction = data.label;
+                // Status bezpośrednio z serwera — bez opóźnienia pollingu
+                this.clockStatus = data.status || 'idle';
+                this.statuses[String(this.selectedUserId)] = this.clockStatus;
                 setTimeout(() => this.lastAction = '', 3000);
-                // Natychmiastowe odświeżenie statusów po akcji
-                await this.fetchStatuses();
-                this.clockStatus = this.statuses[String(this.selectedUserId)] || 'idle';
+                // Odśwież wszystkie statusy w tle
+                this.fetchStatuses();
             }
         },
 
         logout() {
-            this.screen = 'avatars';
+            this.screen         = 'avatars';
             this.selectedUserId = null;
-            this.pin = '';
-            this.clockIn = null;
-            this.clockOut = null;
-            this.breakStart = null;
-            this.breakEnd = null;
-            this.lastAction = '';
-            this.clockStatus = 'idle';
+            this.pin            = '';
+            this.clockIn        = null;
+            this.clockOut       = null;
+            this.breakStart     = null;
+            this.breakEnd       = null;
+            this.lastAction     = '';
+            this.clockStatus    = 'idle';
             this.fetchStatuses();
         }
     }
