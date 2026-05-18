@@ -7,7 +7,7 @@
 
     <div class="flex flex-col gap-6">
 
-        <!-- Bilans urlopowy - jeden, bez roku -->
+        <!-- Bilans urlopowy -->
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body p-4 sm:p-6">
                 <div class="flex items-center justify-between mb-4">
@@ -32,54 +32,115 @@
             </div>
         </div>
 
-        <!-- Konfiguracje miesięcy -->
+        <!-- Konfiguracje miesięcy pogrupowane po latach -->
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body p-4 sm:p-6">
                 <h2 class="card-title text-base mb-4">Konfiguracje miesięcy</h2>
 
                 {% if configs %}
-                <div class="overflow-x-auto">
-                    <table class="table w-full">
-                        <thead>
-                            <tr class="text-xs text-base-content/50 bg-base-200/50">
-                                <th class="min-w-[140px]">Miesiąc</th>
-                                <th class="min-w-[100px] text-right">Stawka</th>
-                                <th class="min-w-[110px] text-right">Wymagane</th>
-                                <th class="min-w-[100px] text-right">Premia</th>
-                                <th class="min-w-[80px]"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for config in configs %}
-                            <tr class="hover">
-                                <td class="font-medium whitespace-nowrap">
-                                    {{ MONTH_NAMES.get(config.billing_month) }} {{ config.billing_year }}
-                                </td>
-                                <td class="text-right whitespace-nowrap">
-                                    {{ config.hourly_rate }} zł/h
-                                </td>
-                                <td class="text-right whitespace-nowrap">
-                                    {{ config.expected_hours or '—' }}{% if config.expected_hours %}h{% endif %}
-                                </td>
-                                <td class="text-right whitespace-nowrap">
-                                    {% if config.bonus and config.bonus > 0 %}
-                                    <span class="text-success font-medium">+{{ config.bonus }} zł</span>
-                                    {% else %}—{% endif %}
-                                </td>
-                                <td class="whitespace-nowrap">
-                                    <a href="{{ url_for('settings.month_config', year=config.billing_year, month=config.billing_month) }}"
-                                       class="btn btn-ghost btn-xs">Edytuj</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+
+                {# Grupowanie configs po latach — configs posortowane malejąco wg roku i miesiąca #}
+                {% set ns = namespace(current_y=None, year_groups=[]) %}
+                {% for config in configs %}
+                    {% if config.billing_year != ns.current_y %}
+                        {% set ns.current_y = config.billing_year %}
+                        {% set _ = ns.year_groups.append({'year': config.billing_year, 'configs': []}) %}
+                    {% endif %}
+                    {% set _ = ns.year_groups[-1]['configs'].append(config) %}
+                {% endfor %}
+
+                {# Aktualny rok rozliczeniowy do domyślnego rozwinięcia #}
+                {% set current_cfg_year = ns.year_groups[0]['year'] if ns.year_groups else 0 %}
+
+                <div class="flex flex-col gap-2"
+                     x-data="{ openYear: {{ current_cfg_year }} }">
+
+                    {% for group in ns.year_groups %}
+                    {% set year = group.year %}
+
+                    <div class="border border-base-200 rounded-xl overflow-hidden">
+
+                        <!-- Nagłówek roku -->
+                        <div class="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-base-50 transition-colors select-none bg-base-100"
+                             @click="openYear = openYear === {{ year }} ? null : {{ year }}">
+
+                            <div class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     class="h-4 w-4 text-base-content/40 transition-transform duration-200 shrink-0"
+                                     :class="openYear === {{ year }} ? 'rotate-90' : ''"
+                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                                <span class="font-bold text-base">{{ year }}</span>
+                                {% if year == current_cfg_year %}
+                                <span class="badge badge-primary badge-xs">aktualny</span>
+                                {% endif %}
+                            </div>
+
+                            <span class="text-xs text-base-content/40">
+                                {{ group.configs | length }}
+                                {% if group.configs | length == 1 %}miesiąc{% elif group.configs | length < 5 %}miesiące{% else %}miesięcy{% endif %}
+                            </span>
+                        </div>
+
+                        <!-- Tabela miesięcy -->
+                        <div x-show="openYear === {{ year }}"
+                             x-cloak
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0"
+                             x-transition:enter-end="opacity-100">
+
+                            <div class="border-t border-base-200 overflow-x-auto">
+                                <table class="table w-full">
+                                    <thead>
+                                        <tr class="text-xs text-base-content/50 bg-base-200/50">
+                                            <th class="min-w-[140px]">Miesiąc</th>
+                                            <th class="min-w-[100px] text-right">Stawka</th>
+                                            <th class="min-w-[110px] text-right">Wymagane</th>
+                                            <th class="min-w-[100px] text-right">Premia</th>
+                                            <th class="min-w-[80px]"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for config in group.configs %}
+                                        <tr class="hover">
+                                            <td class="font-medium whitespace-nowrap">
+                                                {{ MONTH_NAMES.get(config.billing_month) }}
+                                            </td>
+                                            <td class="text-right whitespace-nowrap">
+                                                {{ config.hourly_rate }} zł/h
+                                            </td>
+                                            <td class="text-right whitespace-nowrap">
+                                                {{ config.expected_hours or '—' }}{% if config.expected_hours %}h{% endif %}
+                                            </td>
+                                            <td class="text-right whitespace-nowrap">
+                                                {% if config.bonus and config.bonus > 0 %}
+                                                <span class="text-success font-medium">+{{ config.bonus }} zł</span>
+                                                {% else %}—{% endif %}
+                                            </td>
+                                            <td class="whitespace-nowrap">
+                                                <a href="{{ url_for('settings.month_config', year=config.billing_year, month=config.billing_month) }}"
+                                                   class="btn btn-ghost btn-xs">Edytuj</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {% endfor %}
+
                 </div>
+
                 {% else %}
                 <p class="text-base-content/40 text-sm text-center py-4">
                     Brak konfiguracji. Dodaj pierwszy wpis aby automatycznie je utworzyć.
                 </p>
                 {% endif %}
+
             </div>
         </div>
 
