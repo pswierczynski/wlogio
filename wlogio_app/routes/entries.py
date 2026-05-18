@@ -379,8 +379,29 @@ def delete(entry_id):
         id=entry_id, user_id=current_user.id
     ).first_or_404()
 
-    date_str = entry.date.strftime('%d.%m.%Y')
+    date_str      = entry.date.strftime('%d.%m.%Y')
+    billing_year  = entry.billing_year
+    billing_month = entry.billing_month
+
     db.session.delete(entry)
+    db.session.flush()  # usuń wpis zanim sprawdzisz czy miesiąc pusty
+
+    # Jeśli w tym miesiącu nie ma już żadnych wpisów — usuń konfigurację miesiąca
+    remaining = WorkEntry.query.filter_by(
+        user_id=current_user.id,
+        billing_year=billing_year,
+        billing_month=billing_month,
+    ).count()
+
+    if remaining == 0:
+        config = MonthConfig.query.filter_by(
+            user_id=current_user.id,
+            billing_year=billing_year,
+            billing_month=billing_month,
+        ).first()
+        if config:
+            db.session.delete(config)
+
     db.session.commit()
 
     flash(f'Usunięto wpis dla {date_str}.', 'success')
