@@ -137,18 +137,18 @@
                                     {{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h
                                 </span>
                                 {% endif %}
-                                <span class="font-semibold text-primary text-xs sm:text-sm">
+                                <span class="font-semibold text-success text-xs sm:text-sm">
                                     {{ format_currency(month.summary.total_with_bonus) }}
                                 </span>
                             </div>
-                            <span class="sm:hidden font-semibold text-primary text-xs">
+                            <span class="sm:hidden font-semibold text-success text-xs">
                                 {{ format_currency(month.summary.total_with_bonus) }}
                             </span>
                             {% endif %}
 
                             <a href="{{ url_for('entries.add') }}"
                                @click.stop
-                               class="btn btn-ghost btn-xs text-primary shrink-0">+ Dodaj</a>
+                               class="btn btn-ghost btn-xs text-base-content shrink-0">+ Dodaj</a>
                         </div>
                     </div>
 
@@ -224,7 +224,7 @@
                                                 {{ "%.2f"|format(entry.hours_billed)|replace('.', ',') }}h
                                                 {% endif %}
                                             </td>
-                                            <td class="col-salary text-right text-primary font-medium text-sm whitespace-nowrap">
+                                            <td class="col-salary text-right text-success font-medium text-sm whitespace-nowrap">
                                                 {% if month.hourly_rate > 0 and entry.entry_type != 'unpaid' and entry.time_end %}
                                                     {{ format_currency(entry.hours_billed|float * month.hourly_rate) }}
                                                 {% else %}—{% endif %}
@@ -270,7 +270,7 @@
                                     </div>
                                     <div>
                                         <div class="text-xs text-base-content/50 mb-0.5">Wynagrodzenie</div>
-                                        <div class="font-bold text-primary text-sm">
+                                        <div class="font-bold text-success text-sm">
                                             {{ format_currency(month.summary.actual_salary) }}
                                             {% if month.summary.bonus > 0 %}
                                             <span class="block text-xs text-success font-medium">+ {{ format_currency(month.summary.bonus) }} premia</span>
