@@ -221,7 +221,7 @@
                                    @change="onEntryTypeChange()"
                                    {% if (entry and entry.entry_type == type_key) or (not entry and type_key == 'work') %}checked{% endif %}>
                             <span class="btn btn-sm whitespace-nowrap"
-                                  :class="entryType === '{{ type_key }}' ? 'btn-primary' : 'btn-outline btn-base-300'">
+                                  :class="entryType === '{{ type_key }}' ? 'btn-primary' : 'border border-base-300 bg-base-100 hover:bg-base-200 hover:border-base-300'">
                                 {{ type_label }}
                             </span>
                         </label>
@@ -262,7 +262,7 @@
 
                         <!-- Info o dostępnych urlopach -->
                         <div x-show="entryType === 'vacation'"
-                             class="alert py-2 text-sm bg-base-200 border-base-300 mt-2 mb-1">
+                             class="alert py-2 text-sm bg-base-200 border-base-300 mt-4 mb-3">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-base-content/50"
                                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -281,7 +281,7 @@
                         </div>
 
                         <!-- Błąd podglądu -->
-                        <div x-show="previewError" x-cloak class="alert alert-error py-2 text-sm mt-2 mb-1">
+                        <div x-show="previewError" x-cloak class="alert alert-error py-2 text-sm mt-4 mb-3">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none"
                                  viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -351,7 +351,7 @@
                 </div>
 
                 <!-- GODZINY PRACY (tylko work) -->
-                <div x-show="entryType === 'work'" x-cloak class="flex flex-col gap-4 mt-2">
+                <div x-show="entryType === 'work'" x-cloak class="flex flex-col gap-4 mt-6">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-control">
                             <label class="label">
@@ -371,7 +371,7 @@
                         </div>
                     </div>
                     <div x-show="timeStart && !timeEnd" x-cloak
-                         class="alert py-2 text-sm bg-base-200 border-base-300 mt-2 mb-1">
+                         class="alert py-2 text-sm bg-base-200 border-base-300 mt-4 mb-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-base-content/50"
                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -398,7 +398,7 @@
                         </div>
                     </div>
                     <div x-show="breakStart && !breakEnd" x-cloak
-                         class="alert py-2 text-sm bg-base-200 border-base-300 mt-2 mb-1">
+                         class="alert py-2 text-sm bg-base-200 border-base-300 mt-4 mb-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-base-content/50"
                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -406,7 +406,7 @@
                         </svg>
                         <span class="text-base-content/60">Przerwa trwa do odwołania — uzupełnij koniec przerwy gdy wrócisz.</span>
                     </div>
-                    <div x-show="validationError" x-cloak class="alert alert-error py-2 text-sm mt-2 mb-1">
+                    <div x-show="validationError" x-cloak class="alert alert-error py-2 text-sm mt-4 mb-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none"
                              viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -414,7 +414,7 @@
                         </svg>
                         <span x-text="validationError"></span>
                     </div>
-                    <div x-show="calcResult" x-cloak class="alert alert-info py-3 mt-2 mb-1">
+                    <div x-show="calcResult" x-cloak class="alert alert-info py-3 mt-4 mb-3">
                         <div class="text-sm flex flex-wrap gap-2">
                             <span>Godziny: <strong x-text="calcResult?.hours"></strong>h</span>
                             <span class="text-base-content/30">→</span>
@@ -439,7 +439,7 @@
 
                 <!-- INFO urlop / na żądanie -->
                 <div x-show="entryType === 'vacation' || entryType === 'on_demand'" x-cloak>
-                    <div class="alert alert-info py-3 mt-2 mb-1">
+                    <div class="alert alert-info py-3 mt-4 mb-3">
                         <div class="text-sm">
                             Numer dnia urlopowego: <strong>{{ next_vacation }}</strong>
                             <span class="text-xs text-base-content/60 ml-1">(obliczany automatycznie)</span>
@@ -449,7 +449,7 @@
 
                 <!-- INFO urlop bezpłatny — tylko dla pojedynczego dnia -->
                 <div x-show="entryType === 'unpaid' && rangeMode === 'single'" x-cloak>
-                    <div class="alert alert-warning py-3 mt-2 mb-1">
+                    <div class="alert alert-warning py-3 mt-4 mb-3">
                         <div class="text-sm">
                             Urlop bezpłatny — 0 przepracowanych godzin, nie odlicza się od puli urlopów.
                         </div>
