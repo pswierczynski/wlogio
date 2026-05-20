@@ -321,6 +321,28 @@ def add_range():
     return redirect(url_for('dashboard.index'))
 
 
+def renumber_vacations(user_id, year):
+    """
+    Przelicza numery dni urlopowych (vacation + on_demand) dla danego roku.
+
+    Pobiera wszystkie wpisy vacation/on_demand w roku posortowane rosnąco
+    po dacie i przypisuje im kolejne numery 1, 2, 3...
+    Wpisy które nie są urlopem otrzymują vacation_day_number = None.
+    """
+    vacation_entries = (
+        WorkEntry.query
+        .filter(
+            WorkEntry.user_id == user_id,
+            WorkEntry.entry_type.in_(['vacation', 'on_demand']),
+            db.extract('year', WorkEntry.date) == year,
+        )
+        .order_by(WorkEntry.date.asc())
+        .all()
+    )
+    for i, e in enumerate(vacation_entries, start=1):
+        e.vacation_day_number = i
+
+
 @entries_bp.route('/edit/<int:entry_id>', methods=['GET', 'POST'])
 @login_required
 def edit(entry_id):
@@ -329,7 +351,15 @@ def edit(entry_id):
     ).first_or_404()
 
     if request.method == 'POST':
+        old_type   = entry.entry_type
+        entry_year = entry.date.year
         entry_type = request.form.get('entry_type', 'work')
+
+        # Typy urlopowe (numery urlopów)
+        VACATION_TYPES = ('vacation', 'on_demand')
+        was_vacation = old_type in VACATION_TYPES
+        is_vacation  = entry_type in VACATION_TYPES
+
         entry.entry_type = entry_type
 
         if entry_type == 'work':
@@ -347,6 +377,7 @@ def edit(entry_id):
             entry.hours_worked = Decimal('0')
             entry.hours_billed = Decimal('0')
             entry.is_remote = False
+            entry.vacation_day_number = None
         else:
             entry.time_start = None
             entry.time_end = None
@@ -356,8 +387,18 @@ def edit(entry_id):
             entry.hours_worked = Decimal('8')
             entry.hours_billed = Decimal('8')
             entry.is_remote = False
+            if not is_vacation:
+                entry.vacation_day_number = None
 
         entry.notes = request.form.get('notes', '').strip() or None
+
+        # Renumeracja gdy zmienił się status urlopowy
+        # (urlop → nie-urlop, nie-urlop → urlop, vacation ↔ on_demand bez zmian)
+        needs_renumber = (was_vacation != is_vacation)
+        if needs_renumber:
+            db.session.flush()  # zapisz zmianę typu zanim przeliczysz
+            renumber_vacations(current_user.id, entry_year)
+
         db.session.commit()
 
         flash(f'Zaktualizowano wpis dla {entry.date.strftime("%d.%m.%Y")}.', 'success')
@@ -382,9 +423,11 @@ def delete(entry_id):
     date_str      = entry.date.strftime('%d.%m.%Y')
     billing_year  = entry.billing_year
     billing_month = entry.billing_month
+    entry_year    = entry.date.year
+    was_vacation  = entry.entry_type in ('vacation', 'on_demand')
 
     db.session.delete(entry)
-    db.session.flush()  # usuń wpis zanim sprawdzisz czy miesiąc pusty
+    db.session.flush()
 
     # Jeśli w tym miesiącu nie ma już żadnych wpisów — usuń konfigurację miesiąca
     remaining = WorkEntry.query.filter_by(
@@ -401,6 +444,10 @@ def delete(entry_id):
         ).first()
         if config:
             db.session.delete(config)
+
+    # Renumeruj urlopy w roku jeśli usunięty wpis był urlopem
+    if was_vacation:
+        renumber_vacations(current_user.id, entry_year)
 
     db.session.commit()
 
