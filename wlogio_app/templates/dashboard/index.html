@@ -50,7 +50,7 @@
 <div class="flex flex-col gap-2 sm:gap-3"
      x-data="{
          openYear: {{ current_year }},
-         openMonth: '{{ current_key[0] }}-{{ current_key[1] }}'
+         openMonth: null
      }">
 
     {% for group in ns.year_groups %}
@@ -115,7 +115,7 @@
                             </svg>
                             <span class="font-semibold text-sm sm:text-base">{{ month.month_name }}</span>
                             {% if month.is_current %}
-                            <span class="badge badge-primary badge-xs">aktualny</span>
+                            <span class="badge badge-primary badge-xs py-1 h-5">aktualny</span>
                             {% endif %}
                         </div>
 
@@ -129,11 +129,11 @@
                                     / {{ "%.0f"|format(month.summary.expected_hours) }}h
                                 </span>
                                 {% if month.summary.overtime_hours > 0 %}
-                                <span class="badge badge-success badge-sm">
+                                <span class="badge badge-success badge-sm py-1 h-6">
                                     +{{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h
                                 </span>
                                 {% elif month.summary.overtime_hours < 0 %}
-                                <span class="badge badge-error badge-sm">
+                                <span class="badge badge-error badge-sm py-1 h-6">
                                     {{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h
                                 </span>
                                 {% endif %}
@@ -186,17 +186,17 @@
                                             </td>
                                             <td class="col-type">
                                                 {% if entry.entry_type == 'work' %}
-                                                <span class="badge badge-ghost badge-sm whitespace-nowrap">Praca</span>
+                                                <span class="badge badge-ghost badge-sm whitespace-nowrap py-1 h-6">Praca</span>
                                                 {% elif entry.entry_type == 'vacation' %}
-                                                <span class="badge badge-info badge-sm whitespace-nowrap">Urlop {% if entry.vacation_day_number %}({{ entry.vacation_day_number }}){% endif %}</span>
+                                                <span class="badge badge-info badge-sm whitespace-nowrap py-1 h-6">Urlop {% if entry.vacation_day_number %}({{ entry.vacation_day_number }}){% endif %}</span>
                                                 {% elif entry.entry_type == 'on_demand' %}
-                                                <span class="badge badge-warning badge-sm whitespace-nowrap">Na żąd. {% if entry.vacation_day_number %}({{ entry.vacation_day_number }}){% endif %}</span>
+                                                <span class="badge badge-warning badge-sm whitespace-nowrap py-1 h-6">Na żąd. {% if entry.vacation_day_number %}({{ entry.vacation_day_number }}){% endif %}</span>
                                                 {% elif entry.entry_type == 'unpaid' %}
-                                                <span class="badge badge-neutral badge-sm whitespace-nowrap">Bezpłatny</span>
+                                                <span class="badge badge-neutral badge-sm whitespace-nowrap py-1 h-6">Bezpłatny</span>
                                                 {% elif entry.entry_type == 'holiday' %}
-                                                <span class="badge badge-success badge-sm whitespace-nowrap">Święto</span>
+                                                <span class="badge badge-success badge-sm whitespace-nowrap py-1 h-6">Święto</span>
                                                 {% elif entry.entry_type == 'sick_leave' %}
-                                                <span class="badge badge-error badge-sm whitespace-nowrap">Zwolnienie</span>
+                                                <span class="badge badge-error badge-sm whitespace-nowrap py-1 h-6">Zwolnienie</span>
                                                 {% endif %}
                                             </td>
                                             <td class="col-time text-base-content/70 text-sm whitespace-nowrap">
