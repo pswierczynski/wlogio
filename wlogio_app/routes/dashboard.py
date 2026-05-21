@@ -2,6 +2,7 @@ from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from collections import defaultdict
 from datetime import date
+from decimal import Decimal
 
 from wlogio_app import db
 from wlogio_app.models import WorkEntry, MonthConfig, VacationBalance
@@ -22,6 +23,21 @@ MONTH_NAMES = {
     5: 'Maj', 6: 'Czerwiec', 7: 'Lipiec', 8: 'Sierpień',
     9: 'Wrzesień', 10: 'Październik', 11: 'Listopad', 12: 'Grudzień'
 }
+
+
+def calculate_forecast(expected_hours, overtime_hours, hourly_rate, bonus):
+    """
+    Prognoza wynagrodzenia za miesiąc:
+    (dni robocze × 8h × stawka) + (nadgodziny × stawka) + premia
+    = (expected_hours + overtime_hours) × stawka + premia
+
+    Jeśli nadgodziny ujemne — odejmowane od prognozy.
+    """
+    rate = Decimal(str(hourly_rate))
+    exp  = Decimal(str(expected_hours))
+    ot   = Decimal(str(overtime_hours))
+    bon  = Decimal(str(bonus or 0))
+    return float((exp + ot) * rate + bon)
 
 
 @dashboard_bp.route('/')
@@ -64,12 +80,19 @@ def index():
         entries = periods[key]
         config = configs.get(key)
 
-        hourly_rate = float(config.hourly_rate) if config else 0.0
+        hourly_rate  = float(config.hourly_rate) if config else 0.0
         working_days = get_working_days_in_billing_period(year, month)
         expected_hours = working_days * 8
         bonus = float(config.bonus) if config and config.bonus else 0.0
 
         summary = calculate_month_summary(entries, hourly_rate, expected_hours, bonus)
+
+        forecast = calculate_forecast(
+            expected_hours,
+            summary['overtime_hours'],
+            hourly_rate,
+            bonus,
+        )
 
         months_data.append({
             'year': year,
@@ -81,6 +104,7 @@ def index():
             'summary': summary,
             'hourly_rate': hourly_rate,
             'working_days': working_days,
+            'forecast': forecast,
         })
 
     # Bilans urlopowy

@@ -248,7 +248,7 @@
 
                             <!-- Podsumowanie miesiąca -->
                             <div class="border-t border-base-200 bg-base-50 px-3 sm:px-5 py-3 sm:py-4">
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm">
+                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 text-sm">
                                     <div>
                                         <div class="text-xs text-base-content/50 mb-0.5">Przepracowane</div>
                                         <div class="font-semibold text-sm">
@@ -276,6 +276,12 @@
                                             <span class="block text-xs text-success font-medium">+ {{ format_currency(month.summary.bonus) }} premia</span>
                                             <span class="block text-xs font-semibold">= {{ format_currency(month.summary.total_with_bonus) }}</span>
                                             {% endif %}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-base-content/50 mb-0.5">Prognoza</div>
+                                        <div class="font-bold text-sm text-base-content/70">
+                                            {{ format_currency(month.forecast) }}
                                         </div>
                                     </div>
                                 </div>

@@ -24,8 +24,9 @@ def create_app(config_name='default'):
     migrate.init_app(app, db)
 
     login_manager.login_view = 'auth.login'
-    login_manager.login_message = 'Zaloguj się aby uzyskać dostęp.'
-    login_manager.login_message_category = 'warning'
+    # Wyłącz automatyczny flash "Zaloguj się aby uzyskać dostęp"
+    # — strona logowania nie potrzebuje tego komunikatu
+    login_manager.login_message = None
 
     @login_manager.user_loader
     def load_user(user_id):

@@ -17,15 +17,15 @@
         {% for category, message in messages %}
         <div x-data="{ show: true }" x-show="show" x-cloak
              x-init="setTimeout(() => show = false, 4000)"
-             class="alert {% if category == 'error' %}alert-error{% elif category == 'success' %}alert-success{% else %}alert-info{% endif %} shadow-lg">
-            <span class="text-sm">{{ message }}</span>
+             class="alert {% if category == 'error' %}alert-error{% elif category == 'success' %}alert-success{% else %}alert-info{% endif %} shadow-lg flex flex-row items-center gap-2 py-3 px-4">
+            <span class="text-sm flex-1">{{ message }}</span>
+            <button @click="show = false" class="btn btn-ghost btn-xs shrink-0 self-center">✕</button>
         </div>
         {% endfor %}
     </div>
     {% endif %}
     {% endwith %}
 
-    <!-- Alpine tylko dla modalu ekranu powitalnego -->
     <div x-data="{
             showModal: false,
             password: '',
@@ -51,7 +51,6 @@
          @keydown.window.escape="showModal = false"
          class="w-full flex flex-col items-center">
 
-        <!-- Karta logowania -->
         <div class="card bg-base-100 shadow-xl w-full max-w-md">
             <div class="card-body gap-6 p-6 sm:p-8">
 
@@ -67,7 +66,6 @@
                     <p class="text-base-content/60 text-sm">Rejestr czasu pracy</p>
                 </div>
 
-                <!-- Formularz logowania — czysty HTML, bez Alpine -->
                 <form method="POST" action="{{ url_for('auth.login') }}" class="flex flex-col gap-4">
                     <div class="form-control">
                         <label class="label"><span class="label-text font-medium">Adres email</span></label>
@@ -89,7 +87,6 @@
                 <div class="divider text-xs text-base-content/40">lub</div>
 
                 <div class="flex flex-col gap-3">
-                    <!-- Przycisk ekranu powitalnego - otwiera modal, NIE wysyła formularza -->
                     <button type="button"
                             @click="showModal = true"
                             class="btn btn-outline btn-neutral w-full gap-2">

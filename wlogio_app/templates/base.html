@@ -105,9 +105,9 @@
          x-transition:leave="transition ease-in duration-300"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="alert {% if category == 'error' %}alert-error{% elif category == 'success' %}alert-success{% elif category == 'warning' %}alert-warning{% else %}alert-info{% endif %} shadow-lg">
-        <span class="text-sm break-words">{{ message }}</span>
-        <button @click="show = false" class="btn btn-ghost btn-xs ml-auto">✕</button>
+         class="alert {% if category == 'error' %}alert-error{% elif category == 'success' %}alert-success{% elif category == 'warning' %}alert-warning{% else %}alert-info{% endif %} shadow-lg flex flex-row items-center gap-2 py-3 px-4">
+        <span class="text-sm break-words flex-1">{{ message }}</span>
+        <button @click="show = false" class="btn btn-ghost btn-xs shrink-0 self-center">✕</button>
     </div>
     {% endfor %}
 </div>
