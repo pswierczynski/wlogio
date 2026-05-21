@@ -171,7 +171,13 @@
                         const net = raw - extra;
                         const hours = net / 60;
                         const rounded = Math.round(hours * 4) / 4;
-                        this.calcResult = { hours: hours.toFixed(2), rounded: rounded.toFixed(2), extra };
+                        const hh = Math.floor(hours);
+                        const mm = Math.round((hours - hh) * 60);
+                        this.calcResult = {
+                            hours:   hh + 'h ' + String(mm).padStart(2, '0') + 'min',
+                            rounded: Number.isInteger(rounded) ? rounded + 'h' : rounded.toFixed(2).replace('.', ',') + 'h',
+                            extra
+                        };
                     },
 
                     submitForm(event) {
@@ -416,9 +422,9 @@
                     </div>
                     <div x-show="calcResult" x-cloak class="alert alert-info py-3 mt-4 mb-3 text-left">
                         <div class="text-sm flex flex-wrap gap-2">
-                            <span>Godziny: <strong x-text="calcResult?.hours"></strong>h</span>
+                            <span>Godziny: <strong x-text="calcResult?.hours"></strong></span>
                             <span class="text-base-content/30">→</span>
-                            <span>Zaokrąglone: <strong x-text="calcResult?.rounded"></strong>h</span>
+                            <span>Zaokrąglone: <strong x-text="calcResult?.rounded"></strong></span>
                             <span x-show="calcResult?.extra > 0" class="text-warning text-xs">
                                 (nadprogramowa przerwa: <span x-text="calcResult?.extra"></span> min)
                             </span>
