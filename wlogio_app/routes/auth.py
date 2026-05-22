@@ -18,14 +18,12 @@ def login():
         password = request.form.get('password', '')
         remember = request.form.get('remember') == 'on'
 
-        # Najpierw sprawdź czy to normalny użytkownik
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(password) and user.is_active:
             login_user(user, remember=remember)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('dashboard.index'))
 
-        # Dopiero potem sprawdź hasło ekranu powitalnego (bez emaila)
         if not email and password == WELCOME_PASSWORD:
             return redirect(url_for('welcome.index'))
 
@@ -86,5 +84,4 @@ def register():
 @login_required
 def logout():
     logout_user()
-    flash('Zostałeś wylogowany.', 'info')
     return redirect(url_for('auth.login'))
