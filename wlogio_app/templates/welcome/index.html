@@ -75,7 +75,18 @@
             75% { transform: translateX(8px); }
         }
 
-        .clock-btn {
+        @keyframes badgeToText {
+            0%   { background-color: oklch(var(--su)); color: oklch(var(--su)); border-radius: 999px; padding: 2px 10px; }
+            30%  { background-color: oklch(var(--su)); color: oklch(var(--suc, var(--bc))); border-radius: 999px; padding: 2px 10px; }
+            70%  { background-color: transparent; color: oklch(var(--su)); border-radius: 0; padding: 0; }
+            100% { background-color: transparent; color: oklch(var(--su)); border-radius: 0; padding: 0; }
+        }
+        .last-action-anim {
+            animation: badgeToText 2.5s ease forwards;
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
             width: 140px; height: 140px;
             border-radius: 50%;
             display: flex; flex-direction: column;
@@ -314,10 +325,12 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
 
         </div>
 
-        <div x-show="lastAction" x-cloak
-             class="alert alert-success mb-6 py-2 px-4 text-sm"
-             x-transition>
-            <span x-text="lastAction"></span>
+        <!-- Stały placeholder dla komunikatu akcji — nie przesuwa layoutu -->
+        <div class="h-6 flex items-center justify-center mb-4">
+            <span x-show="lastAction" x-cloak
+                  :key="lastActionKey"
+                  class="last-action-anim"
+                  x-text="lastAction"></span>
         </div>
 
         <button @click="logout()"
@@ -361,6 +374,7 @@ function welcomeApp() {
         clockDate: '',
         clockStatus: 'idle',
         lastAction: '',
+        lastActionKey: 0,
         currentTime: '',
         currentDate: '',
 
@@ -468,6 +482,7 @@ function welcomeApp() {
                 this.breakStart = data.break_start;
                 this.breakEnd   = data.break_end;
                 this.lastAction = data.label;
+                this.lastActionKey++;
                 // Status bezpośrednio z serwera — bez opóźnienia pollingu
                 this.clockStatus = data.status || 'idle';
                 this.statuses[String(this.selectedUserId)] = this.clockStatus;
@@ -486,6 +501,7 @@ function welcomeApp() {
             this.breakStart     = null;
             this.breakEnd       = null;
             this.lastAction     = '';
+            this.lastActionKey  = 0;
             this.clockStatus    = 'idle';
             this.fetchStatuses();
         }
