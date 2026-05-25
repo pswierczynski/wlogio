@@ -125,9 +125,58 @@ def index():
     return render_template('welcome/index.html', users=users, user_statuses=user_statuses)
 
 
+def auto_close_stale_entries():
+    """
+    Zamyka wpisy gdzie time_start ustawiony ale time_end brak
+    i od time_start minęło >= 24 godziny.
+    Przy okazji zamyka też aktywną przerwę.
+    """
+    from wlogio_app.calculator import calculate_hours
+
+    now_dt   = datetime.now(TIMEZONE)
+    now_time = now_dt.time()
+    cutoff   = now_dt - timedelta(hours=24)
+
+    # Szukamy wpisów z dziś lub wczoraj bez time_end
+    today     = now_dt.date()
+    yesterday = today - timedelta(days=1)
+
+    stale = WorkEntry.query.filter(
+        WorkEntry.time_start.isnot(None),
+        WorkEntry.time_end.is_(None),
+        WorkEntry.date.in_([today, yesterday]),
+    ).all()
+
+    changed = False
+    for entry in stale:
+        # Wyznacz datetime rozpoczęcia pracy
+        start_naive = datetime.combine(entry.date, entry.time_start)
+        start_aware = start_naive.replace(tzinfo=TIMEZONE)
+        if (now_dt - start_aware).total_seconds() >= 24 * 3600:
+            # Zamknij przerwę jeśli aktywna
+            if entry.break_start and not entry.break_end:
+                entry.break_end = now_time
+            entry.time_end = now_time
+            # Przelicz godziny
+            calc = calculate_hours(
+                entry.time_start, entry.time_end,
+                entry.break_start, entry.break_end,
+            )
+            entry.hours_worked        = Decimal(str(calc['hours_worked']))
+            entry.hours_billed        = Decimal(str(calc['hours_billed']))
+            entry.extra_break_minutes = calc['extra_break_minutes']
+            changed = True
+
+    if changed:
+        db.session.commit()
+
+
 @welcome_bp.route('/statuses')
 def statuses():
     """Polling endpoint — zwraca aktualne statusy wszystkich użytkowników."""
+    # Przy każdym pollingu sprawdź czy są wpisy do auto-zamknięcia
+    auto_close_stale_entries()
+
     today = datetime.now(TIMEZONE).date()
     users = User.query.filter(User.is_active == True).all()
     result = {}
