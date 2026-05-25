@@ -9,7 +9,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak]{display:none!important}</style>
 </head>
-<body class="bg-base-200 min-h-screen flex flex-col items-center justify-center p-4 overflow-hidden">
+<body class="bg-base-200 min-h-screen flex flex-col items-center justify-center py-4 px-4">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -52,21 +52,21 @@
          class="w-full flex flex-col items-center justify-center flex-1">
 
         <div class="card bg-base-100 shadow-xl w-full max-w-md">
-            <div class="card-body gap-6 p-6 sm:p-8">
+            <div class="card-body gap-4 p-4 sm:gap-6 sm:p-8">
 
                 <div class="text-center">
-                    <div class="flex items-center justify-center gap-2 mb-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none"
+                    <div class="flex items-center justify-center gap-2 mb-0.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 sm:h-8 sm:w-8 text-primary" fill="none"
                              viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        <span class="text-2xl font-bold tracking-tight">wlogio</span>
+                        <span class="text-xl sm:text-2xl font-bold tracking-tight">wlogio</span>
                     </div>
-                    <p class="text-base-content/60 text-sm">Rejestr czasu pracy</p>
+                    <p class="text-base-content/60 text-xs sm:text-sm">Rejestr czasu pracy</p>
                 </div>
 
-                <form method="POST" action="{{ url_for('auth.login') }}" class="flex flex-col gap-4">
+                <form method="POST" action="{{ url_for('auth.login') }}" class="flex flex-col gap-3 sm:gap-4">
                     <div class="form-control">
                         <label class="label"><span class="label-text font-medium">Adres email</span></label>
                         <input type="email" name="email" required autocomplete="email"
@@ -86,7 +86,7 @@
 
                 <div class="divider text-xs text-base-content/40">lub</div>
 
-                <div class="flex flex-col gap-3">
+                <div class="flex flex-col gap-2 sm:gap-3">
                     <button type="button"
                             @click="showModal = true"
                             class="btn btn-outline btn-neutral w-full gap-2">
