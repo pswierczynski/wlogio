@@ -105,50 +105,54 @@
                             this.calcResult = null;
                             return false;
                         }
+
+                        // time_end — przez północ dozwolone
+                        let teAdj = te;
                         if (te !== null) {
-                            let teAdj = te < ts ? te + 24 * 60 : te;
+                            teAdj = te < ts ? te + 24 * 60 : te;
                             if (teAdj === ts) {
                                 this.validationError = 'Godzina wyjścia musi być różna od godziny przyjścia.';
                                 this.calcResult = null;
                                 return false;
                             }
                         }
+
+                        // break_start — może być po północy (bs < ts → +24h)
+                        let bsAdj = bs;
                         if (bs !== null) {
-                            if (bs < ts) {
-                                this.validationError = 'Godzina rozpoczęcia przerwy musi być równa lub późniejsza niż godzina przyjścia.';
+                            bsAdj = bs < ts ? bs + 24 * 60 : bs;
+                            if (teAdj !== null && bsAdj >= teAdj) {
+                                this.validationError = 'Godzina rozpoczęcia przerwy musi być wcześniejsza niż godzina wyjścia.';
                                 this.calcResult = null;
                                 return false;
                             }
-                            if (te !== null) {
-                                let teAdj = te < ts ? te + 24 * 60 : te;
-                                if (bs >= teAdj) {
-                                    this.validationError = 'Godzina rozpoczęcia przerwy musi być wcześniejsza niż godzina wyjścia.';
-                                    this.calcResult = null;
-                                    return false;
-                                }
-                            }
                         }
+
+                        // break_end
                         if (be !== null) {
                             if (bs === null) {
                                 this.validationError = 'Aby ustawić koniec przerwy, najpierw ustaw godzinę rozpoczęcia przerwy.';
                                 this.calcResult = null;
                                 return false;
                             }
-                            let beAdj = be < bs ? be + 24 * 60 : be;
-                            if (beAdj === bs) {
+                            let beAdj = be;
+                            if (bsAdj !== null) {
+                                const bsRaw = bsAdj % (24 * 60);
+                                beAdj = (be <= bsRaw) ? be + 24 * 60 : be;
+                                if (bsAdj >= 24 * 60 && be < ts) beAdj = be + 24 * 60;
+                            }
+                            if (beAdj === bsAdj) {
                                 this.validationError = 'Godzina końca przerwy musi być różna od godziny rozpoczęcia przerwy.';
                                 this.calcResult = null;
                                 return false;
                             }
-                            if (te !== null) {
-                                let teAdj = te < ts ? te + 24 * 60 : te;
-                                if (beAdj > teAdj) {
-                                    this.validationError = 'Godzina końca przerwy nie może być późniejsza niż godzina wyjścia.';
-                                    this.calcResult = null;
-                                    return false;
-                                }
+                            if (teAdj !== null && beAdj > teAdj) {
+                                this.validationError = 'Godzina końca przerwy nie może być późniejsza niż godzina wyjścia.';
+                                this.calcResult = null;
+                                return false;
                             }
                         }
+
                         this.validationError = null;
                         return true;
                     },
@@ -164,8 +168,11 @@
                         let raw = teAdj - ts;
                         let breakMin = 0;
                         if (bs !== null && be !== null) {
-                            let beAdj = be < bs ? be + 24 * 60 : be;
-                            breakMin = beAdj - bs;
+                            let bsAdj = bs < ts ? bs + 24 * 60 : bs;
+                            const bsRaw = bsAdj % (24 * 60);
+                            let beAdj = (be <= bsRaw) ? be + 24 * 60 : be;
+                            if (bsAdj >= 24 * 60 && be < ts) beAdj = be + 24 * 60;
+                            breakMin = beAdj - bsAdj;
                         }
                         const extra = Math.max(0, breakMin - 15);
                         const net = raw - extra;

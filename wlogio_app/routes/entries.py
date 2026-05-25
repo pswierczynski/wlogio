@@ -459,6 +459,11 @@ def _fill_work_entry(entry, form):
     """
     Wypełnia pola czasowe wpisu z danych formularza.
     Zwraca (True, None) gdy OK, (False, komunikat) gdy błąd.
+
+    Obsługa pracy przez północ:
+    - Jeśli time_end < time_start → time_end traktowane jako następny dzień (+24h)
+    - Przerwa musi mieścić się w przedziale time_start..time_end (z uwzględnieniem północy)
+    - Jeśli break_start < time_start → break_start traktowane jako następny dzień (+24h)
     """
 
     def parse_time(val):
@@ -482,42 +487,49 @@ def _fill_work_entry(entry, form):
     if time_start is None:
         return False, 'Godzina przyjścia jest wymagana.'
 
+    ts = to_min(time_start)
+
+    # Wyznacz te (z uwzględnieniem przez północ)
     if time_end is not None:
-        ts = to_min(time_start)
         te = to_min(time_end)
         if te < ts:
-            te += 24 * 60
+            te += 24 * 60   # praca przez północ
         if te == ts:
             return False, 'Godzina wyjścia musi być różna od godziny przyjścia.'
+    else:
+        te = None
 
+    # Walidacja break_start
     if break_start is not None:
-        ts = to_min(time_start)
         bs = to_min(break_start)
+        # Przerwa po północy: jeśli bs < ts, zakładamy że bs jest następnego dnia
         if bs < ts:
-            return False, 'Godzina rozpoczęcia przerwy musi być równa lub późniejsza niż godzina przyjścia.'
-        if time_end is not None:
-            te = to_min(time_end)
-            if te < ts:
-                te += 24 * 60
-            if bs >= te:
-                return False, 'Godzina rozpoczęcia przerwy musi być wcześniejsza niż godzina wyjścia.'
+            bs += 24 * 60
+        # Przerwa musi być przed wyjściem (jeśli ustawione)
+        if te is not None and bs >= te:
+            return False, 'Godzina rozpoczęcia przerwy musi być wcześniejsza niż godzina wyjścia.'
+    else:
+        bs = None
 
+    # Walidacja break_end
     if break_end is not None:
         if break_start is None:
             return False, 'Aby ustawić koniec przerwy, najpierw ustaw godzinę rozpoczęcia przerwy.'
-        bs = to_min(break_start)
         be = to_min(break_end)
-        if be < bs:
-            be += 24 * 60
-        if be == bs:
-            return False, 'Godzina końca przerwy musi być różna od godziny rozpoczęcia przerwy.'
-        if time_end is not None:
-            ts = to_min(time_start)
-            te = to_min(time_end)
-            if te < ts:
-                te += 24 * 60
-            if be > te:
+        # Dostosuj be względem bs
+        if bs is not None:
+            # be musi być > bs; jeśli be < (bs % 1440) → be jest po północy
+            be_raw = be
+            if be_raw <= (bs % (24 * 60)):
+                be += 24 * 60
+            elif bs >= 24 * 60 and be_raw < ts:
+                be += 24 * 60
+            if be == bs:
+                return False, 'Godzina końca przerwy musi być różna od godziny rozpoczęcia przerwy.'
+            if te is not None and be > te:
                 return False, 'Godzina końca przerwy nie może być późniejsza niż godzina wyjścia.'
+    else:
+        be = None
 
     entry.time_start  = time_start
     entry.time_end    = time_end
