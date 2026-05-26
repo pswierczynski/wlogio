@@ -7,26 +7,26 @@
 <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
     <div class="stat bg-base-100 rounded-xl shadow-sm p-3 sm:p-4">
         <div class="stat-title text-xs truncate">Urlop</div>
-        <div class="stat-value text-xl sm:text-2xl text-primary">{{ vacation_info.remaining_vacation }}</div>
-        <div class="stat-desc text-xs">
-            z {{ vacation_info.total }}
-            <span class="text-base-content/40">(wyk. {{ vacation_info.used_vacation }})</span>
+        <div class="stat-value text-xl sm:text-2xl text-base-content">{{ vacation_info.remaining_vacation }}</div>
+        <div class="stat-desc text-xs text-base-content/70">
+            <div>z {{ vacation_info.total }}</div>
+            <div class="text-base-content/40">(wyk. {{ vacation_info.used_vacation }})</div>
         </div>
     </div>
     <div class="stat bg-base-100 rounded-xl shadow-sm p-3 sm:p-4">
         <div class="stat-title text-xs truncate">Na żądanie</div>
-        <div class="stat-value text-xl sm:text-2xl text-secondary">{{ vacation_info.remaining_on_demand }}</div>
-        <div class="stat-desc text-xs">
-            z {{ vacation_info.on_demand_total }}
-            <span class="text-base-content/40">(wyk. {{ vacation_info.used_on_demand }})</span>
+        <div class="stat-value text-xl sm:text-2xl text-base-content">{{ vacation_info.remaining_on_demand }}</div>
+        <div class="stat-desc text-xs text-base-content/70">
+            <div>z {{ vacation_info.on_demand_total }}</div>
+            <div class="text-base-content/40">(wyk. {{ vacation_info.used_on_demand }})</div>
         </div>
     </div>
     <div class="stat bg-base-100 rounded-xl shadow-sm p-3 sm:p-4">
         <div class="stat-title text-xs truncate">Zdalna</div>
-        <div class="stat-value text-xl sm:text-2xl text-accent">{{ vacation_info.remaining_remote }}</div>
-        <div class="stat-desc text-xs">
-            z {{ vacation_info.remote_total }}
-            <span class="text-base-content/40">(wyk. {{ vacation_info.used_remote }})</span>
+        <div class="stat-value text-xl sm:text-2xl text-base-content">{{ vacation_info.remaining_remote }}</div>
+        <div class="stat-desc text-xs text-base-content/70">
+            <div>z {{ vacation_info.remote_total }}</div>
+            <div class="text-base-content/40">(wyk. {{ vacation_info.used_remote }})</div>
         </div>
     </div>
 </div>
@@ -286,7 +286,7 @@
                                     </div>
                                 </div>
 
-                                <div class="flex flex-wrap items-center justify-between gap-2 mt-5 pt-5 border-t border-base-200">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mt-5 pt-5 border-t border-base-300">
                                     <div class="flex flex-wrap gap-2 sm:gap-4 text-xs text-base-content/50">
                                         <span>Stawka: <strong>{{ month.hourly_rate }} PLN/h</strong></span>
                                         <span>Dni: <strong>{{ month.summary.work_days }}</strong></span>
