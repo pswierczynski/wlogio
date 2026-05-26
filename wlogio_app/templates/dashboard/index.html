@@ -5,26 +5,26 @@
 
 <!-- Bilans urlopowy -->
 <div class="grid grid-cols-3 gap-2 sm:gap-3 mb-4 sm:mb-6">
-    <div class="stat bg-base-100 rounded-xl shadow-sm p-3 sm:p-4">
-        <div class="stat-title text-xs truncate">Urlop</div>
-        <div class="stat-value text-xl sm:text-2xl text-base-content">{{ vacation_info.remaining_vacation }}</div>
-        <div class="stat-desc text-xs text-base-content/70">
+    <div class="bg-base-100 rounded-xl shadow-sm p-3 sm:p-4 flex flex-col gap-1">
+        <div class="text-xs text-base-content/50 truncate">Urlop</div>
+        <div class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ vacation_info.remaining_vacation }}</div>
+        <div class="text-xs text-base-content/70 leading-tight">
             <div>z {{ vacation_info.total }}</div>
             <div class="text-base-content/40">(wyk. {{ vacation_info.used_vacation }})</div>
         </div>
     </div>
-    <div class="stat bg-base-100 rounded-xl shadow-sm p-3 sm:p-4">
-        <div class="stat-title text-xs truncate">Na żądanie</div>
-        <div class="stat-value text-xl sm:text-2xl text-base-content">{{ vacation_info.remaining_on_demand }}</div>
-        <div class="stat-desc text-xs text-base-content/70">
+    <div class="bg-base-100 rounded-xl shadow-sm p-3 sm:p-4 flex flex-col gap-1">
+        <div class="text-xs text-base-content/50 truncate">Na żądanie</div>
+        <div class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ vacation_info.remaining_on_demand }}</div>
+        <div class="text-xs text-base-content/70 leading-tight">
             <div>z {{ vacation_info.on_demand_total }}</div>
             <div class="text-base-content/40">(wyk. {{ vacation_info.used_on_demand }})</div>
         </div>
     </div>
-    <div class="stat bg-base-100 rounded-xl shadow-sm p-3 sm:p-4">
-        <div class="stat-title text-xs truncate">Zdalna</div>
-        <div class="stat-value text-xl sm:text-2xl text-base-content">{{ vacation_info.remaining_remote }}</div>
-        <div class="stat-desc text-xs text-base-content/70">
+    <div class="bg-base-100 rounded-xl shadow-sm p-3 sm:p-4 flex flex-col gap-1">
+        <div class="text-xs text-base-content/50 truncate">Zdalna</div>
+        <div class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ vacation_info.remaining_remote }}</div>
+        <div class="text-xs text-base-content/70 leading-tight">
             <div>z {{ vacation_info.remote_total }}</div>
             <div class="text-base-content/40">(wyk. {{ vacation_info.used_remote }})</div>
         </div>
