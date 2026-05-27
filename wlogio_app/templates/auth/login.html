@@ -9,7 +9,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak]{display:none!important}</style>
 </head>
-<body class="bg-base-200 h-dvh flex flex-col items-center justify-center overflow-hidden px-4">
+<body class="bg-base-200 min-h-screen flex flex-col items-center justify-center px-4 py-4">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -51,8 +51,8 @@
          @keydown.window.escape="showModal = false"
          class="w-full flex flex-col items-center justify-center gap-0">
 
-        <div class="card bg-base-100 shadow-xl w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto">
-            <div class="card-body gap-4 p-4 sm:gap-6 sm:p-8">
+        <div class="card bg-base-100 shadow-xl w-full max-w-md">
+            <div class="card-body gap-3 p-4 sm:gap-5 sm:p-8">
 
                 <div class="text-center">
                     <div class="flex items-center justify-center gap-2 mb-0.5">
@@ -84,7 +84,7 @@
                     <button type="submit" class="btn btn-primary w-full">Zaloguj się</button>
                 </form>
 
-                <div class="divider text-xs text-base-content/40">lub</div>
+                <div class="divider my-0 text-xs text-base-content/40">lub</div>
 
                 <div class="flex flex-col gap-2 sm:gap-3">
                     <button type="button"
