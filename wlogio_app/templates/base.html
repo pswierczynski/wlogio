@@ -8,41 +8,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
-        /* Scrollbar zawsze zarezerwowany — brak skoku przy pojawieniu się treści */
+        /* Scrollbar — miejsce zarezerwowane przez overflow-y:scroll,
+           sam pasek ukryty przez width:0 — brak skoku layoutu, brak strzałek */
         html {
             overflow-y: scroll;
-            scrollbar-width: thin;
-            scrollbar-color: transparent transparent;
-        }
-        html:hover {
-            scrollbar-color: rgba(0,0,0,0.15) transparent;
+            scrollbar-width: none; /* Firefox */
         }
         html::-webkit-scrollbar {
-            width: 6px;
-        }
-        html::-webkit-scrollbar-track {
+            width: 0;            /* Chrome/Safari — całkowicie ukryty */
             background: transparent;
         }
-        html::-webkit-scrollbar-thumb {
-            background: transparent;
-            border-radius: 3px;
-        }
-        html::-webkit-scrollbar-button {
-            display: none;
-            width: 0;
-            height: 0;
-        }
-        html::-webkit-scrollbar-button:start:decrement,
-        html::-webkit-scrollbar-button:end:increment,
-        html::-webkit-scrollbar-button:start:increment,
-        html::-webkit-scrollbar-button:end:decrement {
-            display: none;
-            width: 0;
-            height: 0;
-        }
-        html:hover::-webkit-scrollbar-thumb {
-            background: rgba(0,0,0,0.15);
-        }
+
 
         [x-cloak] { display: none !important; }
         .entry-row:hover { background-color: oklch(var(--b2)); }
