@@ -34,10 +34,6 @@
 {% set current_year = current_key[0] %}
 
 <!-- Harmonijka lat + miesięcy -->
-{#
-   Grupujemy months_data (posortowane malejąco wg roku i miesiąca) po latach.
-   Używamy namespace + pętli bo Jinja2 nie ma groupby z zachowaniem kolejności.
-#}
 {% set ns = namespace(current_y=None, year_groups=[]) %}
 {% for month in months_data %}
     {% if month.year != ns.current_y %}
@@ -56,13 +52,10 @@
     {% for group in ns.year_groups %}
     {% set year = group.year %}
 
-    <!-- Karta roku -->
     <div class="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
 
-        <!-- Nagłówek roku — klikalny -->
         <div class="flex items-center justify-between px-4 sm:px-5 py-3 cursor-pointer hover:bg-base-50 transition-colors select-none"
              @click="openYear = openYear === {{ year }} ? null : {{ year }}">
-
             <div class="flex items-center gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg"
                      class="h-5 w-5 text-base-content/40 transition-transform duration-200 shrink-0"
@@ -71,10 +64,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                 </svg>
                 <span class="font-bold text-base sm:text-lg">{{ year }}</span>
-
             </div>
-
-            <!-- Skrócone podsumowanie roku (suma godzin i wynagrodzenia) -->
             {% set yr_h = namespace(v=0) %}
             {% set yr_sal = namespace(v=0) %}
             {% for m in group.months %}
@@ -87,7 +77,6 @@
             </div>
         </div>
 
-        <!-- Zawartość roku -->
         <div x-show="openYear === {{ year }}"
              x-cloak
              x-transition:enter="transition ease-out duration-150"
@@ -99,13 +88,10 @@
                 {% for month in group.months %}
                 {% set key = month.year ~ '-' ~ month.month %}
 
-                <!-- Karta miesiąca -->
                 <div class="card bg-base-100 border border-base-200 shadow-none overflow-hidden">
 
-                    <!-- Nagłówek miesiąca -->
                     <div class="flex items-center justify-between px-3 sm:px-4 py-3 cursor-pointer hover:bg-base-50 transition-colors select-none"
                          @click="openMonth = openMonth === '{{ key }}' ? null : '{{ key }}'">
-
                         <div class="flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg"
                                  class="h-3.5 w-3.5 text-base-content/40 transition-transform duration-200 shrink-0"
@@ -145,14 +131,12 @@
                                 {{ format_currency(month.summary.total_with_bonus) }}
                             </span>
                             {% endif %}
-
                             <a href="{{ url_for('entries.add') }}"
                                @click.stop
                                class="btn btn-ghost btn-xs text-base-content shrink-0">+ Dodaj</a>
                         </div>
                     </div>
 
-                    <!-- Rozwinięta zawartość miesiąca -->
                     <div x-show="openMonth === '{{ key }}'"
                          x-cloak
                          x-transition:enter="transition ease-out duration-150"
@@ -178,13 +162,27 @@
                                     <tbody>
                                         {% for entry in month.entries %}
                                         <tr class="entry-row transition-colors">
+
+                                            <!-- Data + ikonka notatki -->
                                             <td class="col-date font-medium text-sm whitespace-nowrap">
-                                                {{ entry.date.strftime('%d.%m.%Y') }}
-                                                {% if entry.is_remote %}
-                                                <span class="badge badge-accent badge-xs ml-1">PZ</span>
-                                                {% endif %}
+                                                <div class="flex items-center gap-1">
+                                                    {{ entry.date.strftime('%d.%m.%Y') }}
+                                                    {% if entry.notes %}
+                                                    <div class="tooltip tooltip-right" data-tip="{{ entry.notes }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                             class="h-3.5 w-3.5 text-base-content/30 hover:text-base-content/60 cursor-default shrink-0"
+                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                  d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                                                        </svg>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
                                             </td>
+
+                                            <!-- Typ + badge Zdalna -->
                                             <td class="col-type">
+                                                <div class="flex flex-wrap gap-1">
                                                 {% if entry.entry_type == 'work' %}
                                                 <span class="badge badge-ghost badge-sm whitespace-nowrap py-1 h-6">Praca</span>
                                                 {% elif entry.entry_type == 'vacation' %}
@@ -198,7 +196,12 @@
                                                 {% elif entry.entry_type == 'sick_leave' %}
                                                 <span class="badge badge-error badge-sm whitespace-nowrap py-1 h-6">Zwolnienie</span>
                                                 {% endif %}
+                                                {% if entry.is_remote %}
+                                                <span class="badge badge-sm whitespace-nowrap py-1 h-6" style="background-color: oklch(var(--b3)); color: oklch(var(--bc));">Zdalna</span>
+                                                {% endif %}
+                                                </div>
                                             </td>
+
                                             <td class="col-time text-base-content/70 text-sm whitespace-nowrap">
                                                 {% if entry.time_start %}{{ entry.time_start.strftime('%H:%M') }}{% else %}—{% endif %}
                                             </td>
