@@ -11,6 +11,24 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak]{display:none!important}</style>
 </head>
+<script>
+let Keyboard = window.SimpleKeyboard.default;
+
+let keyboard = new Keyboard({
+  onChange: input => document.querySelector("#input").value = input,
+  onKeyPress: button => console.log(button)
+});
+
+document.querySelector("#input").addEventListener("focus", () => {
+  document.querySelector(".simple-keyboard").style.display = "block";
+});
+
+document.querySelector("#input").addEventListener("blur", () => {
+  setTimeout(() => {
+    document.querySelector(".simple-keyboard").style.display = "none";
+  }, 200);
+});
+</script>
 <body class="bg-base-200 h-dvh sm:min-h-screen flex flex-col items-center justify-center px-4 py-2 sm:py-8">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
