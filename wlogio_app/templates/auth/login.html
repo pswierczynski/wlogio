@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logowanie — Wlogio</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard/build/css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/simple-keyboard/build/index.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak]{display:none!important}</style>
@@ -123,11 +125,13 @@
 
                     <div class="form-control">
                         <input type="password" x-model="password"
+                               id="input"
                                @keydown.enter="verify()"
                                class="input input-bordered w-full"
                                :class="error ? 'input-error' : ''"
                                placeholder="Hasło..."
                                x-init="$nextTick(() => $el.focus())"/>
+                        <div class="simple-keyboard"></div>
                         <div x-show="error" x-cloak class="label">
                             <span class="label-text-alt text-error">Nieprawidłowe hasło</span>
                         </div>
