@@ -5,30 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Logowanie — Wlogio</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard/build/css/index.css">
-    <script src="https://cdn.jsdelivr.net/npm/simple-keyboard/build/index.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak]{display:none!important}</style>
 </head>
-<script>
-let Keyboard = window.SimpleKeyboard.default;
-
-let keyboard = new Keyboard({
-  onChange: input => document.querySelector("#input").value = input,
-  onKeyPress: button => console.log(button)
-});
-
-document.querySelector("#input").addEventListener("focus", () => {
-  document.querySelector(".simple-keyboard").style.display = "block";
-});
-
-document.querySelector("#input").addEventListener("blur", () => {
-  setTimeout(() => {
-    document.querySelector(".simple-keyboard").style.display = "none";
-  }, 200);
-});
-</script>
 <body class="bg-base-200 h-dvh sm:min-h-screen flex flex-col items-center justify-center px-4 py-2 sm:py-8">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -143,13 +123,11 @@ document.querySelector("#input").addEventListener("blur", () => {
 
                     <div class="form-control">
                         <input type="password" x-model="password"
-                               id="input"
                                @keydown.enter="verify()"
                                class="input input-bordered w-full"
                                :class="error ? 'input-error' : ''"
                                placeholder="Hasło..."
                                x-init="$nextTick(() => $el.focus())"/>
-                        <div class="simple-keyboard"></div>
                         <div x-show="error" x-cloak class="label">
                             <span class="label-text-alt text-error">Nieprawidłowe hasło</span>
                         </div>
