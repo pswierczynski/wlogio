@@ -33,7 +33,6 @@
 
 {% set current_year = current_key[0] %}
 
-<!-- Harmonijka lat + miesięcy -->
 {% set ns = namespace(current_y=None, year_groups=[]) %}
 {% for month in months_data %}
     {% if month.year != ns.current_y %}
@@ -163,7 +162,6 @@
                                         {% for entry in month.entries %}
                                         <tr class="entry-row transition-colors">
 
-                                            <!-- Data + ikonka notatki -->
                                             <td class="col-date font-medium text-sm whitespace-nowrap">
                                                 <div class="flex items-center gap-1">
                                                     {{ entry.date.strftime('%d.%m.%Y') }}
@@ -180,9 +178,9 @@
                                                 </div>
                                             </td>
 
-                                            <!-- Typ + badge Zdalna -->
+                                            <!-- Typ + badge Zdalna — flex-nowrap = zawsze w jednym wierszu -->
                                             <td class="col-type">
-                                                <div class="flex flex-wrap gap-1">
+                                                <div class="flex flex-nowrap items-center gap-1">
                                                 {% if entry.entry_type == 'work' %}
                                                 <span class="badge badge-ghost badge-sm whitespace-nowrap py-1 h-6">Praca</span>
                                                 {% elif entry.entry_type == 'vacation' %}
@@ -252,14 +250,11 @@
                                 </table>
                             </div>
 
-                            <!-- Podsumowanie miesiąca -->
                             <div class="border-t border-base-300 bg-base-200/60 px-3 sm:px-5 py-5 sm:py-6">
                                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 text-sm">
                                     <div>
                                         <div class="text-xs text-base-content/50 mb-0.5">Przepracowane</div>
-                                        <div class="font-semibold text-sm">
-                                            {{ "%.2f"|format(month.summary.total_hours)|replace('.', ',') }}h
-                                        </div>
+                                        <div class="font-semibold text-sm">{{ "%.2f"|format(month.summary.total_hours)|replace('.', ',') }}h</div>
                                     </div>
                                     <div>
                                         <div class="text-xs text-base-content/50 mb-0.5">Wymagane</div>
@@ -286,9 +281,7 @@
                                     </div>
                                     <div>
                                         <div class="text-xs text-base-content/50 mb-0.5">Prognoza</div>
-                                        <div class="font-bold text-sm text-base-content/70">
-                                            {{ format_currency(month.forecast) }}
-                                        </div>
+                                        <div class="font-bold text-sm text-base-content/70">{{ format_currency(month.forecast) }}</div>
                                     </div>
                                 </div>
 
