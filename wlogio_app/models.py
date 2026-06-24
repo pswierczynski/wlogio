@@ -42,6 +42,13 @@ class WorkEntry(db.Model):
     """
     Pojedynczy dzień w rejestrze.
     entry_type: 'work', 'vacation', 'on_demand', 'unpaid', 'holiday', 'sick_leave'
+
+    Przerwy (breaks): format "HH:MM-HH:MM;HH:MM-HH:MM" — wiele przerw oddzielonych ';'.
+    Każda przerwa musi mieścić się w przedziale time_start..time_end i nie nachodzić
+    na inne przerwy. Suma czasu wszystkich przerw - 15 min = nadprogramowa przerwa.
+
+    UWAGA: break_start/break_end są przejściowe (deprecated) — zachowane do czasu
+    pełnej migracji na kolumnę `breaks`. Nowy kod NIE powinien ich używać.
     """
     __tablename__ = 'work_entries'
 
@@ -52,9 +59,13 @@ class WorkEntry(db.Model):
     billing_month = db.Column(db.Integer, nullable=False)
     entry_type = db.Column(db.String(20), nullable=False, default='work')
 
-    # Wspólne kolumny dla dashboardu i ekranu powitalnego
     time_start = db.Column(db.Time, nullable=True)
     time_end = db.Column(db.Time, nullable=True)
+
+    # NOWE: wiele przerw jako string "HH:MM-HH:MM;HH:MM-HH:MM"
+    breaks = db.Column(db.Text, nullable=True)
+
+    # PRZEJŚCIOWE (deprecated) — zostaną usunięte w etapie cleanup
     break_start = db.Column(db.Time, nullable=True)
     break_end = db.Column(db.Time, nullable=True)
 
