@@ -28,30 +28,82 @@ def get_working_days_in_billing_period(billing_year, billing_month):
     return working_days
 
 
-def calculate_hours(time_start, time_end, break_start=None, break_end=None):
-    start_min = time_start.hour * 60 + time_start.minute
-    end_min = time_end.hour * 60 + time_end.minute
+def parse_breaks(breaks_str):
+    """
+    Parsuje string przerw "HH:MM-HH:MM;HH:MM-HH:MM" na listę tupli (time, time).
+    Zwraca [] jeśli breaks_str jest pusty/None.
+    Ignoruje segmenty które nie da się sparsować (odporność na błędne dane).
+    """
+    if not breaks_str or not breaks_str.strip():
+        return []
+
+    result = []
+    for segment in breaks_str.split(';'):
+        segment = segment.strip()
+        if not segment or '-' not in segment:
+            continue
+        try:
+            start_str, end_str = segment.split('-', 1)
+            start_t = datetime.strptime(start_str.strip(), '%H:%M').time()
+            end_t = datetime.strptime(end_str.strip(), '%H:%M').time()
+            result.append((start_t, end_t))
+        except ValueError:
+            continue
+    return result
+
+
+def format_breaks(breaks_list):
+    """
+    Formatuje listę tupli (time, time) na string "HH:MM-HH:MM;HH:MM-HH:MM".
+    Zwraca None jeśli lista jest pusta.
+    """
+    if not breaks_list:
+        return None
+    segments = []
+    for start_t, end_t in breaks_list:
+        segments.append(f'{start_t.strftime("%H:%M")}-{end_t.strftime("%H:%M")}')
+    return ';'.join(segments)
+
+
+def _to_min(t):
+    if t is None:
+        return None
+    return t.hour * 60 + t.minute
+
+
+def calculate_hours(time_start, time_end, breaks=None):
+    """
+    Oblicza godziny pracy na podstawie time_start, time_end i listy przerw.
+
+    breaks: lista tupli (time, time) — wynik parse_breaks().
+            Każda przerwa powinna być już znormalizowana względem przejścia
+            przez północ przez wywołującego (patrz entries.py walidacja).
+
+    Suma czasu wszystkich przerw - 15 min = nadprogramowa przerwa (jeśli > 0).
+    """
+    start_min = _to_min(time_start)
+    end_min = _to_min(time_end)
     if end_min < start_min:
         end_min += 24 * 60
     raw_minutes = end_min - start_min
 
-    if break_start and break_end:
-        bs_min = break_start.hour * 60 + break_start.minute
-        be_min = break_end.hour * 60 + break_end.minute
+    breaks = breaks or []
+    total_break_minutes = 0
+    for bs, be in breaks:
+        bs_min = _to_min(bs)
+        be_min = _to_min(be)
         if be_min < bs_min:
             be_min += 24 * 60
-        break_minutes = max(0, be_min - bs_min)
-    else:
-        break_minutes = 0
+        total_break_minutes += max(0, be_min - bs_min)
 
-    extra_break_minutes = max(0, break_minutes - BREAK_MINUTES)
+    extra_break_minutes = max(0, total_break_minutes - BREAK_MINUTES)
     net_minutes = raw_minutes - extra_break_minutes
     hours_worked = net_minutes / 60.0
-    # Zaokrąglenie do wielokrotności 0.25: mnożymy przez 4, zaokrąglamy, dzielimy przez 4
     hours_billed = round(hours_worked * 4) / 4
+
     return {
         'raw_minutes': raw_minutes,
-        'break_minutes': break_minutes,
+        'break_minutes': total_break_minutes,
         'extra_break_minutes': extra_break_minutes,
         'net_minutes': net_minutes,
         'hours_worked': round(hours_worked, 4),
