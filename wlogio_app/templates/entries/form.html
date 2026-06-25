@@ -22,10 +22,20 @@
                     calcResult: null,
                     timeStart:  '{% if entry and entry.time_start %}{{ entry.time_start.strftime('%H:%M') }}{% endif %}',
                     timeEnd:    '{% if entry and entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% endif %}',
-                    breakStart: '{% if entry and entry.break_start %}{{ entry.break_start.strftime('%H:%M') }}{% endif %}',
-                    breakEnd:   '{% if entry and entry.break_end %}{{ entry.break_end.strftime('%H:%M') }}{% endif %}',
                     isRemote: {% if entry and entry.is_remote %}true{% else %}false{% endif %},
                     validationError: null,
+
+                    /* --- Wiele przerw: lista obiektów {start, end} --- */
+                    breakRows: {{ existing_breaks | default([]) | tojson }},
+
+                    addBreakRow() {
+                        this.breakRows.push({ start: '', end: '' });
+                        this.calcHours();
+                    },
+                    removeBreakRow(index) {
+                        this.breakRows.splice(index, 1);
+                        this.calcHours();
+                    },
 
                     /* --- Zakres urlopów --- */
                     rangeMode: 'single',
@@ -87,18 +97,31 @@
                         this.previewLoading = false;
                     },
 
-                    /* --- Walidacja godzin --- */
+                    /* --- Walidacja godzin (z wieloma przerwami) --- */
                     toMin(t) {
                         if (!t) return null;
                         const [h, m] = t.split(':').map(Number);
                         return h * 60 + m;
                     },
 
+                    /* Normalizuje przerwę względem time_start (obsługa przejścia przez północ).
+                       Zwraca {bsAdj, beAdj} w minutach absolutnych (mogą być > 1440) lub null jeśli niepełna. */
+                    normalizeBreak(row, ts) {
+                        const bs = this.toMin(row.start);
+                        const be = this.toMin(row.end);
+                        if (bs === null || be === null) return null;
+
+                        let bsAdj = bs < ts ? bs + 24 * 60 : bs;
+                        const bsRaw = bsAdj % (24 * 60);
+                        let beAdj = (be <= bsRaw) ? be + 24 * 60 : be;
+                        if (bsAdj >= 24 * 60 && be < ts) beAdj = be + 24 * 60;
+
+                        return { bsAdj, beAdj };
+                    },
+
                     validate() {
                         const ts = this.toMin(this.timeStart);
                         const te = this.toMin(this.timeEnd);
-                        const bs = this.toMin(this.breakStart);
-                        const be = this.toMin(this.breakEnd);
 
                         if (ts === null) {
                             this.validationError = 'Godzina przyjścia jest wymagana.';
@@ -106,7 +129,6 @@
                             return false;
                         }
 
-                        // time_end — przez północ dozwolone
                         let teAdj = te;
                         if (te !== null) {
                             teAdj = te < ts ? te + 24 * 60 : te;
@@ -117,37 +139,40 @@
                             }
                         }
 
-                        // break_start — może być po północy (bs < ts → +24h)
-                        let bsAdj = bs;
-                        if (bs !== null) {
-                            bsAdj = bs < ts ? bs + 24 * 60 : bs;
-                            if (teAdj !== null && bsAdj >= teAdj) {
-                                this.validationError = 'Godzina rozpoczęcia przerwy musi być wcześniejsza niż godzina wyjścia.';
+                        /* Walidacja każdej przerwy + sprawdzenie nachodzenia */
+                        const normalizedBreaks = [];
+                        for (let i = 0; i < this.breakRows.length; i++) {
+                            const row = this.breakRows[i];
+                            if (!row.start && !row.end) continue; // pusty wiersz — pomiń
+                            if (!row.start || !row.end) {
+                                this.validationError = `Przerwa #${i + 1} ma niekompletne godziny.`;
                                 this.calcResult = null;
                                 return false;
                             }
+                            const norm = this.normalizeBreak(row, ts);
+                            if (!norm) continue;
+                            if (norm.beAdj <= norm.bsAdj) {
+                                this.validationError = `Przerwa #${i + 1}: godzina końca musi być późniejsza niż początku.`;
+                                this.calcResult = null;
+                                return false;
+                            }
+                            if (norm.bsAdj < ts) {
+                                this.validationError = `Przerwa #${i + 1}: musi zaczynać się po godzinie przyjścia.`;
+                                this.calcResult = null;
+                                return false;
+                            }
+                            if (teAdj !== null && norm.beAdj > teAdj) {
+                                this.validationError = `Przerwa #${i + 1}: nie może kończyć się po godzinie wyjścia.`;
+                                this.calcResult = null;
+                                return false;
+                            }
+                            normalizedBreaks.push(norm);
                         }
 
-                        // break_end
-                        if (be !== null) {
-                            if (bs === null) {
-                                this.validationError = 'Aby ustawić koniec przerwy, najpierw ustaw godzinę rozpoczęcia przerwy.';
-                                this.calcResult = null;
-                                return false;
-                            }
-                            let beAdj = be;
-                            if (bsAdj !== null) {
-                                const bsRaw = bsAdj % (24 * 60);
-                                beAdj = (be <= bsRaw) ? be + 24 * 60 : be;
-                                if (bsAdj >= 24 * 60 && be < ts) beAdj = be + 24 * 60;
-                            }
-                            if (beAdj === bsAdj) {
-                                this.validationError = 'Godzina końca przerwy musi być różna od godziny rozpoczęcia przerwy.';
-                                this.calcResult = null;
-                                return false;
-                            }
-                            if (teAdj !== null && beAdj > teAdj) {
-                                this.validationError = 'Godzina końca przerwy nie może być późniejsza niż godzina wyjścia.';
+                        normalizedBreaks.sort((a, b) => a.bsAdj - b.bsAdj);
+                        for (let i = 1; i < normalizedBreaks.length; i++) {
+                            if (normalizedBreaks[i].bsAdj < normalizedBreaks[i - 1].beAdj) {
+                                this.validationError = 'Przerwy nie mogą się nakładać.';
                                 this.calcResult = null;
                                 return false;
                             }
@@ -161,20 +186,18 @@
                         if (!this.validate()) return;
                         const ts = this.toMin(this.timeStart);
                         const te = this.toMin(this.timeEnd);
-                        const bs = this.toMin(this.breakStart);
-                        const be = this.toMin(this.breakEnd);
                         if (ts === null || te === null) { this.calcResult = null; return; }
                         let teAdj = te < ts ? te + 24 * 60 : te;
                         let raw = teAdj - ts;
-                        let breakMin = 0;
-                        if (bs !== null && be !== null) {
-                            let bsAdj = bs < ts ? bs + 24 * 60 : bs;
-                            const bsRaw = bsAdj % (24 * 60);
-                            let beAdj = (be <= bsRaw) ? be + 24 * 60 : be;
-                            if (bsAdj >= 24 * 60 && be < ts) beAdj = be + 24 * 60;
-                            breakMin = beAdj - bsAdj;
+
+                        let totalBreakMin = 0;
+                        for (const row of this.breakRows) {
+                            if (!row.start || !row.end) continue;
+                            const norm = this.normalizeBreak(row, ts);
+                            if (norm) totalBreakMin += (norm.beAdj - norm.bsAdj);
                         }
-                        const extra = Math.max(0, breakMin - 15);
+
+                        const extra = Math.max(0, totalBreakMin - 15);
                         const net = raw - extra;
                         const hours = net / 60;
                         const rounded = Math.round(hours * 4) / 4;
@@ -183,7 +206,8 @@
                         this.calcResult = {
                             hours:   hh + 'h ' + String(mm).padStart(2, '0') + 'min',
                             rounded: Number.isInteger(rounded) ? rounded + 'h' : rounded.toFixed(2).replace('.', ',') + 'h',
-                            extra
+                            extra,
+                            breakTotal: totalBreakMin
                         };
                     },
 
@@ -191,7 +215,6 @@
                         if (this.entryType === 'work') {
                             if (!this.validate()) { event.preventDefault(); return; }
                         }
-                        /* Zakres: zmień action i zablokuj jeśli nie potwierdzono */
                         if (this.isRangeType() && this.rangeMode === 'range') {
                             if (!this.rangeConfirmed || !this.preview) {
                                 event.preventDefault();
@@ -245,7 +268,6 @@
                 <!-- WYBÓR ZAKRESU (tylko vacation/unpaid, tylko dodawanie) -->
                 <div x-show="isRangeType()" x-cloak class="flex flex-col gap-4">
 
-                    <!-- Radio: jeden dzień / zakres -->
                     <div class="form-control">
                         <label class="label"><span class="label-text font-medium">Liczba dni</span></label>
                         <div class="flex gap-4">
@@ -264,7 +286,6 @@
                         </div>
                     </div>
 
-                    <!-- Data końcowa (tylko przy zakresie) -->
                     <div x-show="rangeMode === 'range'" x-cloak class="flex flex-col gap-3">
                         <div class="form-control">
                             <label class="label"><span class="label-text font-medium">Do (data końcowa)</span></label>
@@ -273,7 +294,6 @@
                                    class="input input-bordered w-full"/>
                         </div>
 
-                        <!-- Info o dostępnych urlopach -->
                         <div x-show="entryType === 'vacation'"
                              class="alert py-2 text-sm bg-base-200 border-base-300 mt-4 mb-3 text-left flex flex-row items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-base-content/50"
@@ -287,13 +307,11 @@
                             </span>
                         </div>
 
-                        <!-- Ładowanie -->
                         <div x-show="previewLoading" class="flex items-center gap-2 text-sm text-base-content/50">
                             <span class="loading loading-spinner loading-sm"></span>
                             Sprawdzam zakres…
                         </div>
 
-                        <!-- Błąd podglądu -->
                         <div x-show="previewError" x-cloak class="alert alert-error py-2 text-sm mt-4 mb-3 text-left flex flex-row items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none"
                                  viewBox="0 0 24 24" stroke="currentColor">
@@ -303,10 +321,8 @@
                             <span x-text="previewError"></span>
                         </div>
 
-                        <!-- Podgląd dni -->
                         <div x-show="preview" x-cloak class="flex flex-col gap-3">
 
-                            <!-- Podsumowanie -->
                             <div class="alert py-3 text-sm flex flex-row items-center gap-2 text-left"
                                  :class="preview && preview.unpaid_days > 0 && entryType === 'vacation' ? 'alert-warning' : 'alert-success'">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none"
@@ -330,7 +346,6 @@
                                 </div>
                             </div>
 
-                            <!-- Lista dni -->
                             <div class="border border-base-200 rounded-xl overflow-hidden">
                                 <div class="bg-base-200/60 px-4 py-2 text-xs font-semibold text-base-content/50 uppercase tracking-wide">
                                     Szczegóły
@@ -347,13 +362,11 @@
                                 </div>
                             </div>
 
-                            <!-- Potwierdzenie -->
                             <label class="flex items-center gap-3 cursor-pointer select-none">
                                 <input type="checkbox" class="checkbox checkbox-primary" x-model="rangeConfirmed"/>
                                 <span class="text-sm">Potwierdzam i chcę dodać powyższe dni</span>
                             </label>
 
-                            <!-- Ukryte pola dla add_range -->
                             <input type="hidden" name="date_from" :value="document.getElementById('date_from_field') ? document.getElementById('date_from_field').value : ''"/>
                             <input type="hidden" name="date_to"   :value="dateTo"/>
                             <input type="hidden" name="range_type" :value="entryType"/>
@@ -383,6 +396,7 @@
                                    @change="calcHours()" class="input input-bordered w-full"/>
                         </div>
                     </div>
+
                     <div x-show="timeStart && !timeEnd" x-cloak
                          class="alert py-2 text-sm bg-base-200 border-base-300 mt-4 mb-3 text-left flex flex-row items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-base-content/50"
@@ -392,33 +406,57 @@
                         </svg>
                         <span class="text-base-content/60">Praca trwa do odwołania — uzupełnij wyjście gdy skończysz.</span>
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Przerwa od</span>
-                                <span class="label-text-alt text-base-content/40">opcjonalne</span>
-                            </label>
-                            <input type="time" name="break_start" x-model="breakStart"
-                                   @change="calcHours()" class="input input-bordered w-full"/>
+
+                    <!-- LISTA PRZERW (dynamiczna) -->
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center justify-between">
+                            <span class="label-text font-medium">Przerwy</span>
+                            <button type="button" @click="addBreakRow()"
+                                    class="btn btn-ghost btn-xs gap-1 text-base-content/60">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Dodaj przerwę
+                            </button>
                         </div>
-                        <div class="form-control">
-                            <label class="label">
-                                <span class="label-text font-medium">Przerwa do</span>
-                                <span class="label-text-alt text-base-content/40">opcjonalne</span>
-                            </label>
-                            <input type="time" name="break_end" x-model="breakEnd"
-                                   @change="calcHours()" class="input input-bordered w-full"/>
+
+                        <div x-show="breakRows.length === 0" class="text-xs text-base-content/40 italic">
+                            Brak przerw. Kliknij "Dodaj przerwę" aby dodać.
                         </div>
+
+                        <template x-for="(row, index) in breakRows" :key="index">
+                            <div class="flex items-end gap-2">
+                                <div class="form-control flex-1">
+                                    <label class="label py-1">
+                                        <span class="label-text text-xs" x-text="'Przerwa #' + (index + 1) + ' — od'"></span>
+                                    </label>
+                                    <input type="time" x-model="row.start"
+                                           :name="'break_start_' + index"
+                                           @change="calcHours()"
+                                           class="input input-bordered input-sm w-full"/>
+                                </div>
+                                <div class="form-control flex-1">
+                                    <label class="label py-1">
+                                        <span class="label-text text-xs">do</span>
+                                    </label>
+                                    <input type="time" x-model="row.end"
+                                           :name="'break_end_' + index"
+                                           @change="calcHours()"
+                                           class="input input-bordered input-sm w-full"/>
+                                </div>
+                                <button type="button" @click="removeBreakRow(index)"
+                                        class="btn btn-ghost btn-sm text-error shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                         viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </template>
                     </div>
-                    <div x-show="breakStart && !breakEnd" x-cloak
-                         class="alert py-2 text-sm bg-base-200 border-base-300 mt-4 mb-3 text-left flex flex-row items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0 text-base-content/50"
-                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <span class="text-base-content/60">Przerwa trwa do odwołania — uzupełnij koniec przerwy gdy wrócisz.</span>
-                    </div>
+
                     <div x-show="validationError" x-cloak class="alert alert-error py-2 text-sm mt-4 mb-3 text-left flex flex-row items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none"
                              viewBox="0 0 24 24" stroke="currentColor">
@@ -427,6 +465,7 @@
                         </svg>
                         <span x-text="validationError"></span>
                     </div>
+
                     <div x-show="calcResult" x-cloak class="alert alert-info py-3 mt-4 mb-3 text-left flex flex-row items-center gap-2">
                         <div class="text-sm flex flex-wrap gap-2">
                             <span>Godziny: <strong x-text="calcResult?.hours"></strong></span>
@@ -437,6 +476,7 @@
                             </span>
                         </div>
                     </div>
+
                     <div class="flex items-center gap-3">
                         <input type="checkbox" name="is_remote" class="checkbox"
                                x-model="isRemote"
@@ -460,7 +500,7 @@
                     </div>
                 </div>
 
-                <!-- INFO urlop bezpłatny — tylko dla pojedynczego dnia -->
+                <!-- INFO urlop bezpłatny -->
                 <div x-show="entryType === 'unpaid' && rangeMode === 'single'" x-cloak>
                     <div class="alert alert-warning py-3 mt-4 mb-3 text-left flex flex-row items-center gap-2">
                         <div class="text-sm">
