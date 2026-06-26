@@ -19,7 +19,6 @@
         .avatar-btn:hover { transform: scale(1.06); }
         .avatar-btn:active { transform: scale(0.97); }
 
-        /* Siatka avatarów - max 2 kolumny mobile, 4 desktop */
         .users-grid {
             display: grid;
             gap: 2rem;
@@ -32,18 +31,7 @@
         .users-grid.u2 { grid-template-columns: repeat(2, 1fr); max-width: 420px; }
         .users-grid.u3 { grid-template-columns: repeat(3, 1fr); max-width: 620px; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
-
-        /* Animacja pojawienia się etykiety czasu */
-        @keyframes labelAppear {
-            0%   { opacity: 0; transform: translateY(-4px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        .label-appear { animation: labelAppear 0.35s ease forwards; }
+        @keyframes slideUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
@@ -54,12 +42,16 @@
         .animate-slide-up { animation: slideUp 0.4s ease forwards; }
         .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
 
-        /* Obramowania statusów */
+        @keyframes labelAppear {
+            0%   { opacity: 0; transform: translateY(-4px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .label-appear { animation: labelAppear 0.35s ease forwards; }
+
         .ring-status-working { box-shadow: 0 0 0 4px #22c55e; }
         .ring-status-break   { box-shadow: 0 0 0 4px #f59e0b; }
         .ring-status-idle    { box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
 
-        /* Wygaszenie */
         .avatar-idle    { opacity: 0.5; }
         .avatar-working { opacity: 1; }
         .avatar-break   { opacity: 1; }
@@ -98,18 +90,21 @@
         .clock-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
         .clock-btn:not(:disabled):hover  { transform: scale(1.05); }
         .clock-btn:not(:disabled):active { transform: scale(0.95); }
+
+        .break-count-badge {
+            font-size: 0.7rem;
+            color: oklch(var(--bc) / 0.4);
+        }
     </style>
 </head>
 <body class="bg-base-200 min-h-screen">
 
-<!-- Statusy z backendu (aktualizowane przez polling) -->
 <script>
 const INIT_STATUSES = {{ user_statuses | tojson }};
 </script>
 
 <div x-data="welcomeApp()" x-init="init()" class="min-h-screen flex flex-col">
 
-    <!-- Nagłówek -->
     <div class="flex items-center justify-between px-6 py-4">
         <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none"
@@ -188,7 +183,6 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
     <div x-show="screen === 'pin'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
 
-        <!-- Avatar z dynamicznym statusem -->
         <div class="rounded-full overflow-hidden w-20 h-20 mb-6"
              :class="'ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
              style="border-radius: 50%;">
@@ -291,11 +285,11 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
                 </div>
             </div>
 
-            <!-- Przerwa -->
+            <!-- Przerwa (możliwość wielu przerw — przycisk aktywny przy 'working') -->
             <div class="flex flex-col items-center gap-3">
                 <button @click="clockAction('break_start')"
-                        :disabled="clockStatus !== 'working' || !!breakStart"
-                        x-show="!breakStart"
+                        :disabled="clockStatus !== 'working'"
+                        x-show="clockStatus !== 'break'"
                         class="clock-btn bg-warning text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
@@ -305,8 +299,8 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
                     Przerwa
                 </button>
                 <button @click="clockAction('break_end')"
-                        :disabled="clockStatus !== 'break' || !!breakEnd"
-                        x-show="breakStart"
+                        :disabled="clockStatus !== 'break'"
+                        x-show="clockStatus === 'break'"
                         class="clock-btn bg-info text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor">
@@ -317,9 +311,12 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
                     </svg>
                     Koniec przerwy
                 </button>
+                <!-- Tylko OSTATNIA przerwa jest widoczna -->
                 <div class="text-sm font-medium text-center text-warning leading-relaxed min-h-[2.5rem] flex flex-col items-center justify-center">
                     <span x-show="breakStart" x-text="'Przerwa od: ' + breakStart" class="block label-appear"></span>
                     <span x-show="breakEnd"   x-text="'do: ' + breakEnd"           class="block label-appear"></span>
+                    <span x-show="breaksCount > 1" class="break-count-badge block mt-0.5"
+                          x-text="'(przerw dzisiaj: ' + breaksCount + ')'"></span>
                 </div>
             </div>
 
@@ -363,6 +360,7 @@ function welcomeApp() {
         clockOut: null,
         breakStart: null,
         breakEnd: null,
+        breaksCount: 0,
         clockDate: '',
         clockStatus: 'idle',
         currentTime: '',
@@ -387,7 +385,6 @@ function welcomeApp() {
                 if (r.ok) {
                     const data = await r.json();
                     this.statuses = data;
-                    // Aktualizuj obramowania na ekranie avatarów
                     Object.entries(data).forEach(([uid, status]) => {
                         const el = document.getElementById('av-' + uid);
                         if (el) {
@@ -396,7 +393,6 @@ function welcomeApp() {
                                 .replace(/avatar-\w+/g, 'avatar-' + status);
                         }
                     });
-                    // Jeśli jesteśmy na ekranie clock — odśwież clockStatus
                     if (this.screen === 'clock' && this.selectedUserId) {
                         this.clockStatus = data[String(this.selectedUserId)] || 'idle';
                     }
@@ -442,10 +438,9 @@ function welcomeApp() {
                 this.clockOut    = data.clock_out;
                 this.breakStart  = data.break_start;
                 this.breakEnd    = data.break_end;
+                this.breaksCount = data.breaks_count || 0;
                 this.clockDate   = data.date;
-                // Status bezpośrednio z serwera — pewny i aktualny
                 this.clockStatus = data.status || 'idle';
-                // Zaktualizuj też lokalny słownik statusów
                 this.statuses[String(this.selectedUserId)] = this.clockStatus;
                 this.screen      = 'clock';
             } else {
@@ -467,14 +462,13 @@ function welcomeApp() {
 
             const data = await r.json();
             if (data.ok) {
-                this.clockIn    = data.clock_in;
-                this.clockOut   = data.clock_out;
-                this.breakStart = data.break_start;
-                this.breakEnd   = data.break_end;
-                // Status bezpośrednio z serwera — bez opóźnienia pollingu
+                this.clockIn     = data.clock_in;
+                this.clockOut    = data.clock_out;
+                this.breakStart  = data.break_start;
+                this.breakEnd    = data.break_end;
+                this.breaksCount = data.breaks_count || 0;
                 this.clockStatus = data.status || 'idle';
                 this.statuses[String(this.selectedUserId)] = this.clockStatus;
-                // Odśwież wszystkie statusy w tle
                 this.fetchStatuses();
             }
         },
@@ -487,6 +481,7 @@ function welcomeApp() {
             this.clockOut       = null;
             this.breakStart     = null;
             this.breakEnd       = null;
+            this.breaksCount    = 0;
             this.clockStatus    = 'idle';
             this.fetchStatuses();
         }
