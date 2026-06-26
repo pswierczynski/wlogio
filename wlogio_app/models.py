@@ -46,9 +46,7 @@ class WorkEntry(db.Model):
     Przerwy (breaks): format "HH:MM-HH:MM;HH:MM-HH:MM" — wiele przerw oddzielonych ';'.
     Każda przerwa musi mieścić się w przedziale time_start..time_end i nie nachodzić
     na inne przerwy. Suma czasu wszystkich przerw - 15 min = nadprogramowa przerwa.
-
-    UWAGA: break_start/break_end są przejściowe (deprecated) — zachowane do czasu
-    pełnej migracji na kolumnę `breaks`. Nowy kod NIE powinien ich używać.
+    Patrz wlogio_app.calculator.parse_breaks() / format_breaks().
     """
     __tablename__ = 'work_entries'
 
@@ -62,12 +60,8 @@ class WorkEntry(db.Model):
     time_start = db.Column(db.Time, nullable=True)
     time_end = db.Column(db.Time, nullable=True)
 
-    # NOWE: wiele przerw jako string "HH:MM-HH:MM;HH:MM-HH:MM"
+    # Wiele przerw jako string "HH:MM-HH:MM;HH:MM-HH:MM"
     breaks = db.Column(db.Text, nullable=True)
-
-    # PRZEJŚCIOWE (deprecated) — zostaną usunięte w etapie cleanup
-    break_start = db.Column(db.Time, nullable=True)
-    break_end = db.Column(db.Time, nullable=True)
 
     extra_break_minutes = db.Column(db.Integer, default=0)
     hours_worked = db.Column(db.Numeric(5, 2), nullable=False, default=0)
