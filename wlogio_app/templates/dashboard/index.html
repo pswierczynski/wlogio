@@ -152,7 +152,7 @@
                                             <th class="col-type font-semibold">Typ</th>
                                             <th class="col-time font-semibold">Przyjście</th>
                                             <th class="col-time font-semibold">Wyjście</th>
-                                            <th class="col-break font-semibold">Przerwa</th>
+                                            <th class="col-break font-semibold">Przerwy</th>
                                             <th class="col-hours font-semibold text-right">Godziny</th>
                                             <th class="col-salary font-semibold text-right">Wynagrodzenie</th>
                                             <th class="col-actions font-semibold"></th>
@@ -178,7 +178,6 @@
                                                 </div>
                                             </td>
 
-                                            <!-- Typ + badge Zdalna — flex-nowrap = zawsze w jednym wierszu -->
                                             <td class="col-type">
                                                 <div class="flex flex-nowrap items-center gap-1">
                                                 {% if entry.entry_type == 'work' %}
@@ -209,16 +208,22 @@
                                             <td class="col-time text-base-content/70 text-sm whitespace-nowrap">
                                                 {% if entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% else %}—{% endif %}
                                             </td>
+
+                                            <!-- Wiele przerw: każda w osobnej linii -->
                                             <td class="col-break text-base-content/70 text-xs whitespace-nowrap">
-                                                {% if entry.break_start and entry.break_end %}
-                                                    {{ entry.break_start.strftime('%H:%M') }}–{{ entry.break_end.strftime('%H:%M') }}
+                                                {% if entry.breaks %}
+                                                    {% set break_segments = entry.breaks.split(';') %}
+                                                    {% for seg in break_segments %}
+                                                        {% if seg.strip() %}
+                                                        <div>{{ seg.strip().replace('-', '–') }}</div>
+                                                        {% endif %}
+                                                    {% endfor %}
                                                     {% if entry.extra_break_minutes > 0 %}
-                                                    <span class="text-warning">(+{{ entry.extra_break_minutes }}min)</span>
+                                                    <div class="text-warning">(+{{ entry.extra_break_minutes }}min)</div>
                                                     {% endif %}
-                                                {% elif entry.break_start %}
-                                                    {{ entry.break_start.strftime('%H:%M') }}–…
                                                 {% else %}—{% endif %}
                                             </td>
+
                                             <td class="col-hours text-right font-medium text-sm whitespace-nowrap">
                                                 {% if entry.entry_type == 'unpaid' %}
                                                 <span class="text-base-content/40">0h</span>
