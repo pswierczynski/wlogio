@@ -145,24 +145,24 @@
                             const row = this.breakRows[i];
                             if (!row.start && !row.end) continue; // pusty wiersz — pomiń
                             if (!row.start || !row.end) {
-                                this.validationError = `Przerwa #${i + 1} ma niekompletne godziny.`;
+                                this.validationError = 'Przerwa #' + (i + 1) + ' ma niekompletne godziny.';
                                 this.calcResult = null;
                                 return false;
                             }
                             const norm = this.normalizeBreak(row, ts);
                             if (!norm) continue;
                             if (norm.beAdj <= norm.bsAdj) {
-                                this.validationError = `Przerwa #${i + 1}: godzina końca musi być późniejsza niż początku.`;
+                                this.validationError = 'Przerwa #' + (i + 1) + ': godzina końca musi być późniejsza niż początku.';
                                 this.calcResult = null;
                                 return false;
                             }
                             if (norm.bsAdj < ts) {
-                                this.validationError = `Przerwa #${i + 1}: musi zaczynać się po godzinie przyjścia.`;
+                                this.validationError = 'Przerwa #' + (i + 1) + ': musi zaczynać się po godzinie przyjścia.';
                                 this.calcResult = null;
                                 return false;
                             }
                             if (teAdj !== null && norm.beAdj > teAdj) {
-                                this.validationError = `Przerwa #${i + 1}: nie może kończyć się po godzinie wyjścia.`;
+                                this.validationError = 'Przerwa #' + (i + 1) + ': nie może kończyć się po godzinie wyjścia.';
                                 this.calcResult = null;
                                 return false;
                             }
