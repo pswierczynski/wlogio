@@ -26,7 +26,7 @@
                     validationError: null,
 
                     /* --- Wiele przerw: lista obiektów {start, end} --- */
-                    breakRows: {{ existing_breaks | default([]) | tojson }},
+                    breakRows: {{ (existing_breaks | default([]) | tojson) | forceescape }},
 
                     addBreakRow() {
                         this.breakRows.push({ start: '', end: '' });
