@@ -226,7 +226,6 @@
                                                 {% if entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% else %}—{% endif %}
                                             </td>
 
-                                            <!-- Przerwa jako pojedynczy czas: min(suma,15)min, + nadprogramowa jeśli > 0 -->
                                             <td class="col-break text-base-content/70 text-xs whitespace-nowrap">
                                                 {% if break_total_min.v > 0 %}
                                                     {% if break_total_min.v <= 15 %}
@@ -268,6 +267,8 @@
                                 </table>
                             </div>
 
+                            <!-- Podsumowanie miesiąca -->
+                            {% set overtime_amount = month.summary.overtime_hours * month.hourly_rate %}
                             <div class="border-t border-base-300 bg-base-200/60 px-3 sm:px-5 py-5 sm:py-6">
                                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 text-sm">
                                     <div>
@@ -285,6 +286,11 @@
                                         <div class="text-xs text-base-content/50 mb-0.5">Nadgodziny</div>
                                         <div class="font-semibold text-sm {% if month.summary.overtime_hours > 0 %}text-success{% elif month.summary.overtime_hours < 0 %}text-error{% endif %}">
                                             {% if month.summary.overtime_hours >= 0 %}+{% endif %}{{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h
+                                            {% if month.summary.overtime_hours != 0 and month.hourly_rate > 0 %}
+                                            <span class="block text-xs font-normal {% if month.summary.overtime_hours > 0 %}text-success/70{% else %}text-error/70{% endif %}">
+                                                ({% if overtime_amount >= 0 %}+{% endif %}{{ format_currency(overtime_amount) }})
+                                            </span>
+                                            {% endif %}
                                         </div>
                                     </div>
                                     <div>
