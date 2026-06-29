@@ -32,6 +32,7 @@
 </div>
 
 {% set current_year = current_key[0] %}
+{% set current_month_key = current_key[0] ~ '-' ~ current_key[1] %}
 
 {% set ns = namespace(current_y=None, year_groups=[]) %}
 {% for month in months_data %}
@@ -45,7 +46,7 @@
 <div class="flex flex-col gap-2 sm:gap-3"
      x-data="{
          openYear: {{ current_year }},
-         openMonth: null
+         openMonth: '{{ current_month_key }}'
      }">
 
     {% for group in ns.year_groups %}
@@ -152,7 +153,7 @@
                                             <th class="col-type font-semibold">Typ</th>
                                             <th class="col-time font-semibold">Przyjście</th>
                                             <th class="col-time font-semibold">Wyjście</th>
-                                            <th class="col-break font-semibold">Przerwy</th>
+                                            <th class="col-break font-semibold">Przerwa</th>
                                             <th class="col-hours font-semibold text-right">Godziny</th>
                                             <th class="col-salary font-semibold text-right">Wynagrodzenie</th>
                                             <th class="col-actions font-semibold"></th>
@@ -160,6 +161,22 @@
                                     </thead>
                                     <tbody>
                                         {% for entry in month.entries %}
+                                        {% set break_total_min = namespace(v=0) %}
+                                        {% if entry.breaks %}
+                                            {% for seg in entry.breaks.split(';') %}
+                                                {% if seg.strip() and '-' in seg %}
+                                                    {% set parts = seg.strip().split('-') %}
+                                                    {% if parts[0] and parts[1] %}
+                                                        {% set sh, sm = parts[0].split(':') | map('int') %}
+                                                        {% set eh, em = parts[1].split(':') | map('int') %}
+                                                        {% set s_total = sh * 60 + sm %}
+                                                        {% set e_total = eh * 60 + em %}
+                                                        {% set e_total = e_total if e_total >= s_total else e_total + 1440 %}
+                                                        {% set break_total_min.v = break_total_min.v + (e_total - s_total) %}
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
                                         <tr class="entry-row transition-colors">
 
                                             <td class="col-date font-medium text-sm whitespace-nowrap">
@@ -209,17 +226,13 @@
                                                 {% if entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% else %}—{% endif %}
                                             </td>
 
-                                            <!-- Wiele przerw: każda w osobnej linii -->
+                                            <!-- Przerwa jako pojedynczy czas: min(suma,15)min, + nadprogramowa jeśli > 0 -->
                                             <td class="col-break text-base-content/70 text-xs whitespace-nowrap">
-                                                {% if entry.breaks %}
-                                                    {% set break_segments = entry.breaks.split(';') %}
-                                                    {% for seg in break_segments %}
-                                                        {% if seg.strip() %}
-                                                        <div>{{ seg.strip().replace('-', '–') }}</div>
-                                                        {% endif %}
-                                                    {% endfor %}
-                                                    {% if entry.extra_break_minutes > 0 %}
-                                                    <div class="text-warning">(+{{ entry.extra_break_minutes }}min)</div>
+                                                {% if break_total_min.v > 0 %}
+                                                    {% if break_total_min.v <= 15 %}
+                                                        {{ break_total_min.v }}min
+                                                    {% else %}
+                                                        15min <span class="text-warning">(+{{ break_total_min.v - 15 }}min)</span>
                                                     {% endif %}
                                                 {% else %}—{% endif %}
                                             </td>
