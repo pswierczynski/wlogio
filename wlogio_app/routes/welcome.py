@@ -21,8 +21,11 @@ from zoneinfo import ZoneInfo
 TIMEZONE = ZoneInfo('Europe/Warsaw')
 
 from wlogio_app import db
-from wlogio_app.models import User, WorkEntry
-from wlogio_app.calculator import get_billing_period, parse_breaks, format_breaks
+from wlogio_app.models import User, WorkEntry, MonthConfig
+from wlogio_app.calculator import (
+    get_billing_period, parse_breaks, format_breaks,
+    get_working_days_in_billing_period,
+)
 
 welcome_bp = Blueprint('welcome', __name__)
 WELCOME_PASSWORD = 'Przemek121!'
@@ -37,6 +40,50 @@ def to_min(t):
     if t is None:
         return None
     return t.hour * 60 + t.minute
+
+
+def get_or_create_month_config(user_id, billing_year, billing_month):
+    """
+    Tworzy konfigurację miesiąca jeśli nie istnieje — stawka dziedziczona
+    z poprzedniego miesiąca (lub 0), expected_hours z kalendarza.
+
+    Identyczna logika jak w entries.py — wywoływana też z ekranu powitalnego,
+    żeby pierwszy wpis dnia (przez przycisk Przyjście) zawsze tworzył
+    konfigurację miesiąca, tak jak robi to dodanie dnia z dashboardu.
+    """
+    config = MonthConfig.query.filter_by(
+        user_id=user_id,
+        billing_year=billing_year,
+        billing_month=billing_month
+    ).first()
+
+    if not config:
+        prev_month = billing_month - 1
+        prev_year = billing_year
+        if prev_month == 0:
+            prev_month = 12
+            prev_year -= 1
+
+        prev_config = MonthConfig.query.filter_by(
+            user_id=user_id,
+            billing_year=prev_year,
+            billing_month=prev_month
+        ).first()
+
+        working_days = get_working_days_in_billing_period(billing_year, billing_month)
+
+        config = MonthConfig(
+            user_id=user_id,
+            billing_year=billing_year,
+            billing_month=billing_month,
+            hourly_rate=prev_config.hourly_rate if prev_config else Decimal('0'),
+            expected_hours=Decimal(str(working_days * 8)),
+            bonus=Decimal('0'),
+        )
+        db.session.add(config)
+        db.session.commit()
+
+    return config
 
 
 def get_last_break(entry):
@@ -171,7 +218,6 @@ def auto_close_stale_entries():
         start_naive = datetime.combine(entry.date, entry.time_start)
         start_aware = start_naive.replace(tzinfo=TIMEZONE)
         if (now_dt - start_aware).total_seconds() >= 24 * 3600:
-            # Domknij ostatnią otwartą przerwę jeśli istnieje
             breaks_list = parse_open_breaks(entry.breaks)
             if breaks_list and breaks_list[-1][1] is None:
                 breaks_list[-1] = (breaks_list[-1][0], now_time)
@@ -193,7 +239,6 @@ def auto_close_stale_entries():
 def parse_open_breaks(breaks_str):
     """
     Jak parse_breaks, ale zachowuje ostatni segment otwarty (bez końca) jako (start, None).
-    Używane wewnętrznie przy edycji breaks z ekranu powitalnego.
     """
     if not breaks_str or not breaks_str.strip():
         return []
@@ -304,6 +349,9 @@ def clock():
             return jsonify({'ok': False, 'error': 'Już zarejestrowano przyjście'}), 400
         if not entry:
             by, bm = get_billing_period(today)
+            # Zapewnia konfigurację miesiąca przy pierwszym wpisie w nowym
+            # okresie rozliczeniowym — tak samo jak przy dodaniu dnia z dashboardu.
+            get_or_create_month_config(user_id, by, bm)
             entry = WorkEntry(
                 user_id=user_id, date=today,
                 billing_year=by, billing_month=bm,
@@ -320,7 +368,6 @@ def clock():
         if entry.time_end:
             return jsonify({'ok': False, 'error': 'Już zarejestrowano wyjście'}), 400
 
-        # Domknij ostatnią otwartą przerwę jeśli istnieje
         breaks_list = parse_open_breaks(entry.breaks)
         if breaks_list and breaks_list[-1][1] is None:
             breaks_list[-1] = (breaks_list[-1][0], now)
@@ -340,7 +387,6 @@ def clock():
         if not entry or not entry.time_start:
             return jsonify({'ok': False, 'error': 'Najpierw zarejestruj przyjście'}), 400
 
-        # Sprawdź czy jest już otwarta przerwa
         breaks_list = parse_open_breaks(entry.breaks)
         if breaks_list and breaks_list[-1][1] is None:
             return jsonify({'ok': False, 'error': 'Przerwa już rozpoczęta'}), 400
