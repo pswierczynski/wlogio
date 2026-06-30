@@ -246,7 +246,7 @@
                                                 {% endif %}
                                             </td>
                                             <td class="col-salary text-right text-success font-medium text-sm whitespace-nowrap">
-                                                {% if month.hourly_rate > 0 and entry.entry_type != 'unpaid' and entry.time_end %}
+                                                {% if month.hourly_rate > 0 and entry.entry_type != 'unpaid' and (entry.time_end or entry.entry_type != 'work') %}
                                                     {{ format_currency(entry.hours_billed|float * month.hourly_rate) }}
                                                 {% else %}—{% endif %}
                                             </td>
