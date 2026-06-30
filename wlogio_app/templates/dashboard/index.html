@@ -298,10 +298,8 @@
                                         <div class="font-bold text-success text-sm">
                                             {{ format_currency(month.summary.actual_salary) }}
                                             {% if month.summary.bonus > 0 %}
-                                            <span class="block text-xs font-normal text-success/70">
-                                                (+{{ format_currency(month.summary.bonus) }} premia
-                                                = {{ format_currency(month.summary.total_with_bonus) }})
-                                            </span>
+                                            <span class="block text-xs font-normal text-success/70">(+{{ format_currency(month.summary.bonus) }} premia</span>
+                                            <span class="block text-xs font-normal text-success/70">= {{ format_currency(month.summary.total_with_bonus) }})</span>
                                             {% endif %}
                                         </div>
                                     </div>
