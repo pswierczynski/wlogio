@@ -8,9 +8,11 @@ Logika statusów (na podstawie time_start/time_end/breaks):
             ORAZ (brak end tej przerwy LUB aktualna godzina < end)
 'idle'    = wszystkie pozostałe przypadki
 
-Przerwy są przechowywane jako string "HH:MM-HH:MM;HH:MM-HH:MM" w kolumnie `breaks`.
-Każde kliknięcie "Przerwa" na ekranie powitalnym dodaje nowy segment "HH:MM-" (otwarty),
-każde kliknięcie "Koniec przerwy" domyka ostatni otwarty segment.
+Badge (niezależny od statusu, oparty na wpisie na dziś):
+'P' = praca zdalna (entry_type == 'work' AND is_remote == True)
+'U' = urlop dowolnego rodzaju (vacation, on_demand, unpaid, holiday)
+'Z' = zwolnienie lekarskie (sick_leave)
+None = brak badge'a (zwykła praca stacjonarna lub brak wpisu)
 """
 
 from flask import Blueprint, render_template, request, jsonify, session
@@ -46,10 +48,6 @@ def get_or_create_month_config(user_id, billing_year, billing_month):
     """
     Tworzy konfigurację miesiąca jeśli nie istnieje — stawka dziedziczona
     z poprzedniego miesiąca (lub 0), expected_hours z kalendarza.
-
-    Identyczna logika jak w entries.py — wywoływana też z ekranu powitalnego,
-    żeby pierwszy wpis dnia (przez przycisk Przyjście) zawsze tworzył
-    konfigurację miesiąca, tak jak robi to dodanie dnia z dashboardu.
     """
     config = MonthConfig.query.filter_by(
         user_id=user_id,
@@ -89,8 +87,6 @@ def get_or_create_month_config(user_id, billing_year, billing_month):
 def get_last_break(entry):
     """
     Zwraca ostatnią przerwę z entry.breaks jako (start_time, end_time_or_None).
-    end_time_or_None to None gdy ostatnia przerwa nie ma jeszcze końca
-    (reprezentowana w stringu jako "HH:MM-" bez końca).
     """
     if not entry or not entry.breaks:
         return None, None
@@ -146,7 +142,6 @@ def compute_status(entry):
     if end_min is not None and now >= end_min:
         return 'idle'
 
-    # Sprawdź ostatnią przerwę
     bs, be = get_last_break(entry)
     if bs is not None:
         bs_min = to_min(bs)
@@ -164,6 +159,34 @@ def compute_status(entry):
             return 'break'
 
     return 'working'
+
+
+def compute_badge(entry):
+    """
+    Oblicza typ badge'a na podstawie wpisu na dziś.
+    Zwraca: 'P' | 'U' | 'Z' | None
+
+    Badge jest niezależny od aktualnego statusu (working/break/idle) —
+    odzwierciedla charakter dnia, nie chwilowy stan użytkownika.
+
+    'P' — praca zdalna (work + is_remote)
+    'U' — urlop dowolnego rodzaju: vacation, on_demand, unpaid, holiday
+    'Z' — zwolnienie lekarskie: sick_leave
+    None — zwykła praca stacjonarna lub brak wpisu na dziś
+    """
+    if entry is None:
+        return None
+
+    if entry.entry_type == 'sick_leave':
+        return 'Z'
+
+    if entry.entry_type in ('vacation', 'on_demand', 'unpaid', 'holiday'):
+        return 'U'
+
+    if entry.entry_type == 'work' and entry.is_remote:
+        return 'P'
+
+    return None
 
 
 def get_today_entry(user_id):
@@ -187,23 +210,29 @@ def index():
     today = datetime.now(TIMEZONE).date()
 
     user_statuses = {}
+    user_badges = {}
     for user in users:
         entry = WorkEntry.query.filter_by(user_id=user.id, date=today).first()
         user_statuses[user.id] = compute_status(entry)
+        user_badges[user.id]   = compute_badge(entry)
 
-    return render_template('welcome/index.html', users=users, user_statuses=user_statuses)
+    return render_template(
+        'welcome/index.html',
+        users=users,
+        user_statuses=user_statuses,
+        user_badges=user_badges,
+    )
 
 
 def auto_close_stale_entries():
     """
     Zamyka wpisy gdzie time_start ustawiony ale time_end brak
-    i od time_start minęło >= 24 godziny. Domyka też ostatnią otwartą przerwę.
+    i od time_start minęło >= 24 godziny.
     """
     from wlogio_app.calculator import calculate_hours
 
     now_dt   = datetime.now(TIMEZONE)
     now_time = now_dt.time()
-
     today     = now_dt.date()
     yesterday = today - timedelta(days=1)
 
@@ -237,36 +266,30 @@ def auto_close_stale_entries():
 
 
 def parse_open_breaks(breaks_str):
-    """
-    Jak parse_breaks, ale zachowuje ostatni segment otwarty (bez końca) jako (start, None).
-    """
     if not breaks_str or not breaks_str.strip():
         return []
     result = []
-    segments = [s.strip() for s in breaks_str.split(';') if s.strip()]
-    for idx, seg in enumerate(segments):
+    for seg in breaks_str.split(';'):
+        seg = seg.strip()
         if '-' not in seg:
             continue
         start_str, end_str = seg.split('-', 1)
-        start_str = start_str.strip()
-        end_str = end_str.strip()
         try:
-            start_t = datetime.strptime(start_str, '%H:%M').time()
+            start_t = datetime.strptime(start_str.strip(), '%H:%M').time()
         except ValueError:
             continue
+        end_str = end_str.strip()
+        end_t = None
         if end_str:
             try:
                 end_t = datetime.strptime(end_str, '%H:%M').time()
             except ValueError:
                 end_t = None
-        else:
-            end_t = None
         result.append((start_t, end_t))
     return result
 
 
 def format_breaks_with_open(breaks_list):
-    """Jak format_breaks, ale akceptuje (start, None) dla otwartej przerwy."""
     if not breaks_list:
         return None
     segments = []
@@ -286,7 +309,10 @@ def statuses():
     result = {}
     for user in users:
         entry = WorkEntry.query.filter_by(user_id=user.id, date=today).first()
-        result[str(user.id)] = compute_status(entry)
+        result[str(user.id)] = {
+            'status': compute_status(entry),
+            'badge':  compute_badge(entry),
+        }
     return jsonify(result)
 
 
@@ -318,6 +344,7 @@ def verify_pin():
         'ok': True,
         'user_name': user.name or user.email,
         'status': compute_status(entry),
+        'badge':  compute_badge(entry),
         'date': (entry.date if entry else today).strftime('%d.%m.%Y'),
         'clock_in':    entry.time_start.strftime('%H:%M')  if entry and entry.time_start  else None,
         'clock_out':   entry.time_end.strftime('%H:%M')    if entry and entry.time_end    else None,
@@ -349,8 +376,6 @@ def clock():
             return jsonify({'ok': False, 'error': 'Już zarejestrowano przyjście'}), 400
         if not entry:
             by, bm = get_billing_period(today)
-            # Zapewnia konfigurację miesiąca przy pierwszym wpisie w nowym
-            # okresie rozliczeniowym — tak samo jak przy dodaniu dnia z dashboardu.
             get_or_create_month_config(user_id, by, bm)
             entry = WorkEntry(
                 user_id=user_id, date=today,
@@ -418,6 +443,7 @@ def clock():
         'ok': True,
         'label': label,
         'status': compute_status(entry),
+        'badge':  compute_badge(entry),
         'clock_in':    entry.time_start.strftime('%H:%M')  if entry.time_start  else None,
         'clock_out':   entry.time_end.strftime('%H:%M')    if entry.time_end    else None,
         'break_start': last_bs.strftime('%H:%M') if last_bs else None,
