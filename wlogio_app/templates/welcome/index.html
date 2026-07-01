@@ -40,7 +40,7 @@
             to { opacity: 1; }
         }
         .animate-slide-up { animation: slideUp 0.4s ease forwards; }
-        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+        .animate-fade-in  { animation: fadeIn 0.3s ease forwards; }
 
         @keyframes labelAppear {
             0%   { opacity: 0; transform: translateY(-4px); }
@@ -55,6 +55,35 @@
         .avatar-idle    { opacity: 0.5; }
         .avatar-working { opacity: 1; }
         .avatar-break   { opacity: 1; }
+
+        /* Badge P/U/Z — kółko nachodzące na obramowanie avatara */
+        .avatar-wrapper {
+            position: relative;
+            display: inline-block;
+            border-radius: 50%;
+        }
+        .status-badge {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #fff;
+            border: 2px solid #fff;
+            line-height: 1;
+            z-index: 10;
+            pointer-events: none;
+        }
+        /* Kolor kółka = kolor obramowania aktualnego statusu */
+        .badge-working { background-color: #22c55e; }
+        .badge-break   { background-color: #f59e0b; }
+        .badge-idle    { background-color: rgba(0,0,0,0.25); }
 
         .pin-digit {
             width: 60px; height: 70px;
@@ -96,8 +125,6 @@
             color: oklch(var(--bc) / 0.4);
         }
 
-        /* Kontener ekranu clock: flex-col z resztą miejsca zarezerwowaną
-           na dole dla przycisku Gotowe — nie przesuwa się przy zmianach treści */
         .clock-screen-wrapper {
             display: flex;
             flex-direction: column;
@@ -112,6 +139,7 @@
 
 <script>
 const INIT_STATUSES = {{ user_statuses | tojson }};
+const INIT_BADGES   = {{ user_badges | tojson }};
 </script>
 
 <div x-data="welcomeApp()" x-init="init()" class="min-h-screen flex flex-col">
@@ -145,26 +173,38 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
             {% for user in users %}
             {% set uid = user.id %}
             {% set status = user_statuses.get(uid, 'idle') %}
+            {% set badge  = user_badges.get(uid) %}
 
             <button class="avatar-btn flex flex-col items-center gap-3"
                     data-uid="{{ uid }}"
                     data-name="{{ (user.name or user.email.split('@')[0])|e }}"
-                    data-avatar="{{ (user.avatar or '')|e }}">
+                    data-avatar="{{ (user.avatar or '')|e }}"
+                    data-badge="{{ badge or '' }}">
 
-                <div id="av-{{ uid }}"
-                     class="rounded-full overflow-hidden w-32 h-32 shrink-0
-                            ring-status-{{ status }} avatar-{{ status }}"
-                     style="border-radius: 50%;">
-                    {% if user.avatar %}
-                    <img src="{{ user.avatar }}" alt="{{ user.name or '' }}"
-                         class="w-full h-full object-cover"/>
-                    {% else %}
-                    <div class="w-full h-full bg-neutral flex items-center justify-center">
-                        <span class="text-4xl font-bold text-white select-none">
-                            {% set parts = (user.name or user.email.split('@')[0]).split(' ') %}
-                            {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
-                        </span>
+                <!-- Wrapper z relatywną pozycją dla badge'a -->
+                <div class="avatar-wrapper w-32 h-32 shrink-0">
+                    <div id="av-{{ uid }}"
+                         class="rounded-full overflow-hidden w-32 h-32
+                                ring-status-{{ status }} avatar-{{ status }}"
+                         style="border-radius: 50%;">
+                        {% if user.avatar %}
+                        <img src="{{ user.avatar }}" alt="{{ user.name or '' }}"
+                             class="w-full h-full object-cover"/>
+                        {% else %}
+                        <div class="w-full h-full bg-neutral flex items-center justify-center">
+                            <span class="text-4xl font-bold text-white select-none">
+                                {% set parts = (user.name or user.email.split('@')[0]).split(' ') %}
+                                {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
+                            </span>
+                        </div>
+                        {% endif %}
                     </div>
+                    <!-- Badge P/U/Z — kolor ustawiony przez JS przy inicjalizacji -->
+                    {% if badge %}
+                    <div id="badge-{{ uid }}"
+                         class="status-badge badge-{{ status }}">{{ badge }}</div>
+                    {% else %}
+                    <div id="badge-{{ uid }}" class="status-badge" style="display:none;"></div>
                     {% endif %}
                 </div>
 
@@ -194,17 +234,24 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
     <div x-show="screen === 'pin'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
 
-        <div class="rounded-full overflow-hidden w-20 h-20 mb-6"
-             :class="'ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
-             style="border-radius: 50%;">
-            <template x-if="selectedAvatar">
-                <img :src="selectedAvatar" class="w-full h-full object-cover"/>
-            </template>
-            <template x-if="!selectedAvatar">
-                <div class="w-full h-full bg-neutral flex items-center justify-center">
-                    <span class="text-2xl font-bold text-white" x-text="getInitials(selectedName)"></span>
-                </div>
-            </template>
+        <!-- Avatar z badge'm na ekranie PIN -->
+        <div class="avatar-wrapper w-20 h-20 mb-6">
+            <div class="rounded-full overflow-hidden w-20 h-20"
+                 :class="'ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
+                 style="border-radius: 50%;">
+                <template x-if="selectedAvatar">
+                    <img :src="selectedAvatar" class="w-full h-full object-cover"/>
+                </template>
+                <template x-if="!selectedAvatar">
+                    <div class="w-full h-full bg-neutral flex items-center justify-center">
+                        <span class="text-2xl font-bold text-white" x-text="getInitials(selectedName)"></span>
+                    </div>
+                </template>
+            </div>
+            <div x-show="selectedBadge"
+                 class="status-badge"
+                 :class="'badge-' + (statuses[String(selectedUserId)] || 'idle')"
+                 x-text="selectedBadge"></div>
         </div>
 
         <h2 class="text-xl font-bold mb-1" x-text="selectedName"></h2>
@@ -245,25 +292,29 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
     </div>
 
     <!-- EKRAN 3: Przyciski czasu pracy -->
-    <!-- Struktura: clock-screen-wrapper (flex-1, centruje treść w środku)
-         + przycisk Gotowe ZAWSZE na dole, poza wrapperem — nie przesuwa się
-         niezależnie od tego ile miejsca zajmie treść powyżej. -->
     <div x-show="screen === 'clock'" x-cloak
          class="flex-1 flex flex-col p-8 animate-slide-up">
 
         <div class="clock-screen-wrapper">
 
-            <div class="rounded-full overflow-hidden w-16 h-16 mb-4"
-                 :class="'ring-status-' + clockStatus + ' avatar-' + clockStatus"
-                 style="border-radius: 50%;">
-                <template x-if="selectedAvatar">
-                    <img :src="selectedAvatar" class="w-full h-full object-cover"/>
-                </template>
-                <template x-if="!selectedAvatar">
-                    <div class="w-full h-full bg-neutral flex items-center justify-center">
-                        <span class="text-xl font-bold text-white" x-text="getInitials(selectedName)"></span>
-                    </div>
-                </template>
+            <!-- Avatar z badge'm na ekranie clock -->
+            <div class="avatar-wrapper w-16 h-16 mb-4">
+                <div class="rounded-full overflow-hidden w-16 h-16"
+                     :class="'ring-status-' + clockStatus + ' avatar-' + clockStatus"
+                     style="border-radius: 50%;">
+                    <template x-if="selectedAvatar">
+                        <img :src="selectedAvatar" class="w-full h-full object-cover"/>
+                    </template>
+                    <template x-if="!selectedAvatar">
+                        <div class="w-full h-full bg-neutral flex items-center justify-center">
+                            <span class="text-xl font-bold text-white" x-text="getInitials(selectedName)"></span>
+                        </div>
+                    </template>
+                </div>
+                <div x-show="selectedBadge"
+                     class="status-badge"
+                     :class="'badge-' + clockStatus"
+                     x-text="selectedBadge"></div>
             </div>
 
             <h2 class="text-xl font-bold mb-1" x-text="selectedName"></h2>
@@ -301,7 +352,7 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
                     </div>
                 </div>
 
-                <!-- Przerwa (możliwość wielu przerw) -->
+                <!-- Przerwa -->
                 <div class="flex flex-col items-center gap-3">
                     <button @click="clockAction('break_start')"
                             :disabled="clockStatus !== 'working'"
@@ -327,7 +378,6 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
                         </svg>
                         Koniec przerwy
                     </button>
-                    <!-- Stała wysokość niezależna od liczby linii tekstu wewnątrz -->
                     <div class="text-sm font-medium text-center text-warning leading-relaxed min-h-[2.5rem] flex flex-col items-center justify-center">
                         <span x-show="breakStart" x-text="'Przerwa od: ' + breakStart" class="block label-appear"></span>
                         <span x-show="breakEnd"   x-text="'do: ' + breakEnd"           class="block label-appear"></span>
@@ -340,7 +390,6 @@ const INIT_STATUSES = {{ user_statuses | tojson }};
 
         </div>
 
-        <!-- Gotowe — zawsze przyklejone do dołu, poza wrapperem flex-1 -->
         <div class="flex justify-center">
             <button @click="logout()"
                     class="btn btn-ghost btn-sm text-base-content/40">
@@ -361,7 +410,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 window._welcomeSelectUser(
                     parseInt(this.dataset.uid),
                     this.dataset.name,
-                    this.dataset.avatar
+                    this.dataset.avatar,
+                    this.dataset.badge || null
                 );
             }
         });
@@ -372,9 +422,11 @@ function welcomeApp() {
     return {
         screen: 'avatars',
         statuses: {...INIT_STATUSES},
+        badges:   {...INIT_BADGES},
         selectedUserId: null,
         selectedName: '',
         selectedAvatar: '',
+        selectedBadge: null,
         pin: '',
         pinError: false,
         clockIn: null,
@@ -388,7 +440,8 @@ function welcomeApp() {
         currentDate: '',
 
         init() {
-            window._welcomeSelectUser = (uid, name, avatar) => this.selectUser(uid, name, avatar);
+            window._welcomeSelectUser = (uid, name, avatar, badge) =>
+                this.selectUser(uid, name, avatar, badge);
             this.updateClock();
             setInterval(() => this.updateClock(), 1000);
             setInterval(() => this.fetchStatuses(), 10000);
@@ -400,22 +453,48 @@ function welcomeApp() {
             this.currentDate = now.toLocaleDateString('pl-PL', {weekday: 'long', day: 'numeric', month: 'long'});
         },
 
+        /* Aktualizuje klasę CSS badge'a dla danego avatara na siatce */
+        updateAvatarBadge(uid, status, badge) {
+            const badgeEl = document.getElementById('badge-' + uid);
+            if (!badgeEl) return;
+            if (badge) {
+                badgeEl.textContent = badge;
+                badgeEl.style.display = '';
+                badgeEl.className = 'status-badge badge-' + status;
+            } else {
+                badgeEl.style.display = 'none';
+            }
+        },
+
         async fetchStatuses() {
             try {
                 const r = await fetch('/welcome/statuses');
                 if (r.ok) {
                     const data = await r.json();
-                    this.statuses = data;
-                    Object.entries(data).forEach(([uid, status]) => {
+                    /* Nowy format: {uid: {status, badge}} */
+                    Object.entries(data).forEach(([uid, info]) => {
+                        const status = info.status || 'idle';
+                        const badge  = info.badge  || null;
+                        this.statuses[uid] = status;
+                        this.badges[uid]   = badge;
+
+                        /* Aktualizuj obramowanie avatara */
                         const el = document.getElementById('av-' + uid);
                         if (el) {
                             el.className = el.className
                                 .replace(/ring-status-\w+/g, 'ring-status-' + status)
                                 .replace(/avatar-\w+/g, 'avatar-' + status);
                         }
+                        /* Aktualizuj badge */
+                        this.updateAvatarBadge(uid, status, badge);
                     });
+                    /* Odśwież clockStatus jeśli jesteśmy na ekranie clock */
                     if (this.screen === 'clock' && this.selectedUserId) {
-                        this.clockStatus = data[String(this.selectedUserId)] || 'idle';
+                        const info = data[String(this.selectedUserId)];
+                        if (info) {
+                            this.clockStatus   = info.status || 'idle';
+                            this.selectedBadge = info.badge  || null;
+                        }
                     }
                 }
             } catch (e) { /* ignoruj błędy sieciowe */ }
@@ -427,10 +506,11 @@ function welcomeApp() {
             return (parts[0][0] || '?').toUpperCase();
         },
 
-        selectUser(userId, name, avatar) {
+        selectUser(userId, name, avatar, badge) {
             this.selectedUserId = userId;
             this.selectedName   = name;
             this.selectedAvatar = avatar;
+            this.selectedBadge  = badge;
             this.pin            = '';
             this.pinError       = false;
             this.screen         = 'pin';
@@ -454,7 +534,7 @@ function welcomeApp() {
             });
 
             if (r.ok) {
-                const data    = await r.json();
+                const data       = await r.json();
                 this.clockIn     = data.clock_in;
                 this.clockOut    = data.clock_out;
                 this.breakStart  = data.break_start;
@@ -462,7 +542,9 @@ function welcomeApp() {
                 this.breaksCount = data.breaks_count || 0;
                 this.clockDate   = data.date;
                 this.clockStatus = data.status || 'idle';
+                this.selectedBadge = data.badge || null;
                 this.statuses[String(this.selectedUserId)] = this.clockStatus;
+                this.badges[String(this.selectedUserId)]   = this.selectedBadge;
                 this.screen      = 'clock';
             } else {
                 this.pinError = true;
@@ -489,7 +571,9 @@ function welcomeApp() {
                 this.breakEnd    = data.break_end;
                 this.breaksCount = data.breaks_count || 0;
                 this.clockStatus = data.status || 'idle';
+                this.selectedBadge = data.badge || null;
                 this.statuses[String(this.selectedUserId)] = this.clockStatus;
+                this.badges[String(this.selectedUserId)]   = this.selectedBadge;
                 this.fetchStatuses();
             }
         },
@@ -504,6 +588,7 @@ function welcomeApp() {
             this.breakEnd       = null;
             this.breaksCount    = 0;
             this.clockStatus    = 'idle';
+            this.selectedBadge  = null;
             this.fetchStatuses();
         }
     }
