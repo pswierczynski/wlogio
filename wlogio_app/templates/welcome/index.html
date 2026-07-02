@@ -66,24 +66,24 @@
             position: absolute;
             bottom: 2px;
             right: 2px;
-            width: 22px;
-            height: 22px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.65rem;
-            font-weight: 700;
-            color: #fff;
-            border: 2px solid #fff;
-            line-height: 1;
+            border: 2.5px solid #fff;
             z-index: 10;
             pointer-events: none;
         }
-        /* Kolor kółka = kolor obramowania aktualnego statusu */
-        .badge-working { background-color: #22c55e; }
-        .badge-break   { background-color: #f59e0b; }
-        .badge-idle    { background-color: rgba(0,0,0,0.25); }
+        .status-badge svg {
+            width: 15px;
+            height: 15px;
+        }
+        /* Kolor zalezy od TYPU badge'a — zawsze pelny, nieprzezroczysty */
+        .badge-type-P { background-color: #22c55e; }
+        .badge-type-U { background-color: #f59e0b; }
+        .badge-type-Z { background-color: #94a3b8; }
 
         .pin-digit {
             width: 60px; height: 70px;
@@ -199,13 +199,24 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                         </div>
                         {% endif %}
                     </div>
-                    <!-- Badge P/U/Z — kolor ustawiony przez JS przy inicjalizacji -->
-                    {% if badge %}
+                    <!-- Badge P/U/Z — ikona SVG, kolor zalezy od typu -->
                     <div id="badge-{{ uid }}"
-                         class="status-badge badge-{{ status }}">{{ badge }}</div>
-                    {% else %}
-                    <div id="badge-{{ uid }}" class="status-badge" style="display:none;"></div>
-                    {% endif %}
+                         class="status-badge{% if badge %} badge-type-{{ badge }}{% endif %}"
+                         {% if not badge %}style="display:none;"{% endif %}>
+                        {% if badge == 'P' %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                        </svg>
+                        {% elif badge == 'U' %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        {% elif badge == 'Z' %}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+                        </svg>
+                        {% endif %}
+                    </div>
                 </div>
 
                 <div class="text-xs font-medium text-center max-w-[140px] leading-snug text-base-content/80">
@@ -250,8 +261,8 @@ const INIT_BADGES   = {{ user_badges | tojson }};
             </div>
             <div x-show="selectedBadge"
                  class="status-badge"
-                 :class="'badge-' + (statuses[String(selectedUserId)] || 'idle')"
-                 x-text="selectedBadge"></div>
+                 :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
+                 x-html="selectedBadge ? (BADGE_ICONS[selectedBadge] || '') : ''"></div>
         </div>
 
         <h2 class="text-xl font-bold mb-1" x-text="selectedName"></h2>
@@ -313,8 +324,8 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                 </div>
                 <div x-show="selectedBadge"
                      class="status-badge"
-                     :class="'badge-' + clockStatus"
-                     x-text="selectedBadge"></div>
+                     :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
+                     x-html="selectedBadge ? (BADGE_ICONS[selectedBadge] || '') : ''"></div>
             </div>
 
             <h2 class="text-xl font-bold mb-1" x-text="selectedName"></h2>
@@ -418,6 +429,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+const BADGE_ICONS = window.BADGE_ICONS = {
+    'P': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+    'U': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    'Z': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+};
+
 function welcomeApp() {
     return {
         screen: 'avatars',
@@ -453,16 +470,17 @@ function welcomeApp() {
             this.currentDate = now.toLocaleDateString('pl-PL', {weekday: 'long', day: 'numeric', month: 'long'});
         },
 
-        /* Aktualizuje klasę CSS badge'a dla danego avatara na siatce */
+        /* Aktualizuje badge danego avatara na siatce */
         updateAvatarBadge(uid, status, badge) {
             const badgeEl = document.getElementById('badge-' + uid);
             if (!badgeEl) return;
-            if (badge) {
-                badgeEl.textContent = badge;
+            if (badge && BADGE_ICONS[badge]) {
+                badgeEl.innerHTML = BADGE_ICONS[badge];
                 badgeEl.style.display = '';
-                badgeEl.className = 'status-badge badge-' + status;
+                badgeEl.className = 'status-badge badge-type-' + badge;
             } else {
                 badgeEl.style.display = 'none';
+                badgeEl.className = 'status-badge';
             }
         },
 
