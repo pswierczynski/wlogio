@@ -209,11 +209,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                         </svg>
                         {% elif badge == 'U' %}
                         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <g transform="rotate(-22,12,12)">
-                                <path d="M2 12 C2 2 22 2 22 12"/>
-                                <path d="M2 12 Q3.8 9.8 5.6 12 Q7.4 14.2 9.2 12 Q11 9.8 12 12 Q13 14.2 14.8 12 Q16.6 9.8 18.4 12 Q20.2 14.2 22 12"/>
-                                <line x1="12" y1="12" x2="12" y2="22"/>
-                            </g>
+                            <circle cx="12" cy="6" r="3"/><path d="M4 14 Q7 9 10 14 Q13 19 16 14 Q19 9 22 14"/><path d="M4 20 Q7 15 10 20 Q13 25 16 20 Q19 15 22 20"/>
                         </svg>
                         {% elif badge == 'Z' %}
                         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -435,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 const BADGE_ICONS = window.BADGE_ICONS = {
     'P': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="#fff" stroke="none"/></svg>',
-    'U': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-22,12,12)"><path d="M2 12 C2 2 22 2 22 12"/><path d="M2 12 Q3.8 9.8 5.6 12 Q7.4 14.2 9.2 12 Q11 9.8 12 12 Q13 14.2 14.8 12 Q16.6 9.8 18.4 12 Q20.2 14.2 22 12"/><line x1="12" y1="12" x2="12" y2="22"/></g></svg>',
+    'U': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="3"/><path d="M4 14 Q7 9 10 14 Q13 19 16 14 Q19 9 22 14"/><path d="M4 20 Q7 15 10 20 Q13 25 16 20 Q19 15 22 20"/></svg>',
     'Z': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>',
 };
 
