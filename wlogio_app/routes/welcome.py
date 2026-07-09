@@ -161,17 +161,17 @@ def compute_status(entry):
     return 'working'
 
 
-def compute_badge(entry):
+def compute_badge(entry, status=None):
     """
-    Oblicza typ badge'a na podstawie wpisu na dziś.
+    Oblicza typ badge'a na podstawie wpisu na dziś i aktualnego statusu.
     Zwraca: 'P' | 'U' | 'Z' | None
 
-    Badge jest niezależny od aktualnego statusu (working/break/idle) —
-    odzwierciedla charakter dnia, nie chwilowy stan użytkownika.
-
-    'P' — praca zdalna (work + is_remote)
+    'P' — praca zdalna (work + is_remote) — TYLKO gdy status == 'working'
+          Znika przy przerwie i po zakończeniu pracy (status idle/break).
     'U' — urlop dowolnego rodzaju: vacation, on_demand, unpaid, holiday
+          Wyświetlany zawsze niezależnie od statusu.
     'Z' — zwolnienie lekarskie: sick_leave
+          Wyświetlany zawsze niezależnie od statusu.
     None — zwykła praca stacjonarna lub brak wpisu na dziś
     """
     if entry is None:
@@ -184,7 +184,10 @@ def compute_badge(entry):
         return 'U'
 
     if entry.entry_type == 'work' and entry.is_remote:
-        return 'P'
+        # Badge P widoczny tylko gdy użytkownik aktualnie pracuje (nie na przerwie, nie idle)
+        if status == 'working':
+            return 'P'
+        return None
 
     return None
 
@@ -213,8 +216,9 @@ def index():
     user_badges = {}
     for user in users:
         entry = WorkEntry.query.filter_by(user_id=user.id, date=today).first()
-        user_statuses[user.id] = compute_status(entry)
-        user_badges[user.id]   = compute_badge(entry)
+        status = compute_status(entry)
+        user_statuses[user.id] = status
+        user_badges[user.id]   = compute_badge(entry, status)
 
     return render_template(
         'welcome/index.html',
@@ -309,9 +313,10 @@ def statuses():
     result = {}
     for user in users:
         entry = WorkEntry.query.filter_by(user_id=user.id, date=today).first()
+        status = compute_status(entry)
         result[str(user.id)] = {
-            'status': compute_status(entry),
-            'badge':  compute_badge(entry),
+            'status': status,
+            'badge':  compute_badge(entry, status),
         }
     return jsonify(result)
 
@@ -338,13 +343,14 @@ def verify_pin():
     today = datetime.now(TIMEZONE).date()
     entry = get_today_entry(user_id)
 
+    status = compute_status(entry)
     last_bs, last_be = get_last_break(entry) if entry else (None, None)
 
     return jsonify({
         'ok': True,
         'user_name': user.name or user.email,
-        'status': compute_status(entry),
-        'badge':  compute_badge(entry),
+        'status': status,
+        'badge':  compute_badge(entry, status),
         'date': (entry.date if entry else today).strftime('%d.%m.%Y'),
         'clock_in':    entry.time_start.strftime('%H:%M')  if entry and entry.time_start  else None,
         'clock_out':   entry.time_end.strftime('%H:%M')    if entry and entry.time_end    else None,
@@ -438,12 +444,13 @@ def clock():
     db.session.commit()
 
     last_bs, last_be = get_last_break(entry)
+    final_status = compute_status(entry)
 
     return jsonify({
         'ok': True,
         'label': label,
-        'status': compute_status(entry),
-        'badge':  compute_badge(entry),
+        'status': final_status,
+        'badge':  compute_badge(entry, final_status),
         'clock_in':    entry.time_start.strftime('%H:%M')  if entry.time_start  else None,
         'clock_out':   entry.time_end.strftime('%H:%M')    if entry.time_end    else None,
         'break_start': last_bs.strftime('%H:%M') if last_bs else None,
