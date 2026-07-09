@@ -336,7 +336,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                 <!-- Przyjście / Wyjście -->
                 <div class="flex flex-col items-center gap-3">
                     <button @click="clockAction('clock_in')"
-                            :disabled="!!clockIn"
+                            :disabled="!!clockIn || isDayOff"
                             x-show="!clockIn"
                             class="clock-btn bg-success text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
@@ -347,7 +347,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                         Przyjście
                     </button>
                     <button @click="clockAction('clock_out')"
-                            :disabled="!clockIn || !!clockOut"
+                            :disabled="!clockIn || !!clockOut || isDayOff"
                             x-show="clockIn"
                             class="clock-btn bg-error text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
@@ -366,7 +366,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                 <!-- Przerwa -->
                 <div class="flex flex-col items-center gap-3">
                     <button @click="clockAction('break_start')"
-                            :disabled="clockStatus !== 'working'"
+                            :disabled="clockStatus !== 'working' || isDayOff"
                             x-show="clockStatus !== 'break'"
                             class="clock-btn bg-warning text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
@@ -377,7 +377,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                         Przerwa
                     </button>
                     <button @click="clockAction('break_end')"
-                            :disabled="clockStatus !== 'break'"
+                            :disabled="clockStatus !== 'break' || isDayOff"
                             x-show="clockStatus === 'break'"
                             class="clock-btn bg-info text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
@@ -455,6 +455,10 @@ function welcomeApp() {
         clockStatus: 'idle',
         currentTime: '',
         currentDate: '',
+
+        get isDayOff() {
+            return this.selectedBadge === 'U' || this.selectedBadge === 'Z';
+        },
 
         init() {
             window._welcomeSelectUser = (uid, name, avatar, badge) =>
