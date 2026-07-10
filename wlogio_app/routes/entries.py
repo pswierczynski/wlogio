@@ -149,13 +149,14 @@ def add():
                            today=today.strftime('%Y-%m-%d'),
                            next_vacation=next_vacation,
                            next_remote=next_remote,
-                           remaining_vacation=max(0, remaining_vacation))
+                           remaining_vacation=max(0, remaining_vacation),
+                           existing_breaks=[])
 
 
 @entries_bp.route('/range-preview', methods=['POST'])
 @login_required
 def range_preview():
-    """Zwraca podgląd zakresu urlopów (JSON)."""
+    """Zwraca podgląd zakresu dni (JSON)."""
     data = request.get_json()
     date_from_str = data.get('date_from', '')
     date_to_str   = data.get('date_to', '')
@@ -220,8 +221,26 @@ def range_preview():
             'days': days_detail,
         })
 
-    else:
-        days_detail = [{'date': d.strftime('%d.%m.%Y'), 'type': 'unpaid'} for d in working_days]
+    elif range_type == 'sick_leave':
+        # Zwolnienie lekarskie — wszystkie dni jako sick_leave
+        days_detail = [
+            {'date': d.strftime('%d.%m.%Y'), 'type': 'sick_leave'}
+            for d in working_days
+        ]
+        return jsonify({
+            'ok': True,
+            'total_days': len(working_days),
+            'vacation_days': 0,
+            'unpaid_days': 0,
+            'remaining_before': 0,
+            'days': days_detail,
+        })
+
+    else:  # unpaid
+        days_detail = [
+            {'date': d.strftime('%d.%m.%Y'), 'type': 'unpaid'}
+            for d in working_days
+        ]
         return jsonify({
             'ok': True,
             'total_days': len(working_days),
@@ -235,7 +254,7 @@ def range_preview():
 @entries_bp.route('/add-range', methods=['POST'])
 @login_required
 def add_range():
-    """Zapisuje zakres urlopów do bazy."""
+    """Zapisuje zakres dni do bazy."""
     date_from_str = request.form.get('date_from', '')
     date_to_str   = request.form.get('date_to', '')
     range_type    = request.form.get('range_type', 'vacation')
@@ -280,13 +299,22 @@ def add_range():
 
     added = 0
     for i, entry_date in enumerate(working_days):
+        # Wyznacz typ wpisu
         if range_type == 'vacation':
             entry_type = 'vacation' if i < remaining else 'unpaid'
+        elif range_type == 'sick_leave':
+            entry_type = 'sick_leave'
         else:
             entry_type = 'unpaid'
 
         billing_year, billing_month = get_billing_period(entry_date)
         get_or_create_month_config(current_user.id, billing_year, billing_month)
+
+        # sick_leave i vacation mają 8h, unpaid ma 0h
+        if entry_type == 'unpaid':
+            hours = Decimal('0')
+        else:
+            hours = Decimal('8')
 
         entry = WorkEntry(
             user_id=current_user.id,
@@ -294,8 +322,8 @@ def add_range():
             billing_year=billing_year,
             billing_month=billing_month,
             entry_type=entry_type,
-            hours_worked=Decimal('0') if entry_type == 'unpaid' else Decimal('8'),
-            hours_billed=Decimal('0') if entry_type == 'unpaid' else Decimal('8'),
+            hours_worked=hours,
+            hours_billed=hours,
             notes=notes,
         )
 
@@ -385,7 +413,6 @@ def edit(entry_id):
         flash(f'Zaktualizowano wpis dla {entry.date.strftime("%d.%m.%Y")}.', 'success')
         return redirect(url_for('dashboard.index'))
 
-    # Przygotuj listę przerw dla formularza (lista stringów "HH:MM-HH:MM")
     existing_breaks = []
     if entry.breaks:
         for bs, be in parse_breaks(entry.breaks):
@@ -446,22 +473,7 @@ def delete(entry_id):
 
 def _fill_work_entry(entry, form):
     """
-    Wypełnia pola czasowe wpisu z danych formularza, z obsługą WIELU przerw.
-
-    Formularz przesyła:
-    - time_start, time_end (jak dotychczas)
-    - break_start_1, break_end_1, break_start_2, break_end_2, ... (dynamiczne wiersze)
-
-    Walidacja:
-    - time_start wymagany
-    - time_end opcjonalny (przez północ: end < start → +24h)
-    - każda przerwa musi mieć start i end (niekompletne wiersze są ignorowane —
-      walidacja JS nie powinna pozwolić na wysłanie niekompletnego wiersza,
-      ale backend i tak weryfikuje)
-    - przerwy muszą mieścić się w przedziale time_start..time_end (gdy time_end ustawiony)
-    - przerwy NIE mogą się nakładać
-    - przerwy są sortowane chronologicznie przed zapisem
-
+    Wypełnia pola czasowe wpisu z danych formularza, z obsługą wielu przerw.
     Zwraca (True, None) gdy OK, (False, komunikat) gdy błąd.
     """
 
@@ -495,8 +507,6 @@ def _fill_work_entry(entry, form):
     else:
         te = None
 
-    # --- Zbierz wszystkie przerwy z dynamicznych pól formularza ---
-    # Pola nazwane break_start_0, break_end_0, break_start_1, break_end_1, ...
     raw_breaks = []
     i = 0
     while True:
@@ -508,7 +518,6 @@ def _fill_work_entry(entry, form):
         be_val = form.get(be_key, '')
         bs_t = parse_time(bs_val)
         be_t = parse_time(be_val)
-        # Wiersz całkowicie pusty — pomiń (użytkownik dodał wiersz ale nic nie wpisał)
         if bs_t is None and be_t is None:
             i += 1
             continue
@@ -517,13 +526,11 @@ def _fill_work_entry(entry, form):
         raw_breaks.append((bs_t, be_t))
         i += 1
 
-    # --- Walidacja i normalizacja każdej przerwy (przez północ względem time_start) ---
-    normalized = []  # lista (bs_min_absolute, be_min_absolute, bs_time, be_time)
+    normalized = []
     for idx, (bs_t, be_t) in enumerate(raw_breaks):
         bs_min = to_min(bs_t)
         be_min = to_min(be_t)
 
-        # Przerwa po północy względem time_start
         if bs_min < ts:
             bs_min += 24 * 60
         if be_min <= (bs_min % (24 * 60)):
@@ -533,16 +540,13 @@ def _fill_work_entry(entry, form):
 
         if be_min <= bs_min:
             return False, f'Przerwa #{idx + 1}: godzina końca musi być późniejsza niż godzina początku.'
-
         if bs_min < ts:
             return False, f'Przerwa #{idx + 1}: godzina rozpoczęcia musi być równa lub późniejsza niż godzina przyjścia.'
-
         if te is not None and be_min > te:
             return False, f'Przerwa #{idx + 1}: godzina końca nie może być późniejsza niż godzina wyjścia.'
 
         normalized.append((bs_min, be_min, bs_t, be_t))
 
-    # --- Sortuj chronologicznie i sprawdź nachodzenie ---
     normalized.sort(key=lambda x: x[0])
     for idx in range(1, len(normalized)):
         prev_end = normalized[idx - 1][1]
