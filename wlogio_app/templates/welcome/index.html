@@ -518,6 +518,13 @@ function welcomeApp() {
                             this.selectedBadge = info.badge  || null;
                         }
                     }
+                    /* Odśwież selectedBadge jeśli jesteśmy na ekranie pin */
+                    if (this.screen === 'pin' && this.selectedUserId) {
+                        const info = data[String(this.selectedUserId)];
+                        if (info) {
+                            this.selectedBadge = info.badge || null;
+                        }
+                    }
                 }
             } catch (e) { /* ignoruj błędy sieciowe */ }
         },
