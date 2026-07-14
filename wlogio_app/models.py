@@ -95,6 +95,31 @@ class MonthConfig(db.Model):
     expected_hours = db.Column(db.Numeric(6, 2), nullable=True)
     bonus = db.Column(db.Numeric(10, 2), nullable=True, default=0)
     notes = db.Column(db.String(500), nullable=True)
+
+    # Ustawienia okresu rozliczeniowego
+    # Domyślnie: od 23. dnia poprzedniego miesiąca do 22. dnia bieżącego
+    billing_start_day = db.Column(db.Integer, nullable=False, default=23)
+    billing_end_day   = db.Column(db.Integer, nullable=False, default=22)
+
+    # Zaokrąglanie godzin pracy: 1, 5, 10, 15 lub 30 minut
+    round_minutes = db.Column(db.Integer, nullable=False, default=15)
+
+    # Stawka za nadgodziny (% stawki godzinowej), domyślnie 100%
+    overtime_rate = db.Column(db.Integer, nullable=False, default=100)
+
+    # Dni robocze jako string CSV z numerami dni tygodnia (0=pon, 6=nie)
+    # Domyślnie: pon-pt = '0,1,2,3,4'
+    work_days = db.Column(db.String(20), nullable=False, default='0,1,2,3,4')
+
+    # Stawka za pracę w dni poza roboczymi (% stawki godzinowej), domyślnie 100%
+    offday_rate = db.Column(db.Integer, nullable=False, default=100)
+
+    # Liczba godzin roboczych w dniu, domyślnie 8
+    hours_per_day = db.Column(db.Numeric(4, 2), nullable=False, default=8.00)
+
+    # Dozwolona płatna przerwa w ciągu dnia (minuty), domyślnie 15
+    paid_break_minutes = db.Column(db.Integer, nullable=False, default=15)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -102,6 +127,15 @@ class MonthConfig(db.Model):
         db.UniqueConstraint('user_id', 'billing_year', 'billing_month',
                             name='uq_user_billing_period'),
     )
+
+    def work_days_list(self):
+        """Zwraca listę dni roboczych jako inty, np. [0, 1, 2, 3, 4]."""
+        if not self.work_days:
+            return [0, 1, 2, 3, 4]
+        try:
+            return [int(d.strip()) for d in self.work_days.split(',') if d.strip()]
+        except ValueError:
+            return [0, 1, 2, 3, 4]
 
 
 class VacationBalance(db.Model):
