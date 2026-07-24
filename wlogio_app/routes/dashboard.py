@@ -10,10 +10,15 @@ from wlogio_app.calculator import (
     calculate_month_summary,
     calculate_vacation_used,
     get_billing_period,
-    get_working_days_in_billing_period,
+    get_working_days_in_billing_period_from_config,
     get_or_create_vacation_balance,
     format_hours,
     format_currency,
+    DEFAULT_BILLING_START_DAY,
+    DEFAULT_HOURS_PER_DAY,
+    DEFAULT_OVERTIME_RATE,
+    DEFAULT_OFFDAY_RATE,
+    _get_config_value,
 )
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -25,19 +30,22 @@ MONTH_NAMES = {
 }
 
 
-def calculate_forecast(expected_hours, overtime_hours, hourly_rate, bonus):
+def calculate_forecast(expected_hours, overtime_hours, hourly_rate, bonus,
+                        overtime_rate=None):
     """
-    Prognoza wynagrodzenia za miesiąc:
-    (dni robocze × 8h × stawka) + (nadgodziny × stawka) + premia
-    = (expected_hours + overtime_hours) × stawka + premia
-
-    Jeśli nadgodziny ujemne — odejmowane od prognozy.
+    Prognoza wynagrodzenia:
+    expected_hours × stawka + nadgodziny × stawka × (overtime_rate/100) + premia
     """
-    rate = Decimal(str(hourly_rate))
-    exp  = Decimal(str(expected_hours))
-    ot   = Decimal(str(overtime_hours))
-    bon  = Decimal(str(bonus or 0))
-    return float((exp + ot) * rate + bon)
+    if overtime_rate is None:
+        overtime_rate = DEFAULT_OVERTIME_RATE
+    rate    = Decimal(str(hourly_rate))
+    exp     = Decimal(str(expected_hours))
+    ot      = Decimal(str(overtime_hours))
+    bon     = Decimal(str(bonus or 0))
+    ot_mult = Decimal(str(overtime_rate)) / Decimal('100')
+    # Nadgodziny dodatnie liczone wg overtime_rate, ujemne odejmowane po stawce bazowej
+    ot_value = ot * rate * ot_mult if ot >= 0 else ot * rate
+    return float(exp * rate + ot_value + bon)
 
 
 @dashboard_bp.route('/')
@@ -78,50 +86,65 @@ def index():
     for key in sorted_keys:
         year, month = key
         entries = periods[key]
-        config = configs.get(key)
+        config  = configs.get(key)
 
-        hourly_rate  = float(config.hourly_rate) if config else 0.0
-        working_days = get_working_days_in_billing_period(year, month)
-        expected_hours = working_days * 8
-        bonus = float(config.bonus) if config and config.bonus else 0.0
+        hourly_rate    = float(config.hourly_rate) if config else 0.0
+        bonus          = float(config.bonus) if config and config.bonus else 0.0
 
-        summary = calculate_month_summary(entries, hourly_rate, expected_hours, bonus)
+        # Pobierz nowe parametry z config (z fallbackiem na wartości domyślne)
+        hours_per_day     = float(_get_config_value(config, 'hours_per_day',     DEFAULT_HOURS_PER_DAY))
+        overtime_rate     = int(_get_config_value(config,   'overtime_rate',     DEFAULT_OVERTIME_RATE))
+        offday_rate       = int(_get_config_value(config,   'offday_rate',       DEFAULT_OFFDAY_RATE))
+        work_days         = _get_config_value(config, 'work_days', None)
+
+        # Liczba dni roboczych z uwzględnieniem nowych ustawień
+        working_days   = get_working_days_in_billing_period_from_config(year, month, config)
+        expected_hours = working_days * hours_per_day
+
+        summary = calculate_month_summary(
+            entries, hourly_rate, expected_hours, bonus,
+            hours_per_day=hours_per_day,
+            overtime_rate=overtime_rate,
+            work_days=work_days,
+            offday_rate=offday_rate,
+        )
 
         forecast = calculate_forecast(
             expected_hours,
             summary['overtime_hours'],
             hourly_rate,
             bonus,
+            overtime_rate=overtime_rate,
         )
 
         months_data.append({
-            'year': year,
-            'month': month,
-            'month_name': MONTH_NAMES.get(month, str(month)),
-            'is_current': key == current_key,
-            'entries': entries,
-            'config': config,
-            'summary': summary,
-            'hourly_rate': hourly_rate,
-            'working_days': working_days,
-            'forecast': forecast,
+            'year':          year,
+            'month':         month,
+            'month_name':    MONTH_NAMES.get(month, str(month)),
+            'is_current':    key == current_key,
+            'entries':       entries,
+            'config':        config,
+            'summary':       summary,
+            'hourly_rate':   hourly_rate,
+            'working_days':  working_days,
+            'forecast':      forecast,
+            'hours_per_day': hours_per_day,
         })
 
-    # Bilans urlopowy
     current_year = today.year
     balance = get_or_create_vacation_balance(current_user.id, db.session)
-    used = calculate_vacation_used(current_user.id, current_year, db.session)
+    used    = calculate_vacation_used(current_user.id, current_year, db.session)
 
     vacation_info = {
-        'total': balance.vacation_total,
-        'on_demand_total': balance.on_demand_total,
-        'remote_total': balance.remote_total,
-        'used_vacation': used['used_vacation'],
-        'used_on_demand': used['used_on_demand'],
-        'used_remote': used['used_remote'],
+        'total':              balance.vacation_total,
+        'on_demand_total':    balance.on_demand_total,
+        'remote_total':       balance.remote_total,
+        'used_vacation':      used['used_vacation'],
+        'used_on_demand':     used['used_on_demand'],
+        'used_remote':        used['used_remote'],
         'remaining_vacation': balance.vacation_total - used['used_vacation'],
         'remaining_on_demand': balance.on_demand_total - used['used_on_demand'],
-        'remaining_remote': balance.remote_total - used['used_remote'],
+        'remaining_remote':   balance.remote_total - used['used_remote'],
     }
 
     return render_template(
