@@ -26,7 +26,10 @@ from wlogio_app import db
 from wlogio_app.models import User, WorkEntry, MonthConfig
 from wlogio_app.calculator import (
     get_billing_period, parse_breaks, format_breaks,
-    get_working_days_in_billing_period,
+    get_working_days_in_billing_period_from_config,
+    calculate_hours,
+    _get_config_value,
+    DEFAULT_ROUND_MINUTES, DEFAULT_PAID_BREAK_MINUTES,
 )
 
 welcome_bp = Blueprint('welcome', __name__)
@@ -46,8 +49,8 @@ def to_min(t):
 
 def get_or_create_month_config(user_id, billing_year, billing_month):
     """
-    Tworzy konfigurację miesiąca jeśli nie istnieje — stawka dziedziczona
-    z poprzedniego miesiąca (lub 0), expected_hours z kalendarza.
+    Tworzy konfigurację miesiąca jeśli nie istnieje — wszystkie ustawienia
+    dziedziczone z poprzedniego miesiąca (lub wartości domyślne).
     """
     config = MonthConfig.query.filter_by(
         user_id=user_id,
@@ -68,15 +71,35 @@ def get_or_create_month_config(user_id, billing_year, billing_month):
             billing_month=prev_month
         ).first()
 
-        working_days = get_working_days_in_billing_period(billing_year, billing_month)
+        billing_start_day  = _get_config_value(prev_config, 'billing_start_day',  23)
+        billing_end_day    = _get_config_value(prev_config, 'billing_end_day',    22)
+        round_minutes      = _get_config_value(prev_config, 'round_minutes',      15)
+        overtime_rate      = _get_config_value(prev_config, 'overtime_rate',     100)
+        work_days          = _get_config_value(prev_config, 'work_days',   '0,1,2,3,4')
+        offday_rate        = _get_config_value(prev_config, 'offday_rate',       100)
+        hours_per_day      = _get_config_value(prev_config, 'hours_per_day',    8.00)
+        paid_break_minutes = _get_config_value(prev_config, 'paid_break_minutes', 15)
+
+        working_days   = get_working_days_in_billing_period_from_config(
+            billing_year, billing_month, prev_config
+        )
+        expected_hours = float(hours_per_day) * working_days
 
         config = MonthConfig(
             user_id=user_id,
             billing_year=billing_year,
             billing_month=billing_month,
             hourly_rate=prev_config.hourly_rate if prev_config else Decimal('0'),
-            expected_hours=Decimal(str(working_days * 8)),
+            expected_hours=Decimal(str(expected_hours)),
             bonus=Decimal('0'),
+            billing_start_day=billing_start_day,
+            billing_end_day=billing_end_day,
+            round_minutes=round_minutes,
+            overtime_rate=overtime_rate,
+            work_days=work_days,
+            offday_rate=offday_rate,
+            hours_per_day=Decimal(str(hours_per_day)),
+            paid_break_minutes=paid_break_minutes,
         )
         db.session.add(config)
         db.session.commit()
@@ -233,7 +256,6 @@ def auto_close_stale_entries():
     Zamyka wpisy gdzie time_start ustawiony ale time_end brak
     i od time_start minęło >= 24 godziny.
     """
-    from wlogio_app.calculator import calculate_hours
 
     now_dt   = datetime.now(TIMEZONE)
     now_time = now_dt.time()
@@ -258,8 +280,19 @@ def auto_close_stale_entries():
 
             entry.time_end = now_time
 
+            # Pobierz parametry z config miesiąca
+            month_config = MonthConfig.query.filter_by(
+                user_id=entry.user_id,
+                billing_year=entry.billing_year,
+                billing_month=entry.billing_month,
+            ).first()
+            round_minutes      = _get_config_value(month_config, 'round_minutes',      DEFAULT_ROUND_MINUTES)
+            paid_break_minutes = _get_config_value(month_config, 'paid_break_minutes', DEFAULT_PAID_BREAK_MINUTES)
+
             closed_breaks = parse_breaks(entry.breaks)
-            calc = calculate_hours(entry.time_start, entry.time_end, closed_breaks)
+            calc = calculate_hours(entry.time_start, entry.time_end, closed_breaks,
+                                   round_minutes=round_minutes,
+                                   paid_break_minutes=paid_break_minutes)
             entry.hours_worked        = Decimal(str(calc['hours_worked']))
             entry.hours_billed        = Decimal(str(calc['hours_billed']))
             entry.extra_break_minutes = calc['extra_break_minutes']
@@ -406,9 +439,18 @@ def clock():
 
         entry.time_end = now
 
-        from wlogio_app.calculator import calculate_hours
+        month_config = MonthConfig.query.filter_by(
+            user_id=user_id,
+            billing_year=entry.billing_year,
+            billing_month=entry.billing_month,
+        ).first()
+        round_minutes      = _get_config_value(month_config, 'round_minutes',      DEFAULT_ROUND_MINUTES)
+        paid_break_minutes = _get_config_value(month_config, 'paid_break_minutes', DEFAULT_PAID_BREAK_MINUTES)
+
         closed_breaks = parse_breaks(entry.breaks)
-        calc = calculate_hours(entry.time_start, entry.time_end, closed_breaks)
+        calc = calculate_hours(entry.time_start, entry.time_end, closed_breaks,
+                               round_minutes=round_minutes,
+                               paid_break_minutes=paid_break_minutes)
         entry.hours_worked        = Decimal(str(calc['hours_worked']))
         entry.hours_billed        = Decimal(str(calc['hours_billed']))
         entry.extra_break_minutes = calc['extra_break_minutes']
