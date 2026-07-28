@@ -5,7 +5,15 @@ from decimal import Decimal
 
 from wlogio_app import db
 from wlogio_app.models import MonthConfig, VacationBalance, User
-from wlogio_app.calculator import get_working_days_in_billing_period, get_or_create_vacation_balance
+from wlogio_app.calculator import (
+    get_working_days_in_billing_period_from_config,
+    get_or_create_vacation_balance,
+    _get_config_value,
+    DEFAULT_BILLING_START_DAY, DEFAULT_BILLING_END_DAY,
+    DEFAULT_ROUND_MINUTES, DEFAULT_OVERTIME_RATE,
+    DEFAULT_OFFDAY_RATE, DEFAULT_HOURS_PER_DAY,
+    DEFAULT_PAID_BREAK_MINUTES,
+)
 
 settings_bp = Blueprint('settings', __name__)
 
@@ -179,24 +187,49 @@ def month_config(year, month):
         user_id=current_user.id, billing_year=year, billing_month=month
     ).first_or_404()
 
-    working_days = get_working_days_in_billing_period(year, month)
-    expected_hours = working_days * 8
-
     if request.method == 'POST':
         try:
+            # Podstawowe pola
             config.hourly_rate = Decimal(request.form.get('hourly_rate', '0').replace(',', '.'))
-            config.expected_hours = Decimal(str(expected_hours))
             bonus_str = request.form.get('bonus', '0').replace(',', '.').strip()
             config.bonus = Decimal(bonus_str) if bonus_str else Decimal('0')
             config.notes = request.form.get('notes', '').strip() or None
+
+            # Nowe pola rozszerzonej konfiguracji
+            config.billing_start_day  = int(request.form.get('billing_start_day', 23))
+            config.billing_end_day    = int(request.form.get('billing_end_day', 22))
+            config.round_minutes      = int(request.form.get('round_minutes', 15))
+            config.overtime_rate      = int(request.form.get('overtime_rate', 100))
+            config.offday_rate        = int(request.form.get('offday_rate', 100))
+            config.hours_per_day      = Decimal(request.form.get('hours_per_day', '8').replace(',', '.'))
+            config.paid_break_minutes = int(request.form.get('paid_break_minutes', 15))
+
+            # Dni robocze — checkboxy
+            work_days_selected = request.form.getlist('work_days')
+            config.work_days = ','.join(sorted(work_days_selected)) if work_days_selected else '0,1,2,3,4'
+
+            # Przelicz expected_hours wg nowych ustawień
+            working_days = get_working_days_in_billing_period_from_config(year, month, config)
+            config.expected_hours = Decimal(str(float(config.hours_per_day) * working_days))
+
             db.session.commit()
             flash('Konfiguracja miesiąca zapisana.', 'success')
         except Exception as e:
             flash(f'Błąd: {e}', 'error')
         return redirect(url_for('settings.index'))
 
-    return render_template('settings/month_config.html', config=config,
-                           expected_hours=expected_hours, working_days=working_days,
+    # GET — oblicz aktualną liczbę dni roboczych wg bieżących ustawień
+    working_days   = get_working_days_in_billing_period_from_config(year, month, config)
+    expected_hours = float(_get_config_value(config, 'hours_per_day', DEFAULT_HOURS_PER_DAY)) * working_days
+
+    # Aktualna lista dni roboczych jako zbiór stringów dla checkboxów
+    work_days_set = set(str(d) for d in config.work_days_list()) if config.work_days else {'0','1','2','3','4'}
+
+    return render_template('settings/month_config.html',
+                           config=config,
+                           expected_hours=expected_hours,
+                           working_days=working_days,
+                           work_days_set=work_days_set,
                            MONTH_NAMES=MONTH_NAMES)
 
 
@@ -217,3 +250,33 @@ def vacation_balance():
         return redirect(url_for('settings.index'))
 
     return render_template('settings/vacation_balance.html', balance=balance)
+
+
+@settings_bp.route('/working-days-preview', methods=['POST'])
+@login_required
+def working_days_preview():
+    """
+    Endpoint AJAX — zwraca liczbę dni roboczych dla podanych parametrów.
+    Używany przez formularz month_config.html do live-preview.
+    """
+    from flask import jsonify
+    from wlogio_app.calculator import get_working_days_in_billing_period
+
+    data = request.get_json()
+    try:
+        year      = int(data.get('year', 0))
+        month     = int(data.get('month', 0))
+        start_day = int(data.get('start_day', 23))
+        end_day   = int(data.get('end_day', 22))
+        work_days = data.get('work_days', ['0','1','2','3','4'])
+        work_days_ints = [int(d) for d in work_days]
+
+        working_days = get_working_days_in_billing_period(
+            year, month,
+            start_day=start_day,
+            end_day=end_day,
+            work_days=work_days_ints,
+        )
+        return jsonify({'ok': True, 'working_days': working_days})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 400
