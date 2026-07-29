@@ -67,13 +67,20 @@
             </div>
             {% set yr_h = namespace(v=0) %}
             {% set yr_sal = namespace(v=0) %}
+            {% set yr_months = namespace(v=0) %}
             {% for m in group.months %}
                 {% set yr_h.v = yr_h.v + m.summary.total_hours %}
                 {% set yr_sal.v = yr_sal.v + m.summary.total_with_bonus %}
+                {% if m.summary.total_hours > 0 %}
+                    {% set yr_months.v = yr_months.v + 1 %}
+                {% endif %}
             {% endfor %}
-            <div class="flex items-center gap-3 text-xs text-base-content/50">
-                <span class="hidden sm:inline">{{ "%.0f"|format(yr_h.v) }}h</span>
-                <span class="hidden sm:inline font-medium">{{ format_currency(yr_sal.v) }}</span>
+            {% set yr_avg = (yr_sal.v / yr_months.v) if yr_months.v > 0 else 0 %}
+            <div class="hidden sm:grid text-xs text-base-content/50"
+                 style="grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; text-align: right; min-width: 420px;">
+                <span class="font-medium">{{ format_currency(yr_avg) }}/mies.</span>
+                <span>{{ "%.0f"|format(yr_h.v) }}h</span>
+                <span class="font-medium">{{ format_currency(yr_sal.v) }}</span>
             </div>
         </div>
 
@@ -181,9 +188,7 @@
 
                                             <td class="col-date font-medium text-sm whitespace-nowrap">
                                                 <div class="flex items-center gap-1">
-                                                    <span class="{% if entry.entry_type == 'work' and entry.time_start and not entry.time_end %}text-error{% endif %}">
-                                                        {{ entry.date.strftime('%d.%m.%Y') }}
-                                                    </span>
+                                                    {{ entry.date.strftime('%d.%m.%Y') }}
                                                     {% if entry.notes %}
                                                     <div class="tooltip tooltip-right" data-tip="{{ entry.notes }}">
                                                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -191,16 +196,6 @@
                                                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                                   d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
-                                                        </svg>
-                                                    </div>
-                                                    {% endif %}
-                                                    {% if entry.entry_type == 'work' and entry.time_start and not entry.time_end %}
-                                                    <div class="tooltip tooltip-right" data-tip="Brak godziny zakończenia pracy">
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                             class="h-3.5 w-3.5 text-error cursor-default shrink-0"
-                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
                                                         </svg>
                                                     </div>
                                                     {% endif %}
