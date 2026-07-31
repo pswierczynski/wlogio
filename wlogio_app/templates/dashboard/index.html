@@ -77,7 +77,7 @@
             {% endfor %}
             {% set yr_avg = (yr_sal.v / yr_months.v) if yr_months.v > 0 else 0 %}
             <div class="hidden sm:grid text-xs text-base-content/50"
-                 style="grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; text-align: right; min-width: 420px;">
+                 style="grid-template-columns: 1fr 1fr 1fr; gap: 0.25rem; text-align: right; min-width: 420px;">
                 <span class="font-medium">{{ format_currency(yr_avg) }}/mies.</span>
                 <span>{{ "%.0f"|format(yr_h.v) }}h</span>
                 <span class="font-medium">{{ format_currency(yr_sal.v) }}</span>
