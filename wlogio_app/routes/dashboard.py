@@ -10,15 +10,20 @@ from wlogio_app.calculator import (
     calculate_month_summary,
     calculate_vacation_used,
     get_billing_period,
-    get_working_days_in_billing_period_from_config,
     get_or_create_vacation_balance,
     format_hours,
     format_currency,
-    DEFAULT_BILLING_START_DAY,
+    parse_breaks,
+    calculate_hours,
+    get_working_days_in_billing_period,
+    _get_config_value,
+    DEFAULT_ROUND_MINUTES,
+    DEFAULT_PAID_BREAK_MINUTES,
     DEFAULT_HOURS_PER_DAY,
     DEFAULT_OVERTIME_RATE,
     DEFAULT_OFFDAY_RATE,
-    _get_config_value,
+    DEFAULT_BILLING_START_DAY,
+    DEFAULT_BILLING_END_DAY,
 )
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -31,11 +36,7 @@ MONTH_NAMES = {
 
 
 def calculate_forecast(expected_hours, overtime_hours, hourly_rate, bonus,
-                        overtime_rate=None):
-    """
-    Prognoza wynagrodzenia:
-    expected_hours × stawka + nadgodziny × stawka × (overtime_rate/100) + premia
-    """
+                       overtime_rate=None):
     if overtime_rate is None:
         overtime_rate = DEFAULT_OVERTIME_RATE
     rate    = Decimal(str(hourly_rate))
@@ -43,9 +44,48 @@ def calculate_forecast(expected_hours, overtime_hours, hourly_rate, bonus,
     ot      = Decimal(str(overtime_hours))
     bon     = Decimal(str(bonus or 0))
     ot_mult = Decimal(str(overtime_rate)) / Decimal('100')
-    # Nadgodziny dodatnie liczone wg overtime_rate, ujemne odejmowane po stawce bazowej
     ot_value = ot * rate * ot_mult if ot >= 0 else ot * rate
     return float(exp * rate + ot_value + bon)
+
+
+def recalc_entry_hours(entry, round_minutes, paid_break_minutes):
+    """
+    Przelicza hours_billed i extra_break_minutes dla wpisu na żywo
+    wg aktualnych ustawień konfiguracji miesiąca.
+
+    Zwraca (hours_billed, extra_break_minutes) jako floaty.
+    Nie modyfikuje obiektu entry — tylko zwraca wartości do wyświetlenia.
+
+    Używane wyłącznie przez dashboard — baza danych nie jest zmieniana.
+    """
+    if entry.entry_type != 'work' or not entry.time_start or not entry.time_end:
+        return float(entry.hours_billed), entry.extra_break_minutes
+
+    breaks = parse_breaks(entry.breaks) if entry.breaks else []
+    calc = calculate_hours(
+        entry.time_start, entry.time_end, breaks,
+        round_minutes=round_minutes,
+        paid_break_minutes=paid_break_minutes,
+    )
+    return calc['hours_billed'], calc['extra_break_minutes']
+
+
+class EntryView:
+    """
+    Lekki wrapper na WorkEntry z nadpisanymi hours_billed i extra_break_minutes
+    przeliczonymi na żywo wg aktualnego config. Pozostałe atrybuty delegowane
+    do oryginalnego obiektu entry.
+
+    Dzięki temu Jinja2 i calculate_month_summary używają aktualnych wartości
+    bez modyfikowania bazy danych.
+    """
+    def __init__(self, entry, hours_billed, extra_break_minutes):
+        self._entry = entry
+        self.hours_billed = hours_billed
+        self.extra_break_minutes = extra_break_minutes
+
+    def __getattr__(self, name):
+        return getattr(self._entry, name)
 
 
 @dashboard_bp.route('/')
@@ -91,18 +131,38 @@ def index():
         hourly_rate    = float(config.hourly_rate) if config else 0.0
         bonus          = float(config.bonus) if config and config.bonus else 0.0
 
-        # Pobierz nowe parametry z config (z fallbackiem na wartości domyślne)
-        hours_per_day     = float(_get_config_value(config, 'hours_per_day',     DEFAULT_HOURS_PER_DAY))
-        overtime_rate     = int(_get_config_value(config,   'overtime_rate',     DEFAULT_OVERTIME_RATE))
-        offday_rate       = int(_get_config_value(config,   'offday_rate',       DEFAULT_OFFDAY_RATE))
-        work_days         = _get_config_value(config, 'work_days', None)
+        # Pobierz parametry z config
+        round_minutes      = int(_get_config_value(config, 'round_minutes',      DEFAULT_ROUND_MINUTES))
+        paid_break_minutes = int(_get_config_value(config, 'paid_break_minutes', DEFAULT_PAID_BREAK_MINUTES))
+        hours_per_day      = float(_get_config_value(config, 'hours_per_day',    DEFAULT_HOURS_PER_DAY))
+        overtime_rate      = int(_get_config_value(config, 'overtime_rate',      DEFAULT_OVERTIME_RATE))
+        offday_rate        = int(_get_config_value(config, 'offday_rate',        DEFAULT_OFFDAY_RATE))
+        work_days          = _get_config_value(config, 'work_days', None)
+        start_day          = int(_get_config_value(config, 'billing_start_day',  DEFAULT_BILLING_START_DAY))
+        end_day            = int(_get_config_value(config, 'billing_end_day',    DEFAULT_BILLING_END_DAY))
 
         # Liczba dni roboczych z uwzględnieniem nowych ustawień
-        working_days   = get_working_days_in_billing_period_from_config(year, month, config)
+        from wlogio_app.calculator import _parse_work_days, get_billing_period_dates
+        work_days_list = _parse_work_days(work_days) if work_days else [0,1,2,3,4]
+        from datetime import timedelta
+        date_from, date_to = get_billing_period_dates(year, month, start_day, end_day)
+        working_days = 0
+        cur = date_from
+        while cur <= date_to:
+            if cur.weekday() in work_days_list:
+                working_days += 1
+            cur += timedelta(days=1)
+
         expected_hours = working_days * hours_per_day
 
+        # Przelicz hours_billed i extra_break_minutes na żywo dla każdego wpisu
+        entry_views = []
+        for entry in entries:
+            hb, ebm = recalc_entry_hours(entry, round_minutes, paid_break_minutes)
+            entry_views.append(EntryView(entry, hb, ebm))
+
         summary = calculate_month_summary(
-            entries, hourly_rate, expected_hours, bonus,
+            entry_views, hourly_rate, expected_hours, bonus,
             hours_per_day=hours_per_day,
             overtime_rate=overtime_rate,
             work_days=work_days,
@@ -122,7 +182,7 @@ def index():
             'month':         month,
             'month_name':    MONTH_NAMES.get(month, str(month)),
             'is_current':    key == current_key,
-            'entries':       entries,
+            'entries':       entry_views,
             'config':        config,
             'summary':       summary,
             'hourly_rate':   hourly_rate,
@@ -136,15 +196,15 @@ def index():
     used    = calculate_vacation_used(current_user.id, current_year, db.session)
 
     vacation_info = {
-        'total':              balance.vacation_total,
-        'on_demand_total':    balance.on_demand_total,
-        'remote_total':       balance.remote_total,
-        'used_vacation':      used['used_vacation'],
-        'used_on_demand':     used['used_on_demand'],
-        'used_remote':        used['used_remote'],
-        'remaining_vacation': balance.vacation_total - used['used_vacation'],
+        'total':               balance.vacation_total,
+        'on_demand_total':     balance.on_demand_total,
+        'remote_total':        balance.remote_total,
+        'used_vacation':       used['used_vacation'],
+        'used_on_demand':      used['used_on_demand'],
+        'used_remote':         used['used_remote'],
+        'remaining_vacation':  balance.vacation_total - used['used_vacation'],
         'remaining_on_demand': balance.on_demand_total - used['used_on_demand'],
-        'remaining_remote':   balance.remote_total - used['used_remote'],
+        'remaining_remote':    balance.remote_total - used['used_remote'],
     }
 
     return render_template(
