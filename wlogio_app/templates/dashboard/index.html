@@ -76,10 +76,11 @@
                 {% endif %}
             {% endfor %}
             {% set yr_avg = (yr_sal.v / yr_months.v) if yr_months.v > 0 else 0 %}
-            <div class="hidden sm:flex items-center text-xs text-base-content/50">
-                <span class="font-medium text-right" style="width:140px;">{{ format_currency(yr_avg) }}/mies.</span>
-                <span class="text-right" style="width:70px;">{{ "%.0f"|format(yr_h.v) }}h</span>
-                <span class="font-medium text-right" style="width:105px;">{{ format_currency(yr_sal.v) }}</span>
+            <div class="hidden sm:grid text-xs text-base-content/50"
+                 style="grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; text-align: right; min-width: 420px;">
+                <span class="font-medium">{{ format_currency(yr_avg) }}/mies.</span>
+                <span>{{ "%.0f"|format(yr_h.v) }}h</span>
+                <span class="font-medium">{{ format_currency(yr_sal.v) }}</span>
             </div>
         </div>
 
@@ -246,10 +247,11 @@
 
                                             <td class="col-break text-base-content/70 text-xs whitespace-nowrap">
                                                 {% if break_total_min.v > 0 %}
-                                                    {% if break_total_min.v <= 15 %}
+                                                    {% set paid_break = (month.config.paid_break_minutes if month.config and month.config.paid_break_minutes is not none else 15) | int %}
+                                                    {% if break_total_min.v <= paid_break %}
                                                         {{ break_total_min.v }}min
                                                     {% else %}
-                                                        15min <span class="text-warning">(+{{ break_total_min.v - 15 }}min)</span>
+                                                        {{ paid_break }}min <span class="text-warning">(+{{ break_total_min.v - paid_break }}min)</span>
                                                     {% endif %}
                                                 {% else %}—{% endif %}
                                             </td>
