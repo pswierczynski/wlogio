@@ -76,11 +76,10 @@
                 {% endif %}
             {% endfor %}
             {% set yr_avg = (yr_sal.v / yr_months.v) if yr_months.v > 0 else 0 %}
-            <div class="hidden sm:grid text-xs text-base-content/50"
-                 style="grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; text-align: right; min-width: 420px;">
-                <span class="font-medium">{{ format_currency(yr_avg) }}/mies.</span>
-                <span>{{ "%.0f"|format(yr_h.v) }}h</span>
-                <span class="font-medium">{{ format_currency(yr_sal.v) }}</span>
+            <div class="hidden sm:flex items-center text-xs text-base-content/50">
+                <span class="font-medium text-right" style="width:140px;">{{ format_currency(yr_avg) }}/mies.</span>
+                <span class="text-right" style="width:70px;">{{ "%.0f"|format(yr_h.v) }}h</span>
+                <span class="font-medium text-right" style="width:105px;">{{ format_currency(yr_sal.v) }}</span>
             </div>
         </div>
 
@@ -267,7 +266,21 @@
                                             </td>
                                             <td class="col-salary text-right text-success font-medium text-sm whitespace-nowrap">
                                                 {% if month.hourly_rate > 0 and entry.entry_type != 'unpaid' and (entry.time_end or entry.entry_type != 'work') %}
-                                                    {{ format_currency(entry.hours_billed|float * month.hourly_rate) }}
+                                                    {% set ot_rate = (month.config.overtime_rate if month.config and month.config.overtime_rate is not none else 100) / 100 %}
+                                                    {% set od_rate = (month.config.offday_rate if month.config and month.config.offday_rate is not none else 100) / 100 %}
+                                                    {% set hpd = (month.config.hours_per_day if month.config and month.config.hours_per_day is not none else 8) | float %}
+                                                    {% if entry.entry_type == 'work' %}
+                                                        {% set is_offday = entry.date.weekday() not in (month.config.work_days_list() if month.config else [0,1,2,3,4]) %}
+                                                        {% if is_offday %}
+                                                            {{ format_currency(entry.hours_billed|float * month.hourly_rate * od_rate) }}
+                                                        {% else %}
+                                                            {% set normal_h = [entry.hours_billed|float, hpd] | min %}
+                                                            {% set ot_h = [entry.hours_billed|float - hpd, 0] | max %}
+                                                            {{ format_currency(normal_h * month.hourly_rate + ot_h * month.hourly_rate * ot_rate) }}
+                                                        {% endif %}
+                                                    {% else %}
+                                                        {{ format_currency(entry.hours_billed|float * month.hourly_rate) }}
+                                                    {% endif %}
                                                 {% else %}—{% endif %}
                                             </td>
                                             <td class="col-actions text-right whitespace-nowrap">
@@ -288,7 +301,8 @@
                             </div>
 
                             <!-- Podsumowanie miesiąca -->
-                            {% set overtime_amount = month.summary.overtime_hours * month.hourly_rate %}
+                            {% set ot_rate_pct = (month.config.overtime_rate if month.config and month.config.overtime_rate is not none else 100) / 100 %}
+                            {% set overtime_amount = month.summary.overtime_hours * month.hourly_rate * ot_rate_pct %}
                             <div class="border-t border-base-300 bg-base-200/60 px-3 sm:px-5 py-5 sm:py-6">
                                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 text-sm">
                                     <div>
