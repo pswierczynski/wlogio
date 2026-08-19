@@ -354,8 +354,19 @@
                                         <span>Zdalna: <strong>{{ month.summary.remote_days }}</strong></span>
                                         {% endif %}
                                     </div>
-                                    <a href="{{ url_for('settings.month_config', year=month.year, month=month.month) }}"
-                                       class="btn btn-ghost btn-xs text-base-content/50 shrink-0">⚙ Ustawienia</a>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        {% if month.summary.expected_hours > 0 %}
+                                        {% set progress_pct = [(month.summary.total_hours / month.summary.expected_hours * 100), 100] | min | round | int %}
+                                        <div class="relative h-2.5 rounded-full border border-base-content/20 bg-transparent overflow-hidden"
+                                             style="width: 90px;">
+                                            <div class="absolute left-0 top-0 h-full rounded-full bg-base-content/30"
+                                                 style="width: {{ progress_pct }}%;"></div>
+                                        </div>
+                                        <span class="text-xs text-base-content/50 w-8 text-right">{{ progress_pct }}%</span>
+                                        {% endif %}
+                                        <a href="{{ url_for('settings.month_config', year=month.year, month=month.month) }}"
+                                           class="btn btn-ghost btn-xs text-base-content/50">⚙ Ustawienia</a>
+                                    </div>
                                 </div>
                             </div>
 
