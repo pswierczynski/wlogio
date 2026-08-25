@@ -214,9 +214,10 @@ def month_config(year, month):
 
             db.session.commit()
             flash('Konfiguracja miesiąca zapisana.', 'success')
+            return redirect(url_for('dashboard.index'))
         except Exception as e:
             flash(f'Błąd: {e}', 'error')
-        return redirect(url_for('settings.index'))
+            return redirect(url_for('settings.month_config', year=year, month=month))
 
     # GET — oblicz aktualną liczbę dni roboczych wg bieżących ustawień
     working_days   = get_working_days_in_billing_period_from_config(year, month, config)
@@ -245,9 +246,10 @@ def vacation_balance():
             balance.remote_total = int(request.form.get('remote_total', 24))
             db.session.commit()
             flash('Bilans urlopowy zapisany.', 'success')
+            return redirect(url_for('dashboard.index'))
         except Exception as e:
             flash(f'Błąd: {e}', 'error')
-        return redirect(url_for('settings.index'))
+            return redirect(url_for('settings.vacation_balance'))
 
     return render_template('settings/vacation_balance.html', balance=balance)
 
