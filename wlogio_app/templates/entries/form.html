@@ -39,7 +39,6 @@
 
                     /* --- Zakres urlopów --- */
                     rangeMode: 'single',
-                    dateFrom: '{{ today }}',
                     dateTo: '',
                     preview: null,
                     previewLoading: false,
@@ -66,8 +65,8 @@
                         this.dateTo = '';
                     },
 
-                    async fetchPreview() {
-                        if (!this.dateFrom || !this.dateTo) {
+                    async fetchPreview(dateFrom) {
+                        if (!dateFrom || !this.dateTo) {
                             this.preview = null;
                             this.previewError = null;
                             return;
@@ -81,7 +80,7 @@
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
                                 body: JSON.stringify({
-                                    date_from: this.dateFrom,
+                                    date_from: dateFrom,
                                     date_to: this.dateTo,
                                     range_type: this.entryType,
                                 })
@@ -233,8 +232,8 @@
                     <label class="label">
                         <span class="label-text font-medium" x-text="isRangeType() && rangeMode === 'range' ? 'Od (data początkowa)' : 'Data'"></span>
                     </label>
-                    <input type="date" name="date" id="date_from_field" required x-model="dateFrom"
-                           @change="if (isRangeType() && rangeMode === 'range') fetchPreview()"
+                    <input type="date" name="date" id="date_from_field" required value="{{ today }}"
+                           @change="if (isRangeType() && rangeMode === 'range') fetchPreview($event.target.value)"
                            class="input input-bordered w-full"/>
                 </div>
                 {% endif %}
@@ -294,7 +293,7 @@
                         <div class="form-control">
                             <label class="label"><span class="label-text font-medium">Do (data końcowa)</span></label>
                             <input type="date" x-model="dateTo"
-                                   @change="fetchPreview()"
+                                   @change="fetchPreview(document.getElementById('date_from_field').value)"
                                    class="input input-bordered w-full"/>
                         </div>
 
@@ -371,7 +370,7 @@
                                 <span class="text-sm">Potwierdzam i chcę dodać powyższe dni</span>
                             </label>
 
-                            <input type="hidden" name="date_from" :value="dateFrom"/>
+                            <input type="hidden" name="date_from" :value="document.getElementById('date_from_field') ? document.getElementById('date_from_field').value : ''"/>
                             <input type="hidden" name="date_to"   :value="dateTo"/>
                             <input type="hidden" name="range_type" :value="entryType"/>
 

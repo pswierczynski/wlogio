@@ -207,6 +207,9 @@ def calculate_month_summary(entries, hourly_rate, expected_hours, bonus=0,
     holiday_days    = 0
     sick_days       = 0
     remote_days     = 0
+    care_leave_days    = 0
+    force_majeure_days = 0
+    child_care_days    = 0
 
     for entry in entries:
         billed = Decimal(str(entry.hours_billed))
@@ -248,6 +251,18 @@ def calculate_month_summary(entries, hourly_rate, expected_hours, bonus=0,
             sick_days       += 1
             work_days_count += 1
             actual_salary   += billed * rate
+        elif entry.entry_type == 'care_leave':
+            care_leave_days += 1
+            work_days_count += 1
+            actual_salary   += billed * rate
+        elif entry.entry_type == 'force_majeure':
+            force_majeure_days += 1
+            work_days_count    += 1
+            actual_salary       += billed * rate
+        elif entry.entry_type == 'child_care':
+            child_care_days += 1
+            work_days_count += 1
+            actual_salary   += billed * rate
 
     total_with_bonus = actual_salary + Decimal(str(bonus or 0))
 
@@ -265,6 +280,9 @@ def calculate_month_summary(entries, hourly_rate, expected_hours, bonus=0,
         'holiday_days':     holiday_days,
         'sick_days':        sick_days,
         'remote_days':      remote_days,
+        'care_leave_days':    care_leave_days,
+        'force_majeure_days': force_majeure_days,
+        'child_care_days':    child_care_days,
     }
 
 
@@ -275,17 +293,28 @@ def calculate_vacation_used(user_id, year, db_session):
     entries = db_session.query(WorkEntry).filter(
         WorkEntry.user_id == user_id,
         extract('year', WorkEntry.date) == year,
-        WorkEntry.entry_type.in_(['vacation', 'on_demand', 'work'])
+        WorkEntry.entry_type.in_([
+            'vacation', 'on_demand', 'work',
+            'care_leave', 'force_majeure', 'child_care',
+        ])
     ).all()
 
     used_vacation  = sum(1 for e in entries if e.entry_type == 'vacation')
     used_on_demand = sum(1 for e in entries if e.entry_type == 'on_demand')
     used_remote    = sum(1 for e in entries if e.entry_type == 'work' and e.is_remote)
 
+    # Osobne, roczne pule — nie pomniejszają puli urlopu wypoczynkowego
+    used_care_leave    = sum(1 for e in entries if e.entry_type == 'care_leave')
+    used_force_majeure = sum(1 for e in entries if e.entry_type == 'force_majeure')
+    used_child_care    = sum(1 for e in entries if e.entry_type == 'child_care')
+
     return {
-        'used_vacation':  used_vacation + used_on_demand,
-        'used_on_demand': used_on_demand,
-        'used_remote':    used_remote,
+        'used_vacation':      used_vacation + used_on_demand,
+        'used_on_demand':     used_on_demand,
+        'used_remote':        used_remote,
+        'used_care_leave':    used_care_leave,
+        'used_force_majeure': used_force_majeure,
+        'used_child_care':    used_child_care,
     }
 
 
@@ -339,6 +368,9 @@ def get_or_create_vacation_balance(user_id, db_session):
             vacation_total=26 + carry_over,
             on_demand_total=4,
             remote_total=24,
+            care_leave_total=5,
+            force_majeure_total=2,
+            child_care_total=2,
         )
         db_session.add(balance)
         db_session.commit()

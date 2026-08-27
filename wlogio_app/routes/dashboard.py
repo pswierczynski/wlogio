@@ -205,6 +205,15 @@ def index():
         'remaining_vacation':  balance.vacation_total - used['used_vacation'],
         'remaining_on_demand': balance.on_demand_total - used['used_on_demand'],
         'remaining_remote':    balance.remote_total - used['used_remote'],
+        'care_leave_total':       balance.care_leave_total,
+        'force_majeure_total':    balance.force_majeure_total,
+        'child_care_total':       balance.child_care_total,
+        'used_care_leave':        used['used_care_leave'],
+        'used_force_majeure':     used['used_force_majeure'],
+        'used_child_care':        used['used_child_care'],
+        'remaining_care_leave':    balance.care_leave_total - used['used_care_leave'],
+        'remaining_force_majeure': balance.force_majeure_total - used['used_force_majeure'],
+        'remaining_child_care':    balance.child_care_total - used['used_child_care'],
     }
 
     return render_template(

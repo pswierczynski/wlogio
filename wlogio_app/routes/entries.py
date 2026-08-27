@@ -25,6 +25,9 @@ ENTRY_TYPES = {
     'unpaid': 'Urlop bezpłatny',
     'holiday': 'Święto',
     'sick_leave': 'Zwolnienie lekarskie',
+    'care_leave': 'Urlop opiekuńczy',
+    'force_majeure': 'Siła wyższa',
+    'child_care': 'Opieka nad dzieckiem',
 }
 
 

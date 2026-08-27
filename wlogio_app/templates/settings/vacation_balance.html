@@ -46,6 +46,39 @@
                            class="input input-bordered w-40"/>
                 </div>
 
+                <div class="divider my-0"></div>
+
+                <div class="text-xs text-base-content/50 -mt-2">
+                    Poniższe pule są osobne i nie pomniejszają urlopu wypoczynkowego.
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Pula urlopu opiekuńczego (dni)</span>
+                    </label>
+                    <input type="number" name="care_leave_total" min="0" max="365" required
+                           value="{{ balance.care_leave_total }}"
+                           class="input input-bordered w-40"/>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Pula dni siły wyższej</span>
+                    </label>
+                    <input type="number" name="force_majeure_total" min="0" max="365" required
+                           value="{{ balance.force_majeure_total }}"
+                           class="input input-bordered w-40"/>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Pula dni opieki nad dzieckiem</span>
+                    </label>
+                    <input type="number" name="child_care_total" min="0" max="365" required
+                           value="{{ balance.child_care_total }}"
+                           class="input input-bordered w-40"/>
+                </div>
+
                 <div class="flex gap-3 pt-2">
                     <button type="submit" class="btn btn-primary flex-1">Zapisz</button>
                     <a href="{{ url_for('settings.index') }}" class="btn btn-ghost">Anuluj</a>

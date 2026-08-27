@@ -148,6 +148,11 @@ class VacationBalance(db.Model):
     on_demand_total = db.Column(db.Integer, nullable=False, default=4)
     remote_total = db.Column(db.Integer, nullable=False, default=0)
 
+    # Osobne, roczne pule urlopowe — nie pomniejszają vacation_total
+    care_leave_total = db.Column(db.Integer, nullable=False, default=5)      # Urlop opiekuńczy
+    force_majeure_total = db.Column(db.Integer, nullable=False, default=2)   # Siła wyższa
+    child_care_total = db.Column(db.Integer, nullable=False, default=2)      # Opieka nad dzieckiem
+
     __table_args__ = (
         db.UniqueConstraint('user_id', 'year', name='uq_user_year_balance'),
     )
