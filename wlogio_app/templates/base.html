@@ -108,9 +108,18 @@
 </div>
 {% endif %}
 
-{# Powiadomienia typu "toast" (kolorowe chmurki w prawym górnym rogu) zostały
-   celowo usunięte z UI — flash messages nadal działają w backendzie,
-   ale nie są tu renderowane. #}
+{# Komunikaty flash — wyświetlane inline nad treścią strony (bez floating "chmurek"). #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="container mx-auto px-3 sm:px-4 max-w-6xl pt-4 sm:pt-6 flex flex-col gap-2">
+    {% for category, message in messages %}
+    <div class="alert {% if category == 'error' %}alert-error{% elif category == 'success' %}alert-success{% elif category == 'warning' %}alert-warning{% else %}alert-info{% endif %} shadow-sm py-3 px-4 flex flex-row items-center gap-2">
+        <span class="text-sm break-words flex-1">{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
 
 <main class="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
     {% block content %}{% endblock %}
