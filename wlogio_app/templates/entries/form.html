@@ -39,6 +39,7 @@
 
                     /* --- Zakres urlopów --- */
                     rangeMode: 'single',
+                    dateFrom: '{{ today }}',
                     dateTo: '',
                     preview: null,
                     previewLoading: false,
@@ -47,7 +48,7 @@
                     remainingVacation: {{ remaining_vacation }},
 
                     isRangeType() {
-                        return (this.entryType === 'vacation' || this.entryType === 'unpaid' || this.entryType === 'sick_leave') && !{{ 'true' if entry else 'false' }};
+                        return (this.entryType === 'vacation' || this.entryType === 'unpaid' || this.entryType === 'sick_leave' || this.entryType === 'care_leave') && !{{ 'true' if entry else 'false' }};
                     },
 
                     onEntryTypeChange() {
@@ -65,8 +66,8 @@
                         this.dateTo = '';
                     },
 
-                    async fetchPreview(dateFrom) {
-                        if (!dateFrom || !this.dateTo) {
+                    async fetchPreview() {
+                        if (!this.dateFrom || !this.dateTo) {
                             this.preview = null;
                             this.previewError = null;
                             return;
@@ -80,7 +81,7 @@
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
                                 body: JSON.stringify({
-                                    date_from: dateFrom,
+                                    date_from: this.dateFrom,
                                     date_to: this.dateTo,
                                     range_type: this.entryType,
                                 })
@@ -232,8 +233,8 @@
                     <label class="label">
                         <span class="label-text font-medium" x-text="isRangeType() && rangeMode === 'range' ? 'Od (data początkowa)' : 'Data'"></span>
                     </label>
-                    <input type="date" name="date" id="date_from_field" required value="{{ today }}"
-                           @change="if (isRangeType() && rangeMode === 'range') fetchPreview($event.target.value)"
+                    <input type="date" name="date" id="date_from_field" required x-model="dateFrom"
+                           @change="if (isRangeType() && rangeMode === 'range') fetchPreview()"
                            class="input input-bordered w-full"/>
                 </div>
                 {% endif %}
@@ -293,7 +294,7 @@
                         <div class="form-control">
                             <label class="label"><span class="label-text font-medium">Do (data końcowa)</span></label>
                             <input type="date" x-model="dateTo"
-                                   @change="fetchPreview(document.getElementById('date_from_field').value)"
+                                   @change="fetchPreview()"
                                    class="input input-bordered w-full"/>
                         </div>
 
@@ -358,8 +359,8 @@
                                         <div class="flex items-center justify-between px-4 py-2 text-sm">
                                             <span x-text="day.date" class="font-medium"></span>
                                             <span class="badge badge-sm"
-                                                  :class="day.type === 'vacation' ? 'badge badge-info badge-sm whitespace-nowrap py-1 h-6' : day.type === 'sick_leave' ? 'badge badge-error badge-sm whitespace-nowrap py-1 h-6' : 'badge badge-neutral badge-sm whitespace-nowrap py-1 h-6'"
-                                                  x-text="day.type === 'vacation' ? 'Urlop' : day.type === 'sick_leave' ? 'Zwolnienie' : 'Bezpłatny'"></span>
+                                                  :class="day.type === 'vacation' ? 'badge badge-info badge-sm whitespace-nowrap py-1 h-6' : day.type === 'sick_leave' ? 'badge badge-error badge-sm whitespace-nowrap py-1 h-6' : day.type === 'care_leave' ? 'badge badge-secondary badge-sm whitespace-nowrap py-1 h-6' : 'badge badge-neutral badge-sm whitespace-nowrap py-1 h-6'"
+                                                  x-text="day.type === 'vacation' ? 'Urlop' : day.type === 'sick_leave' ? 'Zwolnienie' : day.type === 'care_leave' ? 'Opiekuńczy' : 'Bezpłatny'"></span>
                                         </div>
                                     </template>
                                 </div>
@@ -370,7 +371,7 @@
                                 <span class="text-sm">Potwierdzam i chcę dodać powyższe dni</span>
                             </label>
 
-                            <input type="hidden" name="date_from" :value="document.getElementById('date_from_field') ? document.getElementById('date_from_field').value : ''"/>
+                            <input type="hidden" name="date_from" :value="dateFrom"/>
                             <input type="hidden" name="date_to"   :value="dateTo"/>
                             <input type="hidden" name="range_type" :value="entryType"/>
 
@@ -520,7 +521,7 @@
                     </label>
                     <textarea name="notes" rows="2"
                               class="textarea textarea-bordered w-full resize-none"
-                              placeholder="{% if not entry %}Przy zakresie dni — dodane do każdego dnia{% else %}Dodatkowe informacje...{% endif %}">{{ entry.notes if entry and entry.notes else '' }}</textarea>
+                              :placeholder="isRangeType() ? 'Przy zakresie dni — dodane do każdego dnia' : 'Dodatkowe informacje...'">{{ entry.notes if entry and entry.notes else '' }}</textarea>
                 </div>
 
                 <!-- PRZYCISKI -->

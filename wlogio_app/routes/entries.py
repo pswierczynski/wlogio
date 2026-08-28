@@ -263,6 +263,21 @@ def range_preview():
             'days': days_detail,
         })
 
+    elif range_type == 'care_leave':
+        # Urlop opiekuńczy — osobna pula, nie odlicza się od urlopu wypoczynkowego
+        days_detail = [
+            {'date': d.strftime('%d.%m.%Y'), 'type': 'care_leave'}
+            for d in working_days
+        ]
+        return jsonify({
+            'ok': True,
+            'total_days': len(working_days),
+            'vacation_days': 0,
+            'unpaid_days': 0,
+            'remaining_before': 0,
+            'days': days_detail,
+        })
+
     else:  # unpaid
         days_detail = [
             {'date': d.strftime('%d.%m.%Y'), 'type': 'unpaid'}
@@ -331,6 +346,8 @@ def add_range():
             entry_type = 'vacation' if i < remaining else 'unpaid'
         elif range_type == 'sick_leave':
             entry_type = 'sick_leave'
+        elif range_type == 'care_leave':
+            entry_type = 'care_leave'
         else:
             entry_type = 'unpaid'
 
