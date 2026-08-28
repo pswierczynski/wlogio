@@ -83,6 +83,9 @@
         .badge-type-P { background-color: #22c55e; }  /* zielony — praca zdalna */
         .badge-type-U { background-color: #9ca3af; }  /* szary — urlop */
         .badge-type-Z { background-color: #9ca3af; }  /* szary — zwolnienie */
+        .badge-type-O { background-color: #9ca3af; }  /* szary — urlop opiekuńczy */
+        .badge-type-S { background-color: #9ca3af; }  /* szary — siła wyższa */
+        .badge-type-D { background-color: #9ca3af; }  /* szary — opieka nad dzieckiem */
 
         .pin-digit {
             width: 60px; height: 70px;
@@ -199,7 +202,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                         {% endif %}
                     </div>
                     <!-- Badge P/U/Z — ikona SVG, kolor zalezy od typu -->
-                    {% set badge_labels = {'P': 'Praca zdalna', 'U': 'Urlop', 'Z': 'Zwolnienie lekarskie'} %}
+                    {% set badge_labels = {'P': 'Praca zdalna', 'U': 'Urlop', 'Z': 'Zwolnienie lekarskie', 'O': 'Urlop opiekuńczy', 'S': 'Siła wyższa', 'D': 'Opieka nad dzieckiem'} %}
                     <div id="badge-{{ uid }}"
                          class="status-badge{% if badge %} badge-type-{{ badge }} tooltip tooltip-top{% endif %}"
                          {% if badge %}data-tip="{{ badge_labels.get(badge, '') }}"{% else %}style="display:none;"{% endif %}>
@@ -435,14 +438,20 @@ const BADGE_ICONS = window.BADGE_ICONS = {
     'P': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="#fff" stroke="none"/></svg>',
     'U': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><path d="M3 12 Q6 8 9 12 Q12 16 15 12 Q18 8 21 12"/><path d="M3 18 Q6 14 9 18 Q12 22 15 18 Q18 14 21 18"/></svg>',
     'Z': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>',
+    'O': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>',
+    'S': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    'D': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="6" r="2.6"/><path d="M4.5 17c0-3 2-5 4.5-5s4.5 2 4.5 5"/><circle cx="18" cy="10" r="2"/><path d="M14.7 17c.2-2.2 1.6-3.6 3.3-3.6s3.1 1.4 3.3 3.6"/></svg>',
 };
 
-/* Etykiety pod kursorem dla badge'y P/U/Z — używane w tooltipach na siatce
-   avatarów oraz na ekranach PIN i zegara. */
+/* Etykiety pod kursorem dla badge'y P/U/Z/O/S/D — używane w tooltipach na
+   siatce avatarów oraz na ekranach PIN i zegara. */
 const BADGE_LABELS = window.BADGE_LABELS = {
     'P': 'Praca zdalna',
     'U': 'Urlop',
     'Z': 'Zwolnienie lekarskie',
+    'O': 'Urlop opiekuńczy',
+    'S': 'Siła wyższa',
+    'D': 'Opieka nad dzieckiem',
 };
 
 function welcomeApp() {
