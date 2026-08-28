@@ -74,7 +74,6 @@
             justify-content: center;
             border: 2.5px solid #fff;
             z-index: 10;
-            pointer-events: none;
         }
         .status-badge svg {
             width: 15px;
@@ -200,9 +199,10 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                         {% endif %}
                     </div>
                     <!-- Badge P/U/Z — ikona SVG, kolor zalezy od typu -->
+                    {% set badge_labels = {'P': 'Praca zdalna', 'U': 'Urlop', 'Z': 'Zwolnienie lekarskie'} %}
                     <div id="badge-{{ uid }}"
-                         class="status-badge{% if badge %} badge-type-{{ badge }}{% endif %}"
-                         {% if not badge %}style="display:none;"{% endif %}>
+                         class="status-badge{% if badge %} badge-type-{{ badge }} tooltip tooltip-top{% endif %}"
+                         {% if badge %}data-tip="{{ badge_labels.get(badge, '') }}"{% else %}style="display:none;"{% endif %}>
                         {% if badge == 'P' %}
                         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="#fff" stroke="none"/>
@@ -260,8 +260,9 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                 </template>
             </div>
             <div x-show="selectedBadge"
-                 class="status-badge"
+                 class="status-badge tooltip tooltip-top"
                  :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
+                 :data-tip="selectedBadge ? (BADGE_LABELS[selectedBadge] || '') : ''"
                  x-html="selectedBadge ? (BADGE_ICONS[selectedBadge] || '') : ''"></div>
         </div>
 
@@ -323,8 +324,9 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                     </template>
                 </div>
                 <div x-show="selectedBadge"
-                     class="status-badge"
+                     class="status-badge tooltip tooltip-top"
                      :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
+                     :data-tip="selectedBadge ? (BADGE_LABELS[selectedBadge] || '') : ''"
                      x-html="selectedBadge ? (BADGE_ICONS[selectedBadge] || '') : ''"></div>
             </div>
 
@@ -435,6 +437,14 @@ const BADGE_ICONS = window.BADGE_ICONS = {
     'Z': '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6v0a6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg>',
 };
 
+/* Etykiety pod kursorem dla badge'y P/U/Z — używane w tooltipach na siatce
+   avatarów oraz na ekranach PIN i zegara. */
+const BADGE_LABELS = window.BADGE_LABELS = {
+    'P': 'Praca zdalna',
+    'U': 'Urlop',
+    'Z': 'Zwolnienie lekarskie',
+};
+
 function welcomeApp() {
     return {
         screen: 'avatars',
@@ -481,10 +491,12 @@ function welcomeApp() {
             if (badge && BADGE_ICONS[badge]) {
                 badgeEl.innerHTML = BADGE_ICONS[badge];
                 badgeEl.style.display = '';
-                badgeEl.className = 'status-badge badge-type-' + badge;
+                badgeEl.className = 'status-badge badge-type-' + badge + ' tooltip tooltip-top';
+                badgeEl.setAttribute('data-tip', BADGE_LABELS[badge] || '');
             } else {
                 badgeEl.style.display = 'none';
                 badgeEl.className = 'status-badge';
+                badgeEl.removeAttribute('data-tip');
             }
         },
 
