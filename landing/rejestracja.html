@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wybierz plan — Wlogio</title>
+<meta name="description" content="Wybierz subskrypcję indywidualną lub firmową i załóż konto Wlogio.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2 3 6.5V12c0 5.2 3.6 9.7 9 11 5.4-1.3 9-5.8 9-11V6.5L12 2Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg></span>
+      Wlogio
+    </a>
+    <nav class="main-nav" id="mainNav">
+      <a href="index.html#funkcje">Funkcje</a>
+      <a href="index.html#cennik">Cennik</a>
+      <a href="index.html#terminal">Terminal</a>
+      <a href="index.html#o-nas">O nas</a>
+      <a href="index.html#kontakt">Kontakt</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn btn-outline btn-sm" data-app-link="/login" href="#">Zaloguj się</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Otwórz menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="reg-hero">
+    <div class="wrap">
+      <span class="eyebrow">Rejestracja</span>
+      <h1 style="margin-top:10px;">Wybierz plan i załóż konto Wlogio</h1>
+      <p>Konto indywidualne i konto firmowe to dwie oddzielne subskrypcje z różną funkcjonalnością — wybierz tę, która pasuje do Ciebie. Plan firmowy możesz w każdej chwili rozszerzyć na wyższy pakiet.</p>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="billing-toggle" style="margin-left:auto;margin-right:auto;">
+      <button data-billing="monthly" class="active">Miesięcznie</button>
+      <button data-billing="yearly">Rocznie <span class="save">2 mies. gratis</span></button>
+    </div>
+
+    <div class="reg-tabs">
+      <button class="reg-tab active" data-target="panel-individual">Konto indywidualne</button>
+      <button class="reg-tab" data-target="panel-company">Konto firmowe</button>
+    </div>
+  </div>
+
+  <!-- INDIVIDUAL -->
+  <div class="reg-panel active" id="panel-individual">
+    <div class="wrap">
+      <div class="plan-picker single">
+        <div class="pick-card" data-plan="individual" data-plan-label="Indywidualna — 19 zł/mies.">
+          <span class="pick-radio"></span>
+          <h3>Indywidualna</h3>
+          <div class="range">1 użytkownik</div>
+          <div class="price"><span class="amount" data-monthly="19">19</span><span class="unit" data-unit>zł / mies.</span></div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Panel pracy — pełna funkcjonalność osobista</li>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Rejestr czasu pracy i wynagrodzenia</li>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Bez ekranu powitalnego / kiosku</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPANY -->
+  <div class="reg-panel" id="panel-company">
+    <div class="wrap">
+      <div class="plan-picker">
+        <div class="pick-card" data-plan="company_small" data-plan-label="Firma — Mała (299 zł/mies.)">
+          <span class="pick-radio"></span>
+          <h3>Firma — Mała</h3>
+          <div class="range">pracowników: 1 – 10</div>
+          <div class="price"><span class="amount" data-monthly="299">299</span><span class="unit" data-unit>zł / mies.</span></div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Konto terminalu pracy (firmowe)</li>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Panel firmy</li>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Subkonta pracowników</li>
+          </ul>
+        </div>
+        <div class="pick-card" data-plan="company_medium" data-plan-label="Firma — Średnia (649 zł/mies.)">
+          <span class="badge-pop">Najczęściej wybierana</span>
+          <span class="pick-radio"></span>
+          <h3>Firma — Średnia</h3>
+          <div class="range">pracowników: 11 – 50</div>
+          <div class="price"><span class="amount" data-monthly="649">649</span><span class="unit" data-unit>zł / mies.</span></div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Konto terminalu pracy (firmowe)</li>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Panel firmy</li>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Subkonta pracowników</li>
+          </ul>
+        </div>
+        <div class="pick-card" data-plan="company_large" data-plan-label="Firma — Duża (1499 zł/mies.)">
+          <span class="pick-radio"></span>
+          <h3>Firma — Duża</h3>
+          <div class="range">pracowników: 51 – 100</div>
+          <div class="price"><span class="amount" data-monthly="1499">1499</span><span class="unit" data-unit>zł / mies.</span></div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Konto terminalu pracy (firmowe)</li>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Panel firmy</li>
+            <li><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Subkonta pracowników</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="reg-continue">
+      <div class="selected-summary" id="regSelectedSummary">Wybrany plan: <b>Indywidualna — 19 zł/mies.</b></div>
+      <a class="btn btn-primary" id="regContinueBtn" data-app-link="/register?plan=individual&billing=monthly" href="#">Kontynuuj rejestrację →</a>
+    </div>
+    <p class="reg-note">Po kliknięciu „Kontynuuj” przejdziesz do formularza zakładania konta w aplikacji Wlogio, gdzie podasz dane logowania i dane rozliczeniowe.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom" style="border-top:none;padding-top:0;">
+      <span>© 2026 Wlogio. Wszelkie prawa zastrzeżone.</span>
+      <a href="index.html" style="color:var(--ink-faint);">Wróć na stronę główną</a>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>

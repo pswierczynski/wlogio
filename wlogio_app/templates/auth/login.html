@@ -34,14 +34,14 @@
             async verify() {
                 this.loading = true;
                 this.error = false;
-                const r = await fetch('/welcome/verify-password', {
+                const r = await fetch('/terminal/verify-password', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({password: this.password})
                 });
                 this.loading = false;
                 if (r.ok) {
-                    window.location.href = '/welcome/';
+                    window.location.href = '/terminal/';
                 } else {
                     this.error = true;
                     this.password = '';

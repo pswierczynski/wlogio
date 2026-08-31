@@ -523,7 +523,7 @@ function welcomeApp() {
 
         async fetchStatuses() {
             try {
-                const r = await fetch('/welcome/statuses');
+                const r = await fetch('/terminal/statuses');
                 if (r.ok) {
                     const data = await r.json();
                     /* Nowy format: {uid: {status, badge}} */
@@ -589,7 +589,7 @@ function welcomeApp() {
         },
 
         async verifyPin() {
-            const r = await fetch('/welcome/verify-pin', {
+            const r = await fetch('/terminal/verify-pin', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({user_id: this.selectedUserId, pin: this.pin})
@@ -615,7 +615,7 @@ function welcomeApp() {
         },
 
         async clockAction(action) {
-            const r = await fetch('/welcome/clock', {
+            const r = await fetch('/terminal/clock', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({

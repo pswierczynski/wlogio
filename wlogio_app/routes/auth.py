@@ -8,7 +8,7 @@ auth_bp = Blueprint('auth', __name__)
 WELCOME_PASSWORD = 'Przemek121!'
 
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/login/', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
@@ -32,7 +32,7 @@ def login():
     return render_template('auth/login.html')
 
 
-@auth_bp.route('/register', methods=['GET', 'POST'])
+@auth_bp.route('/register/', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
@@ -80,7 +80,7 @@ def register():
     return render_template('auth/register.html')
 
 
-@auth_bp.route('/logout')
+@auth_bp.route('/logout/')
 @login_required
 def logout():
     logout_user()
