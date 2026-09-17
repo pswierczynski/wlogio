@@ -45,8 +45,9 @@
 <body class="bg-base-200 min-h-screen">
 
 {% if current_user.is_authenticated %}
-<div class="navbar bg-base-100 shadow-sm border-b border-base-300 px-4">
-    <div class="navbar-start">
+<div class="navbar bg-base-100 shadow-sm border-b border-base-300 px-0">
+  <div class="container mx-auto max-w-6xl px-3 sm:px-4 flex items-center justify-between w-full">
+    <div class="navbar-start w-auto">
         <a href="{{ url_for('dashboard.index') }}" class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none"
                  viewBox="0 0 24 24" stroke="currentColor">
@@ -57,7 +58,7 @@
         </a>
     </div>
 
-    <div class="navbar-end gap-2">
+    <div class="navbar-end gap-2 w-auto">
         <a href="{{ url_for('entries.add') }}" class="btn btn-primary btn-sm gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                  viewBox="0 0 24 24" stroke="currentColor">
@@ -114,6 +115,7 @@
                 </li>
             </ul>
         </div>
+    </div>
     </div>
 </div>
 {% endif %}

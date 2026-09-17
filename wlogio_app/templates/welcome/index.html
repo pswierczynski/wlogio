@@ -29,6 +29,15 @@
         .avatar-btn:hover { transform: scale(1.06); }
         .avatar-btn:active { transform: scale(0.97); }
 
+        /* Płynne zanikanie zdjęć przy górnej/dolnej krawędzi przewijanego
+           obszaru — żeby avatar nie wyglądał na "ucięty" krawędzią ekranu. */
+        .avatars-scroll {
+            -webkit-mask-image: linear-gradient(to bottom,
+                transparent 0, black 32px, black calc(100% - 32px), transparent 100%);
+            mask-image: linear-gradient(to bottom,
+                transparent 0, black 32px, black calc(100% - 32px), transparent 100%);
+        }
+
         .users-grid {
             display: grid;
             gap: 2rem;
@@ -173,7 +182,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
     <!-- EKRAN 1: Siatka avatarów -->
     <div x-show="screen === 'avatars'"
-         class="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto animate-fade-in">
+         class="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto animate-fade-in avatars-scroll">
 
         <h1 class="text-3xl font-bold mb-1 text-center">Dzień dobry!</h1>
         <p class="text-base-content/50 text-sm mb-10 text-center">Wybierz swój profil</p>
