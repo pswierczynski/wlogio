@@ -156,14 +156,14 @@
         }
     </style>
 </head>
-<body class="bg-base-200 min-h-screen">
+<body class="bg-base-200 h-screen overflow-hidden">
 
 <script>
 const INIT_STATUSES = {{ user_statuses | tojson }};
 const INIT_BADGES   = {{ user_badges | tojson }};
 </script>
 
-<div x-data="welcomeApp()" x-init="init()" class="min-h-screen flex flex-col">
+<div x-data="welcomeApp()" x-init="init()" class="h-screen flex flex-col">
 
     <div class="flex items-center justify-between px-6 py-4">
         <div class="flex items-center gap-2">
