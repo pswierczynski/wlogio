@@ -59,19 +59,27 @@
         .label-appear { animation: labelAppear 0.35s ease forwards; }
 
         .ring-status-working { box-shadow: 0 0 0 4px #22c55e; }
+        .ring-status-break   { box-shadow: 0 0 0 4px #f59e0b; }
 
         /* Pulsowanie obramowania — tylko na ekranie głównym avatarów, tylko rozmiar, bez zmiany koloru */
         .avatars-screen .ring-status-working {
             animation: pulseWorking 2.6s ease-in-out infinite;
         }
+        .avatars-screen .ring-status-break {
+            animation: pulseBreak 2.6s ease-in-out infinite;
+        }
         @keyframes pulseWorking {
             0%, 100% { box-shadow: 0 0 0 4px #22c55e; }
             50%      { box-shadow: 0 0 0 7px #22c55e; }
         }
-        @media (prefers-reduced-motion: reduce) {
-            .avatars-screen .ring-status-working { animation: none; }
+        @keyframes pulseBreak {
+            0%, 100% { box-shadow: 0 0 0 4px #f59e0b; }
+            50%      { box-shadow: 0 0 0 7px #f59e0b; }
         }
-        .ring-status-break   { box-shadow: 0 0 0 4px #f59e0b; }
+        @media (prefers-reduced-motion: reduce) {
+            .avatars-screen .ring-status-working,
+            .avatars-screen .ring-status-break { animation: none; }
+        }
         .ring-status-idle    { box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
 
         .avatar-idle    { opacity: 0.5; }
