@@ -342,7 +342,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
             Nieprawidłowy PIN. Spróbuj ponownie.
         </div>
 
-        <button @click="screen = 'avatars'; pin = ''; pinError = false"
+        <button @click="screen = 'avatars'; pin = ''; pinError = false; restartPulseAnimation()"
                 class="btn btn-ghost btn-sm text-base-content/40">
             ← Wróć
         </button>
@@ -664,6 +664,18 @@ function welcomeApp() {
             }
         },
 
+        /* Wymusza restart animacji pulsowania (przeglądarki potrafią "zamrozić"
+           animację CSS na elementach ukrywanych przez x-show/display:none) */
+        restartPulseAnimation() {
+            this.$nextTick(() => {
+                const grid = document.querySelector('.avatars-screen');
+                if (!grid) return;
+                grid.classList.remove('avatars-screen');
+                void grid.offsetWidth; /* wymuszenie przeliczenia stylów */
+                grid.classList.add('avatars-screen');
+            });
+        },
+
         logout() {
             this.screen         = 'avatars';
             this.selectedUserId = null;
@@ -676,6 +688,7 @@ function welcomeApp() {
             this.clockStatus    = 'idle';
             this.selectedBadge  = null;
             this.fetchStatuses();
+            this.restartPulseAnimation();
         }
     }
 }
