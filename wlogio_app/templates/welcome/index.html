@@ -58,15 +58,18 @@
         }
         .label-appear { animation: labelAppear 0.35s ease forwards; }
 
-        .ring-status-working {
+        .ring-status-working { box-shadow: 0 0 0 4px #22c55e; }
+
+        /* Pulsowanie obramowania — tylko na ekranie głównym avatarów, tylko rozmiar, bez zmiany koloru */
+        .avatars-screen .ring-status-working {
             animation: pulseWorking 2.6s ease-in-out infinite;
         }
         @keyframes pulseWorking {
             0%, 100% { box-shadow: 0 0 0 4px #22c55e; }
-            50%      { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.55); }
+            50%      { box-shadow: 0 0 0 7px #22c55e; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .ring-status-working { animation: none; box-shadow: 0 0 0 4px #22c55e; }
+            .avatars-screen .ring-status-working { animation: none; }
         }
         .ring-status-break   { box-shadow: 0 0 0 4px #f59e0b; }
         .ring-status-idle    { box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
@@ -91,7 +94,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2.5px solid #fff;
+            border: 2.5px solid oklch(var(--b2));
             z-index: 10;
         }
         .status-badge svg {
@@ -182,7 +185,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
     <!-- EKRAN 1: Siatka avatarów -->
     <div x-show="screen === 'avatars'"
-         class="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto animate-fade-in">
+         class="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto animate-fade-in avatars-screen">
 
         <h1 class="text-3xl font-bold mb-1 text-center">Dzień dobry!</h1>
         <p class="text-base-content/50 text-sm mb-10 text-center">Wybierz swój profil</p>
@@ -205,8 +208,8 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                 <!-- Wrapper z relatywną pozycją dla badge'a -->
                 <div class="avatar-wrapper w-32 h-32 shrink-0">
                     <div id="av-{{ uid }}"
-                         class="rounded-full overflow-hidden w-32 h-32
-                                ring-status-{{ status }} avatar-{{ status }}"
+                         class="rounded-full overflow-hidden w-32 h-32"
+                         :class="'ring-status-' + (statuses[String({{ uid }})] || 'idle') + ' avatar-' + (statuses[String({{ uid }})] || 'idle')"
                          style="border-radius: 50%;">
                         {% if user.avatar %}
                         <img src="{{ user.avatar }}" alt="{{ user.name or '' }}"
@@ -552,13 +555,7 @@ function welcomeApp() {
                         this.statuses[uid] = status;
                         this.badges[uid]   = badge;
 
-                        /* Aktualizuj obramowanie avatara */
-                        const el = document.getElementById('av-' + uid);
-                        if (el) {
-                            el.className = el.className
-                                .replace(/ring-status-\w+/g, 'ring-status-' + status)
-                                .replace(/avatar-\w+/g, 'avatar-' + status);
-                        }
+                        /* Obramowanie avatara aktualizuje się samo przez :class (reaktywnie z this.statuses) */
                         /* Aktualizuj badge */
                         this.updateAvatarBadge(uid, status, badge);
                     });
