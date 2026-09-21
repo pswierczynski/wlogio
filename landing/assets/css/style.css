@@ -22,8 +22,11 @@ html{scroll-behavior:smooth;}
   html{scroll-behavior:auto;}
   *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
 }
+html{overflow-x:hidden;}
 body{
   margin:0;
+  max-width:100%;
+  overflow-x:hidden;
   font-family:var(--font);
   font-weight:300;
   color:var(--ink);
@@ -85,15 +88,21 @@ button{font-family:inherit;}
 .nav-toggle svg{width:22px; height:22px;}
 
 @media (max-width: 980px){
+  /* backdrop-filter na .site-header tworzy "containing block" dla potomków
+     position:fixed — bez tego menu poniżej próbuje zmieścić się w wysokości
+     samego paska (84px) zamiast całego ekranu. Wyłączamy blur tylko tutaj. */
+  .site-header{backdrop-filter:none; background:rgba(255,255,255,.98);}
+
   .main-nav{
     position:fixed; inset:84px 0 0 0; background:var(--paper); flex-direction:column; align-items:stretch;
     padding:12px 32px; gap:0; transform:translateY(-8px); opacity:0; pointer-events:none; transition:all .18s ease;
-    border-top:1px solid var(--hairline);
+    border-top:1px solid var(--hairline); overflow-y:auto; z-index:60;
   }
   .main-nav.open{transform:translateY(0); opacity:1; pointer-events:auto;}
-  .main-nav a{padding:18px 0; border-bottom:1px solid var(--hairline);}
+  .main-nav a{padding:18px 0; border-bottom:1px solid var(--hairline); color:var(--ink-soft);}
+  .main-nav a.nav-login{display:flex; margin-top:20px; padding:15px 30px; border:1px solid var(--hairline); border-radius:var(--radius); color:var(--ink);}
   .header-actions .btn-outline{display:none;}
-  .nav-toggle{display:inline-flex;}
+  .nav-toggle{display:inline-flex; color:var(--ink);}
 }
 
 /* ---------- Hero ---------- */
@@ -289,4 +298,7 @@ button{font-family:inherit;}
   .cta-band{flex-direction:column; align-items:flex-start;}
   .footer-grid{grid-template-columns:1fr;}
   .footer-bottom{flex-direction:column; align-items:flex-start;}
+  .plan-picker.single{grid-template-columns:minmax(0,420px);}
+  .reg-tabs{width:100%; max-width:100%;}
+  .reg-tab{flex:1; padding:13px 12px;}
 }
