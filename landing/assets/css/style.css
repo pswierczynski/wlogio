@@ -85,7 +85,7 @@ button{font-family:inherit;}
 .main-nav a:hover{color:var(--ink);}
 .header-actions{display:flex; align-items:center; gap:14px;}
 .nav-toggle{display:none; background:none; border:none; padding:8px; cursor:pointer;}
-.nav-toggle svg{width:22px; height:22px;}
+.nav-toggle svg{width:30px; height:30px;}
 
 @media (max-width: 980px){
   /* backdrop-filter na .site-header tworzy "containing block" dla potomków
@@ -103,6 +103,13 @@ button{font-family:inherit;}
   .main-nav a.nav-login{display:flex; margin-top:20px; padding:15px 30px; border:1px solid var(--hairline); border-radius:var(--radius); color:var(--ink);}
   .header-actions .btn-outline{display:none;}
   .nav-toggle{display:inline-flex; color:var(--ink);}
+
+  .site-header .wrap{padding:0 16px; gap:10px;}
+  .header-actions{gap:8px;}
+  .header-actions .btn-primary{padding:10px 14px; font-size:11px;}
+}
+@media (max-width: 360px){
+  .header-actions .btn-primary{padding:9px 10px; font-size:10px; letter-spacing:.02em;}
 }
 
 /* ---------- Hero ---------- */
@@ -283,7 +290,7 @@ button{font-family:inherit;}
   .hero .wrap{grid-template-columns:1fr; gap:44px;}
   .hero-art{order:-1;}
   .feature-grid{grid-template-columns:repeat(2,1fr); gap:36px;}
-  .plan-row{grid-template-columns:repeat(2,1fr); gap:16px;}
+  .plan-row, .plan-row.four-up{grid-template-columns:repeat(2,1fr); gap:16px;}
   .plan-card{border-right:none; border-bottom:1px solid var(--hairline);}
   .terminal-sec .wrap{grid-template-columns:1fr;}
   .terminal-art{order:-1;}
@@ -291,12 +298,13 @@ button{font-family:inherit;}
   .stat-grid{grid-template-columns:repeat(2,1fr);}
   .stat:nth-child(2n){border-right:none;}
   .footer-grid{grid-template-columns:repeat(2,1fr);}
+  .footer-brand{grid-column:1 / -1;}
   .plan-picker{grid-template-columns:1fr;}
 }
 @media (max-width: 560px){
-  .plan-row{grid-template-columns:1fr;}
+  .plan-row, .plan-row.four-up{grid-template-columns:1fr;}
   .cta-band{flex-direction:column; align-items:flex-start;}
-  .footer-grid{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:repeat(2,1fr); gap:24px;}
   .footer-bottom{flex-direction:column; align-items:flex-start;}
   .plan-picker.single{grid-template-columns:minmax(0,420px);}
   .reg-tabs{width:100%; max-width:100%;}
