@@ -88,15 +88,26 @@ class EntryView:
         return getattr(self._entry, name)
 
 
-@dashboard_bp.route('/')
-@login_required
-def index():
+def build_months_data(user_id, date_from=None, date_to=None, include_empty_current=True):
+    """
+    Buduje listę danych miesięcy rozliczeniowych (dokładnie te same obliczenia
+    co panel pracy) — opcjonalnie ograniczoną do wpisów w zakresie dat
+    [date_from, date_to]. Współdzielone przez dashboard i eksport, żeby nie
+    duplikować logiki liczenia godzin/wynagrodzenia.
+
+    Zwraca (months_data, current_key).
+    """
     today = date.today()
     current_billing_year, current_billing_month = get_billing_period(today)
 
+    query = WorkEntry.query.filter_by(user_id=user_id)
+    if date_from is not None:
+        query = query.filter(WorkEntry.date >= date_from)
+    if date_to is not None:
+        query = query.filter(WorkEntry.date <= date_to)
+
     all_entries = (
-        WorkEntry.query
-        .filter_by(user_id=current_user.id)
+        query
         .order_by(
             WorkEntry.billing_year.desc(),
             WorkEntry.billing_month.desc(),
@@ -111,13 +122,13 @@ def index():
 
     configs = {
         (c.billing_year, c.billing_month): c
-        for c in MonthConfig.query.filter_by(user_id=current_user.id).all()
+        for c in MonthConfig.query.filter_by(user_id=user_id).all()
     }
 
     sorted_keys = sorted(periods.keys(), key=lambda x: (x[0], x[1]), reverse=True)
 
     current_key = (current_billing_year, current_billing_month)
-    if current_key not in periods:
+    if include_empty_current and current_key not in periods:
         periods[current_key] = []
         if current_key not in sorted_keys:
             sorted_keys.insert(0, current_key)
@@ -145,10 +156,10 @@ def index():
         from wlogio_app.calculator import _parse_work_days, get_billing_period_dates
         work_days_list = _parse_work_days(work_days) if work_days else [0,1,2,3,4]
         from datetime import timedelta
-        date_from, date_to = get_billing_period_dates(year, month, start_day, end_day)
+        period_date_from, period_date_to = get_billing_period_dates(year, month, start_day, end_day)
         working_days = 0
-        cur = date_from
-        while cur <= date_to:
+        cur = period_date_from
+        while cur <= period_date_to:
             if cur.weekday() in work_days_list:
                 working_days += 1
             cur += timedelta(days=1)
@@ -191,6 +202,15 @@ def index():
             'hours_per_day': hours_per_day,
         })
 
+    return months_data, current_key
+
+
+@dashboard_bp.route('/')
+@login_required
+def index():
+    months_data, current_key = build_months_data(current_user.id)
+
+    today = date.today()
     current_year = today.year
     balance = get_or_create_vacation_balance(current_user.id, db.session)
     used    = calculate_vacation_used(current_user.id, current_year, db.session)

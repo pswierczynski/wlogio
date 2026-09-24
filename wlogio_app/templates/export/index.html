@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Eksportuj dane{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto"
+     x-data="{ range: 'current_year', format: 'csv' }">
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
+        <h1 class="text-xl font-bold">Eksportuj dane</h1>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-6">
+
+            <div class="alert alert-info text-sm">
+                Eksport zawiera dokładnie te dane, które widzisz w swoim panelu pracy
+                (godziny, wynagrodzenie, nadgodziny), pogrupowane wg miesięcy rozliczeniowych.
+            </div>
+
+            <form method="POST" action="{{ url_for('export.generate') }}" class="flex flex-col gap-6">
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Format pliku</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <label class="btn flex-1"
+                               :class="format === 'csv' ? 'btn-neutral' : 'btn-outline'">
+                            <input type="radio" name="format" value="csv" class="hidden" x-model="format"/>
+                            CSV
+                        </label>
+                        <label class="btn flex-1"
+                               :class="format === 'xlsx' ? 'btn-neutral' : 'btn-outline'">
+                            <input type="radio" name="format" value="xlsx" class="hidden" x-model="format"/>
+                            Excel (XLSX)
+                        </label>
+                        <label class="btn flex-1"
+                               :class="format === 'pdf' ? 'btn-neutral' : 'btn-outline'">
+                            <input type="radio" name="format" value="pdf" class="hidden" x-model="format"/>
+                            PDF
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Zakres dat</span>
+                    </label>
+                    <div class="flex flex-col gap-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="range" value="current_year" class="radio radio-sm"
+                                   x-model="range"/>
+                            <span class="text-sm">Bieżący rok (do dziś)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="range" value="previous_year" class="radio radio-sm"
+                                   x-model="range"/>
+                            <span class="text-sm">Poprzedni rok</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="range" value="previous_month" class="radio radio-sm"
+                                   x-model="range"/>
+                            <span class="text-sm">Poprzedni miesiąc</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="range" value="custom" class="radio radio-sm"
+                                   x-model="range"/>
+                            <span class="text-sm">Zakres własny</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div x-show="range === 'custom'" x-cloak class="flex gap-3">
+                    <div class="form-control flex-1">
+                        <label class="label"><span class="label-text text-sm">Od</span></label>
+                        <input type="date" name="date_from" class="input input-bordered w-full"/>
+                    </div>
+                    <div class="form-control flex-1">
+                        <label class="label"><span class="label-text text-sm">Do</span></label>
+                        <input type="date" name="date_to" class="input input-bordered w-full"/>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">Eksportuj</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
