@@ -18,9 +18,12 @@ from wlogio_app.calculator import (
     format_currency,
     _get_config_value,
     _parse_work_days,
+    get_billing_period_dates,
     DEFAULT_OVERTIME_RATE,
     DEFAULT_OFFDAY_RATE,
     DEFAULT_HOURS_PER_DAY,
+    DEFAULT_BILLING_START_DAY,
+    DEFAULT_BILLING_END_DAY,
 )
 
 export_bp = Blueprint('export', __name__)
@@ -110,10 +113,18 @@ def entry_salary(entry, month):
 def resolve_date_range(range_key, date_from_str, date_to_str):
     today = date.today()
     if range_key == 'current_year':
-        return date(today.year, 1, 1), today
+        # Początek roku = pierwszy dzień okresu rozliczeniowego stycznia
+        # (domyślnie 23 grudnia poprzedniego roku), nie kalendarzowy 1 stycznia.
+        start, _ = get_billing_period_dates(today.year, 1, DEFAULT_BILLING_START_DAY, DEFAULT_BILLING_END_DAY)
+        return start, today
     if range_key == 'previous_year':
         y = today.year - 1
-        return date(y, 1, 1), date(y, 12, 31)
+        start, _ = get_billing_period_dates(y, 1, DEFAULT_BILLING_START_DAY, DEFAULT_BILLING_END_DAY)
+        # Koniec roku = ostatni dzień okresu rozliczeniowego grudnia (domyślnie
+        # 22 grudnia), żeby nie nachodzić na okres, który już należy do stycznia
+        # następnego roku (a więc do zakresu "current_year").
+        _, end = get_billing_period_dates(y, 12, DEFAULT_BILLING_START_DAY, DEFAULT_BILLING_END_DAY)
+        return start, end
     if range_key == 'previous_month':
         first_this = date(today.year, today.month, 1)
         last_prev = first_this - timedelta(days=1)
