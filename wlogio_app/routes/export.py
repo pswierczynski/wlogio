@@ -14,6 +14,7 @@ from flask import Blueprint, render_template, request, Response, flash, redirect
 from flask_login import login_required, current_user
 
 from wlogio_app.routes.dashboard import build_months_data
+from wlogio_app.models import MonthConfig
 from wlogio_app.calculator import (
     format_currency,
     _get_config_value,
@@ -110,20 +111,36 @@ def entry_salary(entry, month):
     return float(entry.hours_billed) * hourly_rate
 
 
-def resolve_date_range(range_key, date_from_str, date_to_str):
+def _billing_days_for(user_id, year, month):
+    """
+    Zwraca (start_day, end_day) skonfigurowane przez użytkownika dla danego
+    miesiąca rozliczeniowego, albo wartości domyślne (23/22), jeśli dla tego
+    miesiąca nie ma jeszcze zapisanej konfiguracji.
+    """
+    config = MonthConfig.query.filter_by(user_id=user_id, billing_year=year, billing_month=month).first()
+    start_day = _get_config_value(config, 'billing_start_day', DEFAULT_BILLING_START_DAY)
+    end_day   = _get_config_value(config, 'billing_end_day',   DEFAULT_BILLING_END_DAY)
+    return start_day, end_day
+
+
+def resolve_date_range(user_id, range_key, date_from_str, date_to_str):
     today = date.today()
     if range_key == 'current_year':
-        # Początek roku = pierwszy dzień okresu rozliczeniowego stycznia
-        # (domyślnie 23 grudnia poprzedniego roku), nie kalendarzowy 1 stycznia.
-        start, _ = get_billing_period_dates(today.year, 1, DEFAULT_BILLING_START_DAY, DEFAULT_BILLING_END_DAY)
+        # Początek roku = pierwszy dzień okresu rozliczeniowego stycznia wg
+        # ustawień użytkownika dla tego miesiąca (domyślnie 23 grudnia
+        # poprzedniego roku), nie kalendarzowy 1 stycznia.
+        start_day, end_day = _billing_days_for(user_id, today.year, 1)
+        start, _ = get_billing_period_dates(today.year, 1, start_day, end_day)
         return start, today
     if range_key == 'previous_year':
         y = today.year - 1
-        start, _ = get_billing_period_dates(y, 1, DEFAULT_BILLING_START_DAY, DEFAULT_BILLING_END_DAY)
-        # Koniec roku = ostatni dzień okresu rozliczeniowego grudnia (domyślnie
-        # 22 grudnia), żeby nie nachodzić na okres, który już należy do stycznia
-        # następnego roku (a więc do zakresu "current_year").
-        _, end = get_billing_period_dates(y, 12, DEFAULT_BILLING_START_DAY, DEFAULT_BILLING_END_DAY)
+        start_day, end_day = _billing_days_for(user_id, y, 1)
+        start, _ = get_billing_period_dates(y, 1, start_day, end_day)
+        # Koniec roku = ostatni dzień okresu rozliczeniowego grudnia wg
+        # ustawień użytkownika dla grudnia, żeby nie nachodzić na okres,
+        # który już należy do stycznia następnego roku ("current_year").
+        dec_start_day, dec_end_day = _billing_days_for(user_id, y, 12)
+        _, end = get_billing_period_dates(y, 12, dec_start_day, dec_end_day)
         return start, end
     if range_key == 'previous_month':
         first_this = date(today.year, today.month, 1)
@@ -377,7 +394,7 @@ def generate():
         flash('Podaj obie daty zakresu (od — do).', 'error')
         return redirect(url_for('export.index'))
 
-    date_from, date_to = resolve_date_range(range_key, date_from_str, date_to_str)
+    date_from, date_to = resolve_date_range(current_user.id, range_key, date_from_str, date_to_str)
 
     if date_from and date_to and date_from > date_to:
         flash('Data "od" musi być wcześniejsza niż data "do".', 'error')
