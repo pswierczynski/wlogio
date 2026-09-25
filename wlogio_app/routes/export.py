@@ -270,7 +270,8 @@ def generate_xlsx(months_data):
         razem_cell.number_format = '#,##0.00 "zł"'
         row += 1
         ws.cell(row=row, column=1, value='Stawka')
-        ws.cell(row=row, column=2, value=f"{month['hourly_rate']} PLN/h")
+        rate_cell = ws.cell(row=row, column=2, value=f"{month['hourly_rate']} PLN/h")
+        rate_cell.alignment = Alignment(horizontal='right')
         row += 3
 
     widths = [22, 22, 11, 11, 13, 11, 16]
@@ -373,7 +374,7 @@ def generate_pdf(months_data, user):
         summary_style = [
             ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans'),
             ('FONTNAME', (1, 0), (1, -1), 'DejaVuSans-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
             ('TOPPADDING', (0, 0), (-1, -1), 3),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
