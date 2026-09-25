@@ -273,7 +273,7 @@ def generate_xlsx(months_data):
         ws.cell(row=row, column=2, value=f"{month['hourly_rate']} PLN/h")
         row += 3
 
-    widths = [13, 22, 11, 11, 13, 11, 16]
+    widths = [22, 22, 11, 11, 13, 11, 16]
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
@@ -313,6 +313,9 @@ def generate_pdf(months_data, user):
         Spacer(1, 12),
     ]
 
+    from reportlab.lib.units import mm as _mm
+    DAY_TABLE_COL_WIDTHS = [20 * _mm, 34 * _mm, 16 * _mm, 16 * _mm, 16 * _mm, 18 * _mm, 28 * _mm]
+
     headers = ['Data', 'Typ', 'Przyjście', 'Wyjście', 'Przerwa', 'Godziny', 'Wynagrodzenie']
 
     for month in months_data:
@@ -335,7 +338,7 @@ def generate_pdf(months_data, user):
 
         table = Table(
             data, repeatRows=1,
-            colWidths=[20 * mm, 34 * mm, 16 * mm, 16 * mm, 16 * mm, 18 * mm, 28 * mm],
+            colWidths=DAY_TABLE_COL_WIDTHS,
         )
         table.setStyle(TableStyle([
             ('FONTNAME', (0, 0), (-1, 0), 'DejaVuSans-Bold'),
@@ -351,16 +354,37 @@ def generate_pdf(months_data, user):
         elements.append(table)
 
         s = month['summary']
-        summary_text = (
-            f"<b>Przepracowane:</b> {hours_str(s['total_hours'])}h &nbsp;&nbsp; "
-            f"<b>Wymagane:</b> {s['expected_hours']:.0f}h &nbsp;&nbsp; "
-            f"<b>Nadgodziny:</b> {hours_str(s['overtime_hours'])}h &nbsp;&nbsp; "
-            f"<b>Wynagrodzenie:</b> {format_currency(s['actual_salary'])} &nbsp;&nbsp; "
-            f"<b>Razem:</b> {format_currency(s['total_with_bonus'])} &nbsp;&nbsp; "
-            f"<b>Stawka:</b> {month['hourly_rate']} PLN/h"
-        )
+        summary_rows = [
+            ['Przepracowane', f"{hours_str(s['total_hours'])}h"],
+            ['Wymagane', f"{s['expected_hours']:.0f}h"],
+            ['Nadgodziny', f"{hours_str(s['overtime_hours'])}h"],
+            ['Wynagrodzenie', format_currency(s['actual_salary'])],
+        ]
+        if s.get('bonus'):
+            summary_rows.append(['Premia', format_currency(s['bonus'])])
+        razem_row_index = len(summary_rows)
+        summary_rows.append(['Razem', format_currency(s['total_with_bonus'])])
+        summary_rows.append(['Stawka', f"{month['hourly_rate']} PLN/h"])
+
+        # Ta sama szerokość i lewa krawędź co tabela dni powyżej — dwie kolumny
+        # sumujące się do tej samej wartości (suma DAY_TABLE_COL_WIDTHS).
+        summary_col_widths = [sum(DAY_TABLE_COL_WIDTHS) - 70 * mm, 70 * mm]
+        summary_table = Table(summary_rows, colWidths=summary_col_widths)
+        summary_style = [
+            ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans'),
+            ('FONTNAME', (1, 0), (1, -1), 'DejaVuSans-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('LINEBELOW', (0, 0), (-1, -2), 0.3, colors.HexColor('#eeeeee')),
+            ('LINEABOVE', (0, razem_row_index), (-1, razem_row_index), 0.6, colors.HexColor('#999999')),
+            ('FONTNAME', (0, razem_row_index), (-1, razem_row_index), 'DejaVuSans-Bold'),
+        ]
+        summary_table.setStyle(TableStyle(summary_style))
+
         elements.append(Spacer(1, 6))
-        elements.append(Paragraph(summary_text, normal_style))
+        elements.append(summary_table)
         elements.append(Spacer(1, 18))
 
     if len(months_data) == 0 or all(len(m['entries']) == 0 for m in months_data):
