@@ -315,7 +315,9 @@ def generate_pdf(months_data, user):
     ]
 
     from reportlab.lib.units import mm as _mm
-    DAY_TABLE_COL_WIDTHS = [20 * _mm, 34 * _mm, 16 * _mm, 16 * _mm, 16 * _mm, 18 * _mm, 28 * _mm]
+    # A4 (210mm) minus lewy/prawy margines dokumentu (14mm każdy) = 182mm
+    # dostępnej szerokości — tabela wykorzystuje ją całą, zamiast być węższa.
+    DAY_TABLE_COL_WIDTHS = [22 * _mm, 54 * _mm, 18 * _mm, 18 * _mm, 18 * _mm, 20 * _mm, 32 * _mm]
 
     headers = ['Data', 'Typ', 'Przyjście', 'Wyjście', 'Przerwa', 'Godziny', 'Wynagrodzenie']
 
