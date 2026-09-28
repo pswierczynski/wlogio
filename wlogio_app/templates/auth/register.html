@@ -18,6 +18,13 @@
         .badge-primary { background-color: #1A1A19; border-color: #1A1A19; color: #fff; }
         .checkbox-primary:checked { background-color: #1A1A19; border-color: #1A1A19; }
         .radio-primary:checked { background-color: #1A1A19; border-color: #1A1A19; }
+
+        /* Komunikaty (alert) — zawsze szare, bez wariantów czerwony/niebieski/zielony/żółty */
+        .alert-error, .alert-success, .alert-info, .alert-warning {
+            background-color: oklch(var(--b3));
+            border-color: oklch(var(--b3));
+            color: oklch(var(--bc));
+        }
     </style>
 </head>
 <body class="bg-base-200 min-h-screen flex items-center justify-center">
