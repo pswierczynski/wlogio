@@ -187,12 +187,16 @@ def compute_status(entry):
 def compute_badge(entry, status=None):
     """
     Oblicza typ badge'a na podstawie wpisu na dziś i aktualnego statusu.
-    Zwraca: 'P' | 'U' | 'Z' | 'O' | 'S' | 'D' | None
+    Zwraca: 'P' | 'U' | 'Z' | 'O' | 'S' | 'D' | 'N' | 'B' | 'H' | 'W' | None
 
     'P' — praca zdalna (work + is_remote) — TYLKO gdy status == 'working'
           Znika przy przerwie i po zakończeniu pracy (status idle/break).
-    'U' — urlop dowolnego rodzaju: vacation, on_demand, unpaid, holiday
-          Wyświetlany zawsze niezależnie od statusu.
+    'W' — praca stacjonarna (work + nie is_remote) — TYLKO gdy status == 'working'
+          Znika przy przerwie i po zakończeniu pracy (status idle/break).
+    'U' — urlop wypoczynkowy: vacation
+    'N' — urlop na żądanie: on_demand
+    'B' — urlop bezpłatny: unpaid
+    'H' — święto: holiday
     'Z' — zwolnienie lekarskie: sick_leave
     'O' — urlop opiekuńczy: care_leave
     'S' — siła wyższa: force_majeure
@@ -215,13 +219,28 @@ def compute_badge(entry, status=None):
     if entry.entry_type == 'child_care':
         return 'D'
 
-    if entry.entry_type in ('vacation', 'on_demand', 'unpaid', 'holiday'):
+    if entry.entry_type == 'vacation':
         return 'U'
+
+    if entry.entry_type == 'on_demand':
+        return 'N'
+
+    if entry.entry_type == 'unpaid':
+        return 'B'
+
+    if entry.entry_type == 'holiday':
+        return 'H'
 
     if entry.entry_type == 'work' and entry.is_remote:
         # Badge P widoczny tylko gdy użytkownik aktualnie pracuje (nie na przerwie, nie idle)
         if status == 'working':
             return 'P'
+        return None
+
+    if entry.entry_type == 'work' and not entry.is_remote:
+        # Badge W (praca stacjonarna) — ta sama zasada widoczności co P
+        if status == 'working':
+            return 'W'
         return None
 
     return None
