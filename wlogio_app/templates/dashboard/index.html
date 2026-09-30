@@ -118,7 +118,8 @@
                 {% for month in group.months %}
                 {% set key = month.year ~ '-' ~ month.month %}
 
-                <div class="card bg-base-100 border border-base-200 shadow-none overflow-hidden">
+                <div class="card bg-base-100 shadow-none overflow-hidden"
+                     :class="openMonth === '{{ key }}' ? 'border-2 border-base-content/40' : 'border border-base-200'">
 
                     <div class="flex items-center justify-between px-3 sm:px-4 py-3 cursor-pointer hover:bg-base-50 transition-colors select-none"
                          @click="openMonth = openMonth === '{{ key }}' ? null : '{{ key }}'">
