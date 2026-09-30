@@ -145,11 +145,11 @@
                                     / {{ "%.0f"|format(month.summary.expected_hours) }}h
                                 </span>
                                 {% if month.summary.overtime_hours > 0 %}
-                                <span class="badge badge-sm py-1 h-6 text-white" style="background-color:#22c55e; border-color:#22c55e; padding-right:12px;">
+                                <span class="badge badge-sm py-1 h-6 text-white" style="background-color:#22c55e; border-color:#22c55e; padding-right:9px; display:inline-flex; align-items:center; justify-content:center; line-height:1;">
                                     +{{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h
                                 </span>
                                 {% elif month.summary.overtime_hours < 0 %}
-                                <span class="badge badge-error badge-sm py-1 h-6 text-white" style="padding-right:12px;">
+                                <span class="badge badge-error badge-sm py-1 h-6 text-white" style="padding-right:9px; display:inline-flex; align-items:center; justify-content:center; line-height:1;">
                                     {{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h
                                 </span>
                                 {% endif %}
