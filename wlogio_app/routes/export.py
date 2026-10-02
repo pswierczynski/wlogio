@@ -232,14 +232,15 @@ def generate_xlsx(months_data):
             ws.cell(row=row, column=2, value=entry_type_label(entry))
             ws.cell(row=row, column=3, value=entry.time_start.strftime('%H:%M') if entry.time_start else '')
             ws.cell(row=row, column=4, value=entry.time_end.strftime('%H:%M') if entry.time_end else '')
-            ws.cell(row=row, column=5, value=bmin if bmin else None)
+            bmin_cell = ws.cell(row=row, column=5, value=bmin if bmin else None)
+            bmin_cell.alignment = Alignment(horizontal='left')
             hb_cell = ws.cell(
                 row=row, column=6,
                 value=round(float(entry.hours_billed), 2) if entry.entry_type != 'unpaid' else 0
             )
-            hb_cell.alignment = Alignment(horizontal='right')
+            hb_cell.alignment = Alignment(horizontal='left')
             sal_cell = ws.cell(row=row, column=7, value=round(salary, 2) if salary is not None else None)
-            sal_cell.alignment = Alignment(horizontal='right')
+            sal_cell.alignment = Alignment(horizontal='left')
             if salary is not None:
                 sal_cell.number_format = '#,##0.00 "zł"'
             row += 1
