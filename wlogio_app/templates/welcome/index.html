@@ -91,20 +91,47 @@
         .badge-type-H { background-color: #9ca3af; }  /* szary — święto */
         .badge-type-W { background-color: #22c55e; }  /* zielony jak zdalna — praca stacjonarna */
 
+        /* ---- Biały panel z zaokrąglonymi narożnikami (ekran PIN i ekran zegara) ---- */
+        .kiosk-card {
+            background: #fff;
+            border-radius: 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            padding: 2.25rem 1.75rem;
+            width: 100%;
+            max-width: 560px;
+        }
+        @media (orientation: landscape) {
+            .kiosk-card { padding: 2.5rem 3rem; max-width: 680px; }
+        }
+
+        /* Układ: avatar nad PIN-em na komórce (pionowo), obok po prawej na ekranach poziomych */
+        .pin-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        @media (orientation: landscape) {
+            .pin-layout { flex-direction: row-reverse; align-items: center; gap: 3rem; justify-content: center; }
+        }
+
+        /* Rząd kropek PIN-u i siatka klawiatury mają tę samą szerokość */
+        .keypad-wrap   { width: 228px; }
+        .pin-dots-row  { width: 228px; display: flex; justify-content: space-between; }
+
         .pin-digit {
-            width: 60px; height: 70px;
-            font-size: 2rem; font-weight: bold;
-            border: 2px solid oklch(var(--bc) / 0.2);
-            border-radius: 12px;
-            background: oklch(var(--b2));
+            width: 48px; height: 58px;
+            font-size: 1.75rem; font-weight: bold;
+            border: 2px solid #e5e7eb;
+            border-radius: 14px;
+            background: #f9fafb;
             display: flex; align-items: center; justify-content: center;
             transition: border-color 0.2s, background 0.2s;
         }
-        .pin-digit.active { border-color: oklch(var(--p)); background: oklch(var(--b1)); }
-        .pin-digit.filled { background: oklch(var(--p) / 0.1); border-color: oklch(var(--p)); }
+        .pin-digit.active { border-color: #18181b; background: #fff; }
+        .pin-digit.filled { background: #f3f4f6; border-color: #18181b; }
         .pin-digit.error  {
-            border-color: oklch(var(--er));
-            background: oklch(var(--er) / 0.1);
+            border-color: #ff5861;
+            background: #fff1f1;
             animation: shake 0.4s ease;
         }
         @keyframes shake {
@@ -113,9 +140,29 @@
             75% { transform: translateX(8px); }
         }
 
+        /* Kwadratowe przyciski klawiatury numerycznej, w lekkiej ramce */
+        .keypad-btn {
+            width: 68px; height: 68px;
+            border-radius: 18px;
+            border: 1.5px solid #e5e7eb;
+            background: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: 700; color: #18181b;
+            transition: background 0.15s ease, transform 0.1s ease;
+        }
+        .keypad-btn:not(:disabled):hover  { background: #f3f4f6; }
+        .keypad-btn:not(:disabled):active { transform: scale(0.94); }
+        .keypad-btn:disabled { opacity: 0.3; }
+        /* Przycisk "dalej" — ciemny, z białą strzałką */
+        .keypad-btn.keypad-btn-dark {
+            background: #18181b; border-color: #18181b; color: #fff;
+        }
+        .keypad-btn.keypad-btn-dark:not(:disabled):hover { background: #27272a; }
+
+        /* Kwadratowe, zaokrąglone przyciski na ekranie zegara (zamiast okrągłych) */
         .clock-btn {
-            width: 140px; height: 140px;
-            border-radius: 50%;
+            width: 120px; height: 120px;
+            border-radius: 26px;
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             gap: 8px; font-size: 0.85rem; font-weight: 600;
@@ -278,70 +325,94 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
     <!-- EKRAN 2: PIN -->
     <div x-show="screen === 'pin'" x-cloak
-         class="flex-1 flex flex-col items-center justify-center p-8 animate-slide-up">
+         class="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 animate-slide-up">
 
-        <!-- Avatar z badge'm na ekranie PIN -->
-        <div class="avatar-wrapper w-20 h-20 mb-6">
-            <div class="rounded-full overflow-hidden w-20 h-20"
-                 :class="'ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
-                 style="border-radius: 50%;">
-                <template x-if="selectedAvatar">
-                    <img :src="selectedAvatar" class="w-full h-full object-cover"/>
-                </template>
-                <template x-if="!selectedAvatar">
-                    <div class="w-full h-full bg-neutral flex items-center justify-center">
-                        <span class="text-2xl font-bold text-white" x-text="getInitials(selectedName)"></span>
+      <div class="kiosk-card">
+        <div class="pin-layout">
+
+            <!-- Avatar z badge'm — nad PIN-em na komórce, po prawej na ekranach poziomych -->
+            <div class="flex flex-col items-center gap-3 mb-6" style="flex-shrink:0;">
+                <div class="avatar-wrapper w-20 h-20">
+                    <div class="rounded-full overflow-hidden w-20 h-20"
+                         :class="'ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
+                         style="border-radius: 50%;">
+                        <template x-if="selectedAvatar">
+                            <img :src="selectedAvatar" class="w-full h-full object-cover"/>
+                        </template>
+                        <template x-if="!selectedAvatar">
+                            <div class="w-full h-full bg-neutral flex items-center justify-center">
+                                <span class="text-2xl font-bold text-white" x-text="getInitials(selectedName)"></span>
+                            </div>
+                        </template>
                     </div>
-                </template>
-            </div>
-            <div x-show="selectedBadge"
-                 class="status-badge tooltip tooltip-top"
-                 :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
-                 :data-tip="selectedBadge ? (BADGE_LABELS[selectedBadge] || '') : ''"
-                 x-html="selectedBadge ? (BADGE_ICONS[selectedBadge] || '') : ''"></div>
-        </div>
-
-        <h2 class="text-xl font-bold mb-1" x-text="selectedName"></h2>
-        <p class="text-base-content/60 text-sm mb-8">Wpisz swój PIN (4 cyfry)</p>
-
-        <div class="flex gap-3 mb-8">
-            <template x-for="i in 4" :key="i">
-                <div class="pin-digit"
-                     :class="{
-                         'filled': pin.length >= i,
-                         'active': pin.length === i - 1,
-                         'error': pinError
-                     }">
-                    <span x-text="pin.length >= i ? '•' : ''"></span>
+                    <div x-show="selectedBadge"
+                         class="status-badge tooltip tooltip-top"
+                         :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
+                         :data-tip="selectedBadge ? (BADGE_LABELS[selectedBadge] || '') : ''"
+                         x-html="selectedBadge ? (BADGE_ICONS[selectedBadge] || '') : ''"></div>
                 </div>
-            </template>
-        </div>
+                <h2 class="text-lg font-bold text-center" x-text="selectedName"></h2>
+            </div>
 
-        <div class="grid grid-cols-3 gap-3 mb-6">
-            <template x-for="key in ['1','2','3','4','5','6','7','8','9','','0','⌫']" :key="key">
-                <button @click="pressKey(key)"
-                        :disabled="key === ''"
-                        class="btn btn-ghost text-xl font-bold h-14 w-14 rounded-xl"
-                        :class="key === '' ? 'opacity-0 pointer-events-none' : 'hover:bg-base-300'">
-                    <span x-text="key"></span>
+            <!-- Blok PIN -->
+            <div class="flex flex-col items-center">
+                <p class="text-base-content/60 text-sm mb-6">Wpisz swój PIN (4 cyfry)</p>
+
+                <div class="pin-dots-row mb-6">
+                    <template x-for="i in 4" :key="i">
+                        <div class="pin-digit"
+                             :class="{
+                                 'filled': pin.length >= i,
+                                 'active': pin.length === i - 1,
+                                 'error': pinError
+                             }">
+                            <span x-text="pin.length >= i ? '•' : ''"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="keypad-wrap grid grid-cols-3 gap-3 mb-5">
+                    <template x-for="key in ['1','2','3','4','5','6','7','8','9']" :key="key">
+                        <button @click="pressKey(key)" class="keypad-btn">
+                            <span x-text="key"></span>
+                        </button>
+                    </template>
+
+                    <button @click="pressKey('⌫')" class="keypad-btn">
+                        <span>⌫</span>
+                    </button>
+                    <button @click="pressKey('0')" class="keypad-btn">
+                        <span>0</span>
+                    </button>
+                    <button @click="pin.length === 4 && verifyPin()"
+                            :disabled="pin.length < 4"
+                            class="keypad-btn keypad-btn-dark">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div x-show="pinError" x-cloak class="text-error text-sm mb-2 animate-fade-in">
+                    Nieprawidłowy PIN. Spróbuj ponownie.
+                </div>
+
+                <button @click="screen = 'avatars'; pin = ''; pinError = false"
+                        class="btn btn-ghost btn-sm text-base-content/40">
+                    ← Wróć
                 </button>
-            </template>
-        </div>
+            </div>
 
-        <div x-show="pinError" x-cloak class="text-error text-sm mb-4 animate-fade-in">
-            Nieprawidłowy PIN. Spróbuj ponownie.
         </div>
-
-        <button @click="screen = 'avatars'; pin = ''; pinError = false"
-                class="btn btn-ghost btn-sm text-base-content/40">
-            ← Wróć
-        </button>
+      </div>
     </div>
 
     <!-- EKRAN 3: Przyciski czasu pracy -->
     <div x-show="screen === 'clock'" x-cloak
-         class="flex-1 flex flex-col p-8 animate-slide-up">
+         class="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 animate-slide-up">
 
+      <div class="kiosk-card flex flex-col items-center">
         <div class="clock-screen-wrapper">
 
             <!-- Avatar z badge'm na ekranie clock -->
@@ -444,6 +515,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                 Gotowe →
             </button>
         </div>
+      </div>
     </div>
 
 </div>
