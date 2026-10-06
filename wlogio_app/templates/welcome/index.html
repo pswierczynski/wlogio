@@ -373,18 +373,19 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
                 <div class="keypad-wrap grid grid-cols-3 gap-3 mb-5">
                     <template x-for="key in ['1','2','3','4','5','6','7','8','9']" :key="key">
-                        <button @click="pressKey(key)" class="keypad-btn">
+                        <button type="button" @click="pressKey(key)" class="keypad-btn">
                             <span x-text="key"></span>
                         </button>
                     </template>
 
-                    <button @click="pressKey('⌫')" class="keypad-btn">
+                    <button type="button" @click="pressKey('⌫')" class="keypad-btn">
                         <span>⌫</span>
                     </button>
-                    <button @click="pressKey('0')" class="keypad-btn">
+                    <button type="button" @click="pressKey('0')" class="keypad-btn">
                         <span>0</span>
                     </button>
-                    <button @click="pin.length === 4 && verifyPin()"
+                    <button type="button"
+                            @click="pin.length === 4 && verifyPin()"
                             :disabled="pin.length < 4"
                             class="keypad-btn keypad-btn-dark">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
