@@ -332,8 +332,8 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
             <!-- Avatar z badge'm — nad PIN-em na komórce, po prawej na ekranach poziomych -->
             <div class="flex flex-col items-center gap-3 mb-6" style="flex-shrink:0;">
-                <div class="avatar-wrapper w-20 h-20">
-                    <div class="rounded-full overflow-hidden w-20 h-20"
+                <div class="avatar-wrapper w-32 h-32">
+                    <div class="rounded-full overflow-hidden w-32 h-32"
                          :class="'ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
                          style="border-radius: 50%;">
                         <template x-if="selectedAvatar">
@@ -341,7 +341,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                         </template>
                         <template x-if="!selectedAvatar">
                             <div class="w-full h-full bg-neutral flex items-center justify-center">
-                                <span class="text-2xl font-bold text-white" x-text="getInitials(selectedName)"></span>
+                                <span class="text-4xl font-bold text-white" x-text="getInitials(selectedName)"></span>
                             </div>
                         </template>
                     </div>
@@ -351,7 +351,11 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                          :data-tip="selectedBadge ? (BADGE_LABELS[selectedBadge] || '') : ''"
                          x-html="selectedBadge ? (BADGE_ICONS[selectedBadge] || '') : ''"></div>
                 </div>
-                <h2 class="text-lg font-bold text-center" x-text="selectedName"></h2>
+                <div class="text-center leading-snug">
+                    <h2 class="text-lg font-bold" x-text="selectedName.split(' ')[0]"></h2>
+                    <h2 x-show="selectedName.split(' ').length > 1"
+                        class="text-lg font-bold" x-text="selectedName.split(' ').slice(1).join(' ')"></h2>
+                </div>
             </div>
 
             <!-- Blok PIN -->
