@@ -118,6 +118,17 @@
         .keypad-wrap   { width: 228px; }
         .pin-dots-row  { width: 228px; display: flex; justify-content: space-between; }
 
+        /* Układ ekranu zegara: avatar nad przyciskami na pionowych ekranach,
+           avatar po prawej obok przycisków na ekranach poziomych */
+        .clock-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        @media (orientation: landscape) {
+            .clock-layout { flex-direction: row-reverse; align-items: center; gap: 3rem; justify-content: center; }
+        }
+
         .pin-digit {
             width: 48px; height: 58px;
             font-size: 1.75rem; font-weight: bold;
@@ -419,30 +430,36 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
       <div class="kiosk-card flex flex-col items-center">
         <div class="clock-screen-wrapper">
+          <div class="clock-layout">
 
-            <!-- Avatar z badge'm na ekranie clock -->
-            <div class="avatar-wrapper w-16 h-16 mb-4">
-                <div class="rounded-full overflow-hidden w-16 h-16"
-                     :class="'ring-status-' + clockStatus + ' avatar-' + clockStatus"
-                     style="border-radius: 50%;">
-                    <template x-if="selectedAvatar">
-                        <img :src="selectedAvatar" class="w-full h-full object-cover"/>
-                    </template>
-                    <template x-if="!selectedAvatar">
-                        <div class="w-full h-full bg-neutral flex items-center justify-center">
-                            <span class="text-xl font-bold text-white" x-text="getInitials(selectedName)"></span>
-                        </div>
-                    </template>
+            <!-- Avatar z badge'm — nad przyciskami na pionowym ekranie, po prawej na poziomym -->
+            <div class="flex flex-col items-center gap-3 mb-6" style="flex-shrink:0;">
+                <div class="avatar-wrapper w-32 h-32">
+                    <div class="rounded-full overflow-hidden w-32 h-32"
+                         :class="'ring-status-' + clockStatus + ' avatar-' + clockStatus"
+                         style="border-radius: 50%;">
+                        <template x-if="selectedAvatar">
+                            <img :src="selectedAvatar" class="w-full h-full object-cover"/>
+                        </template>
+                        <template x-if="!selectedAvatar">
+                            <div class="w-full h-full bg-neutral flex items-center justify-center">
+                                <span class="text-4xl font-bold text-white" x-text="getInitials(selectedName)"></span>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="selectedBadge"
+                         class="status-badge tooltip tooltip-top"
+                         :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
+                         :data-tip="selectedBadge ? (BADGE_LABELS[selectedBadge] || '') : ''"
+                         x-html="selectedBadge ? (BADGE_ICONS[selectedBadge] || '') : ''"></div>
                 </div>
-                <div x-show="selectedBadge"
-                     class="status-badge tooltip tooltip-top"
-                     :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
-                     :data-tip="selectedBadge ? (BADGE_LABELS[selectedBadge] || '') : ''"
-                     x-html="selectedBadge ? (BADGE_ICONS[selectedBadge] || '') : ''"></div>
+                <div class="text-center leading-snug">
+                    <h2 class="text-lg font-bold" x-text="selectedName.split(' ')[0]"></h2>
+                    <h2 x-show="selectedName.split(' ').length > 1"
+                        class="text-lg font-bold" x-text="selectedName.split(' ').slice(1).join(' ')"></h2>
+                </div>
+                <p class="text-base-content/60 text-sm" x-text="clockDate"></p>
             </div>
-
-            <h2 class="text-xl font-bold mb-1" x-text="selectedName"></h2>
-            <p class="text-base-content/60 text-sm mb-8" x-text="clockDate"></p>
 
             <div class="flex flex-wrap gap-8 justify-center mb-8">
 
@@ -512,6 +529,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
             </div>
 
+          </div>
         </div>
 
         <div class="flex justify-center">
