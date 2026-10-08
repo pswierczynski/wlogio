@@ -414,7 +414,7 @@
                                 <div class="flex flex-wrap items-center justify-between gap-2 mt-5 pt-5 border-t border-base-300">
                                     <div class="flex flex-wrap gap-2 sm:gap-4 text-xs text-base-content/50">
                                         <span>Stawka: <strong>{{ month.hourly_rate }} PLN/h</strong></span>
-                                        <span>Dni: <strong>{{ month.summary.work_days }}</strong></span>
+                                        <span>Dni: <strong>{{ month.summary.work_days }} / {{ month.working_days }}</strong></span>
                                         {% if month.summary.vacation_days > 0 %}
                                         <span>Urlop: <strong>{{ month.summary.vacation_days }}</strong></span>
                                         {% endif %}
