@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from wlogio_app import db
-from wlogio_app.models import User
+from wlogio_app.models import User, REGISTRATION_ACCOUNT_TYPES
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -42,9 +42,13 @@ def register():
         password = request.form.get('password', '')
         password2 = request.form.get('password2', '')
         name = request.form.get('name', '').strip()
+        account_type = request.form.get('account_type', '')
 
         if not email or not password:
             flash('Email i hasło są wymagane.', 'error')
+            return render_template('auth/register.html')
+        if account_type not in REGISTRATION_ACCOUNT_TYPES:
+            flash('Wybierz typ konta.', 'error')
             return render_template('auth/register.html')
         if password != password2:
             flash('Hasła nie są identyczne.', 'error')
@@ -56,7 +60,7 @@ def register():
             flash('Ten adres email jest już zarejestrowany.', 'error')
             return render_template('auth/register.html')
 
-        user = User(email=email, name=name)
+        user = User(email=email, name=name, account_type=account_type)
         user.set_password(password)
         user.generate_pin()
         db.session.add(user)

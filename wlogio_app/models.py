@@ -5,6 +5,17 @@ import random
 from wlogio_app import db
 
 
+ACCOUNT_TYPES = ('individual', 'company', 'employee')
+ACCOUNT_TYPE_LABELS = {
+    'individual': 'Indywidualne',
+    'company':    'Firmowe',
+    'employee':   'Pracownicze',
+}
+# Typy dostępne do wyboru podczas rejestracji — 'employee' nadawane jest
+# wyłącznie ręcznie/niezależnie od samodzielnej rejestracji.
+REGISTRATION_ACCOUNT_TYPES = ('individual', 'company')
+
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
@@ -15,6 +26,10 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True)
     pin = db.Column(db.String(4), nullable=True)
     avatar = db.Column(db.Text, nullable=True)
+    # 'individual' / 'company' — wybierane przy rejestracji;
+    # 'employee' — konto pracownicze, nadawane niezależnie od rejestracji
+    # (patrz ACCOUNT_TYPES / ACCOUNT_TYPE_LABELS).
+    account_type = db.Column(db.String(20), nullable=False, default='employee')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     work_entries = db.relationship('WorkEntry', backref='user', lazy='dynamic',

@@ -57,7 +57,23 @@
                 <p class="text-base-content/60 text-sm">Utwórz nowe konto</p>
             </div>
 
-            <form method="POST" class="flex flex-col gap-4">
+            <form method="POST" class="flex flex-col gap-4" x-data="{ accountType: 'individual' }">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Typ konta</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <label class="btn flex-1" :class="accountType === 'individual' ? 'btn-neutral' : 'btn-outline'">
+                            <input type="radio" name="account_type" value="individual" class="hidden" x-model="accountType"/>
+                            Indywidualne
+                        </label>
+                        <label class="btn flex-1" :class="accountType === 'company' ? 'btn-neutral' : 'btn-outline'">
+                            <input type="radio" name="account_type" value="company" class="hidden" x-model="accountType"/>
+                            Firmowe
+                        </label>
+                    </div>
+                </div>
+
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-medium">Imię i nazwisko</span>
