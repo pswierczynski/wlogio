@@ -210,7 +210,6 @@
         .clock-screen-wrapper {
             display: flex;
             flex-direction: column;
-            align-items: center;
             justify-content: center;
             flex: 1;
             min-height: 0;
@@ -356,7 +355,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
     <div x-show="screen === 'pin'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 animate-slide-up">
 
-      <div class="kiosk-card">
+      <div class="kiosk-card flex flex-col justify-center">
         <div class="pin-layout">
 
             <!-- Avatar z badge'm — nad PIN-em na komórce, po prawej na ekranach poziomych -->
@@ -452,7 +451,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
     <div x-show="screen === 'clock'" x-cloak
          class="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 animate-slide-up">
 
-      <div class="kiosk-card flex flex-col items-center">
+      <div class="kiosk-card flex flex-col">
         <div class="clock-screen-wrapper">
           <div class="clock-layout">
 
