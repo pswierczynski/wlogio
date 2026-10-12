@@ -46,6 +46,7 @@ RANGE_LABELS = {
     'current_year':   'Bieżący rok (do dziś)',
     'previous_year':  'Poprzedni rok',
     'previous_month': 'Poprzedni miesiąc',
+    'all':            'Wszystko',
 }
 
 
@@ -147,6 +148,8 @@ def resolve_date_range(user_id, range_key, date_from_str, date_to_str):
         last_prev = first_this - timedelta(days=1)
         first_prev = date(last_prev.year, last_prev.month, 1)
         return first_prev, last_prev
+    if range_key == 'all':
+        return None, None
     # custom
     d_from = date.fromisoformat(date_from_str) if date_from_str else None
     d_to = date.fromisoformat(date_to_str) if date_to_str else None
