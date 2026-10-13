@@ -20,7 +20,12 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(255), unique=True, nullable=False, index=True)
+    # Konta 'individual' / 'company' logują się emailem; konto 'employee'
+    # nie ma (i nie wymaga) adresu email — stąd nullable=True.
+    email = db.Column(db.String(255), unique=True, nullable=True, index=True)
+    # Login — wyłącznie dla kont 'employee', nadawany przez administratora
+    # konta firmowego (zamiast adresu email).
+    login = db.Column(db.String(50), unique=True, nullable=True, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     name = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
@@ -30,7 +35,17 @@ class User(UserMixin, db.Model):
     # 'employee' — konto pracownicze, nadawane niezależnie od rejestracji
     # (patrz ACCOUNT_TYPES / ACCOUNT_TYPE_LABELS).
     account_type = db.Column(db.String(20), nullable=False, default='employee')
+    # Wyłącznie dla kont 'employee' — id konta 'company', do którego należą.
+    company_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Konto firmowe -> jego konta pracownicze (self-referencyjna relacja).
+    employees = db.relationship(
+        'User',
+        backref=db.backref('company', remote_side=[id]),
+        foreign_keys=[company_id],
+        order_by='User.name',
+    )
 
     work_entries = db.relationship('WorkEntry', backref='user', lazy='dynamic',
                                    cascade='all, delete-orphan')
@@ -49,8 +64,20 @@ class User(UserMixin, db.Model):
         self.pin = str(random.randint(1000, 9999))
         return self.pin
 
+    @property
+    def is_individual(self):
+        return self.account_type == 'individual'
+
+    @property
+    def is_company(self):
+        return self.account_type == 'company'
+
+    @property
+    def is_employee_account(self):
+        return self.account_type == 'employee'
+
     def __repr__(self):
-        return f'<User {self.email}>'
+        return f'<User {self.email or self.login}>'
 
 
 class WorkEntry(db.Model):
