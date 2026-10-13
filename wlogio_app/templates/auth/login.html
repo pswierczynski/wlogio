@@ -46,7 +46,8 @@
 
     <div x-data="{
             activeTab: 'panel',
-            password: '',
+            terminalEmail: '',
+            terminalPassword: '',
             error: false,
             loading: false,
             async verify() {
@@ -55,14 +56,14 @@
                 const r = await fetch('/terminal/verify-password', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({password: this.password})
+                    body: JSON.stringify({email: this.terminalEmail, password: this.terminalPassword})
                 });
                 this.loading = false;
                 if (r.ok) {
                     window.location.href = '/terminal/';
                 } else {
                     this.error = true;
-                    this.password = '';
+                    this.terminalPassword = '';
                 }
             }
          }"
@@ -103,9 +104,9 @@
                     <div x-show="activeTab === 'panel'" x-cloak class="flex-1 flex flex-col justify-center">
                         <form method="POST" action="{{ url_for('auth.login') }}" class="flex flex-col gap-3 sm:gap-4">
                             <div class="form-control">
-                                <label class="label"><span class="label-text font-medium">Adres email</span></label>
-                                <input type="email" name="email" required autocomplete="email"
-                                       class="input input-bordered w-full" placeholder="twoj@email.com"/>
+                                <label class="label"><span class="label-text font-medium">Adres email lub login</span></label>
+                                <input type="text" name="identifier" required autocomplete="username"
+                                       class="input input-bordered w-full" placeholder="twoj@email.com lub login"/>
                             </div>
                             <div class="form-control">
                                 <label class="label"><span class="label-text font-medium">Hasło</span></label>
@@ -129,14 +130,24 @@
 
                     <div x-show="activeTab === 'terminal'" x-cloak class="flex-1 flex flex-col justify-center">
                         <div class="form-control">
-                            <label class="label"><span class="label-text font-medium">Hasło terminala</span></label>
-                            <input type="password" x-model="password"
+                            <label class="label"><span class="label-text font-medium">Adres email</span></label>
+                            <input type="email" x-model="terminalEmail"
                                    @keydown.enter="verify()"
+                                   autocomplete="email"
+                                   class="input input-bordered w-full"
+                                   :class="error ? 'input-error' : ''"
+                                   placeholder="twoj@email.com"/>
+                        </div>
+                        <div class="form-control mt-2">
+                            <label class="label"><span class="label-text font-medium">Hasło</span></label>
+                            <input type="password" x-model="terminalPassword"
+                                   @keydown.enter="verify()"
+                                   autocomplete="current-password"
                                    class="input input-bordered w-full"
                                    :class="error ? 'input-error' : ''"
                                    placeholder="••••••••"/>
                             <div x-show="error" x-cloak class="label">
-                                <span class="label-text-alt text-error">Nieprawidłowe hasło</span>
+                                <span class="label-text-alt text-error">Nieprawidłowy email lub hasło</span>
                             </div>
                         </div>
                         <button type="button" @click="verify()" :disabled="loading"
@@ -146,7 +157,7 @@
                         </button>
 
                         <div class="flex flex-col items-center text-center mt-5">
-                            <h3 class="font-semibold text-base-content/90">Wspólny terminal pracy</h3>
+                            <h3 class="font-semibold text-base-content/90">Terminal pracy</h3>
                             <div class="w-14 h-14 rounded-full bg-base-200 flex items-center justify-center my-3">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-base-content/70" fill="none"
                                      viewBox="0 0 24 24" stroke="currentColor">
@@ -157,8 +168,8 @@
                                 </svg>
                             </div>
                             <p class="text-base-content/50 text-sm leading-snug max-w-[280px]">
-                                Urządzenie dla całego zespołu — po zalogowaniu pracownicy
-                                odbijają wejścia i wyjścia własnym PIN-em.
+                                Zaloguj się kontem indywidualnym lub firmowym, aby otworzyć
+                                jego terminal — pracownicy odbijają wejścia i wyjścia własnym PIN-em.
                             </p>
                         </div>
                     </div>

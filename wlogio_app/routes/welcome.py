@@ -15,12 +15,14 @@ Badge (niezależny od statusu, oparty na wpisie na dziś):
 None = brak badge'a (zwykła praca stacjonarna lub brak wpisu)
 """
 
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 TIMEZONE = ZoneInfo('Europe/Warsaw')
+
+from sqlalchemy import func
 
 from wlogio_app import db
 from wlogio_app.models import User, WorkEntry, MonthConfig
@@ -33,7 +35,37 @@ from wlogio_app.calculator import (
 )
 
 welcome_bp = Blueprint('welcome', __name__)
-WELCOME_PASSWORD = 'Przemek121!'
+
+
+def get_terminal_owner():
+    """
+    Zwraca konto ('individual' lub 'company'), do którego należy terminal
+    aktywny w bieżącej sesji przeglądarki (ustawiane przez /verify-password),
+    albo None, jeśli sesja jest nieprawidłowa/wygasła.
+    """
+    owner_id = session.get('terminal_owner_id')
+    if not owner_id:
+        return None
+    owner = User.query.get(owner_id)
+    if not owner or not owner.is_active or owner.account_type not in ('individual', 'company'):
+        return None
+    return owner
+
+
+def get_terminal_users(owner):
+    """Konta widoczne w terminalu danego właściciela (do wyboru PIN-em)."""
+    if owner.account_type == 'individual':
+        return [owner]
+    return [u for u in owner.employees if u.is_active]
+
+
+def user_in_terminal(user, owner):
+    """Czy dany user może bić PIN w terminalu danego właściciela."""
+    if user is None or owner is None:
+        return False
+    if owner.account_type == 'individual':
+        return user.id == owner.id
+    return user.is_employee_account and user.company_id == owner.id
 
 
 def now_minutes():
@@ -263,7 +295,11 @@ def get_today_entry(user_id):
 
 @welcome_bp.route('/')
 def index():
-    users = User.query.filter(User.is_active == True).order_by(User.name).all()
+    owner = get_terminal_owner()
+    if not owner:
+        return redirect(url_for('auth.login'))
+
+    users = get_terminal_users(owner)
     today = datetime.now(TIMEZONE).date()
 
     user_statuses = {}
@@ -370,10 +406,14 @@ def format_breaks_with_open(breaks_list):
 
 @welcome_bp.route('/statuses')
 def statuses():
+    owner = get_terminal_owner()
+    if not owner:
+        return jsonify({}), 401
+
     auto_close_stale_entries()
 
     today = datetime.now(TIMEZONE).date()
-    users = User.query.filter(User.is_active == True).all()
+    users = get_terminal_users(owner)
     result = {}
     for user in users:
         entry = WorkEntry.query.filter_by(user_id=user.id, date=today).first()
@@ -387,21 +427,39 @@ def statuses():
 
 @welcome_bp.route('/verify-password', methods=['POST'])
 def verify_password():
-    data = request.get_json()
-    if data.get('password', '') == WELCOME_PASSWORD:
-        session['welcome_access'] = True
+    """
+    Logowanie do terminala — tym samym emailem i hasłem co do panelu pracy,
+    wyłącznie dla kont 'individual' lub 'company' (konto pracownicze nie ma
+    dostępu do terminalu). Po sukcesie sesja pamięta, czyj terminal jest
+    aktywny w tej przeglądarce (session['terminal_owner_id']).
+    """
+    data = request.get_json() or {}
+    email = (data.get('email') or '').strip().lower()
+    password = data.get('password', '')
+
+    user = User.query.filter(
+        func.lower(User.email) == email,
+        User.account_type.in_(('individual', 'company')),
+    ).first()
+
+    if user and user.check_password(password) and user.is_active:
+        session['terminal_owner_id'] = user.id
         return jsonify({'ok': True})
     return jsonify({'ok': False}), 401
 
 
 @welcome_bp.route('/verify-pin', methods=['POST'])
 def verify_pin():
+    owner = get_terminal_owner()
+    if not owner:
+        return jsonify({'ok': False}), 401
+
     data = request.get_json()
     user_id = data.get('user_id')
     pin = data.get('pin', '')
 
     user = User.query.get(user_id)
-    if not user or user.pin != pin:
+    if not user or user.pin != pin or not user_in_terminal(user, owner):
         return jsonify({'ok': False}), 401
 
     today = datetime.now(TIMEZONE).date()
@@ -426,13 +484,17 @@ def verify_pin():
 
 @welcome_bp.route('/clock', methods=['POST'])
 def clock():
+    owner = get_terminal_owner()
+    if not owner:
+        return jsonify({'ok': False, 'error': 'Nieautoryzowany'}), 401
+
     data = request.get_json()
     user_id = data.get('user_id')
     action  = data.get('action')
     pin     = data.get('pin', '')
 
     user = User.query.get(user_id)
-    if not user or user.pin != pin:
+    if not user or user.pin != pin or not user_in_terminal(user, owner):
         return jsonify({'ok': False, 'error': 'Nieautoryzowany'}), 401
 
     now_dt = datetime.now(TIMEZONE)

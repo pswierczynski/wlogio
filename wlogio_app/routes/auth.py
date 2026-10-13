@@ -1,11 +1,10 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
+from sqlalchemy import or_, func
 from wlogio_app import db
 from wlogio_app.models import User, REGISTRATION_ACCOUNT_TYPES
 
 auth_bp = Blueprint('auth', __name__)
-
-WELCOME_PASSWORD = 'Przemek121!'
 
 
 @auth_bp.route('/login/', methods=['GET', 'POST'])
@@ -14,20 +13,24 @@ def login():
         return redirect(url_for('dashboard.index'))
 
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
+        identifier = request.form.get('identifier', '').strip().lower()
         password = request.form.get('password', '')
         remember = request.form.get('remember') == 'on'
 
-        user = User.query.filter_by(email=email).first()
+        # Konta indywidualne/firmowe logują się emailem, konta pracownicze —
+        # loginem nadanym przez administratora konta firmowego.
+        user = User.query.filter(
+            or_(
+                func.lower(User.email) == identifier,
+                func.lower(User.login) == identifier,
+            )
+        ).first()
         if user and user.check_password(password) and user.is_active:
             login_user(user, remember=remember)
             next_page = request.args.get('next')
             return redirect(next_page or url_for('dashboard.index'))
 
-        if not email and password == WELCOME_PASSWORD:
-            return redirect(url_for('welcome.index'))
-
-        flash('Nieprawidłowy email lub hasło.', 'error')
+        flash('Nieprawidłowy email/login lub hasło.', 'error')
 
     return render_template('auth/login.html')
 
