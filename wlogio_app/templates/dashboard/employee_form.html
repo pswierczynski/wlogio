@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Nowy pracownik{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
+        <h1 class="text-xl font-bold">Dodaj pracownika</h1>
+    </div>
+
+    {% if last_config %}
+    <div class="alert py-2 bg-base-200 border-base-300 text-sm mb-4">
+        Parametry poniżej są wstępnie wypełnione na podstawie ostatnio dodanego pracownika — możesz je skorygować.
+    </div>
+    {% endif %}
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-6 p-4 sm:p-8">
+            <form method="POST" class="flex flex-col gap-6">
+
+                <!-- SEKCJA: Dane konta -->
+                <div class="flex flex-col gap-4">
+                    <h2 class="font-semibold text-base border-b border-base-200 pb-2">Dane konta</h2>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">Imię i nazwisko</span></label>
+                        <input type="text" name="name" required
+                               class="input input-bordered w-full" placeholder="Jan Kowalski"/>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Login</span></label>
+                            <input type="text" name="login" required autocomplete="off"
+                                   class="input input-bordered w-full" placeholder="jkowalski"/>
+                        </div>
+                        <div></div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Hasło</span></label>
+                            <input type="password" name="password" required autocomplete="new-password"
+                                   class="input input-bordered w-full" placeholder="min. 6 znaków"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Powtórz hasło</span></label>
+                            <input type="password" name="password2" required autocomplete="new-password"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEKCJA: Wynagrodzenie -->
+                <div class="flex flex-col gap-4">
+                    <h2 class="font-semibold text-base border-b border-base-200 pb-2">Wynagrodzenie</h2>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">Stawka godzinowa (PLN/h)</span></label>
+                        <input type="number" name="hourly_rate" step="0.01" min="0" required
+                               value="{{ last_config.hourly_rate if last_config else '' }}"
+                               class="input input-bordered w-full"/>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Stawka nadgodzin (%)</span></label>
+                            <input type="number" name="overtime_rate" min="0" max="500" step="1"
+                                   value="{{ last_config.overtime_rate if last_config else 100 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Stawka dni poza roboczymi (%)</span></label>
+                            <input type="number" name="offday_rate" min="0" max="500" step="1"
+                                   value="{{ last_config.offday_rate if last_config else 100 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEKCJA: Okres rozliczeniowy -->
+                <div class="flex flex-col gap-4">
+                    <h2 class="font-semibold text-base border-b border-base-200 pb-2">Okres rozliczeniowy</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Od dnia miesiąca</span></label>
+                            <input type="number" name="billing_start_day" min="1" max="31" step="1"
+                                   value="{{ last_config.billing_start_day if last_config else 23 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Do dnia miesiąca</span></label>
+                            <input type="number" name="billing_end_day" min="1" max="31" step="1"
+                                   value="{{ last_config.billing_end_day if last_config else 22 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEKCJA: Dni robocze -->
+                <div class="flex flex-col gap-4">
+                    <h2 class="font-semibold text-base border-b border-base-200 pb-2">Dni robocze</h2>
+                    <div class="flex flex-wrap gap-2">
+                        {% set day_names = [('0','Pon'), ('1','Wt'), ('2','Śr'), ('3','Czw'), ('4','Pt'), ('5','Sob'), ('6','Nie')] %}
+                        {% for val, label in day_names %}
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="work_days" value="{{ val }}" class="sr-only peer"
+                                   {% if val in work_days_set %}checked{% endif %}/>
+                            <span class="btn btn-sm w-12 peer-checked:btn-primary border border-base-300 bg-base-100 hover:bg-base-200 peer-checked:border-transparent">
+                                {{ label }}
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- SEKCJA: Czas pracy -->
+                <div class="flex flex-col gap-4">
+                    <h2 class="font-semibold text-base border-b border-base-200 pb-2">Czas pracy</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Godziny robocze w dniu</span></label>
+                            <input type="number" name="hours_per_day" step="0.5" min="1" max="24"
+                                   value="{{ last_config.hours_per_day if last_config else 8 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Płatna przerwa (minuty)</span></label>
+                            <input type="number" name="paid_break_minutes" min="0" max="120" step="1"
+                                   value="{{ last_config.paid_break_minutes if last_config else 15 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">Zaokrąglanie godzin pracy</span></label>
+                        <div class="flex flex-wrap gap-2">
+                            {% set current_round = last_config.round_minutes if last_config else 15 %}
+                            {% for mins in [1, 5, 10, 15, 30] %}
+                            <label class="cursor-pointer">
+                                <input type="radio" name="round_minutes" value="{{ mins }}" class="sr-only peer"
+                                       {% if current_round == mins %}checked{% endif %}/>
+                                <span class="btn btn-sm peer-checked:btn-primary border border-base-300 bg-base-100 hover:bg-base-200 peer-checked:border-transparent">
+                                    {{ mins }} min
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEKCJA: Pula urlopowa -->
+                <div class="flex flex-col gap-4">
+                    <h2 class="font-semibold text-base border-b border-base-200 pb-2">Pula urlopowa (roczna)</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Urlop wypoczynkowy</span></label>
+                            <input type="number" name="vacation_total" min="0" step="1"
+                                   value="{{ last_balance.vacation_total if last_balance else 26 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Na żądanie</span></label>
+                            <input type="number" name="on_demand_total" min="0" step="1"
+                                   value="{{ last_balance.on_demand_total if last_balance else 4 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Praca zdalna</span></label>
+                            <input type="number" name="remote_total" min="0" step="1"
+                                   value="{{ last_balance.remote_total if last_balance else 0 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Opiekuńczy</span></label>
+                            <input type="number" name="care_leave_total" min="0" step="1"
+                                   value="{{ last_balance.care_leave_total if last_balance else 5 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Siła wyższa</span></label>
+                            <input type="number" name="force_majeure_total" min="0" step="1"
+                                   value="{{ last_balance.force_majeure_total if last_balance else 2 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-medium">Opieka nad dz.</span></label>
+                            <input type="number" name="child_care_total" min="0" step="1"
+                                   value="{{ last_balance.child_care_total if last_balance else 2 }}"
+                                   class="input input-bordered w-full"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="btn btn-primary flex-1">Dodaj pracownika</button>
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost">Anuluj</a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

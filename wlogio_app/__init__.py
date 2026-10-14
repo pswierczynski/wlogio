@@ -49,6 +49,32 @@ def create_app(config_name='default'):
     app.register_blueprint(welcome_bp, url_prefix='/terminal')
     app.register_blueprint(export_bp, url_prefix='/app/export')
 
+    @app.context_processor
+    def inject_nav_context():
+        """
+        Udostępnia szablonom (base.html) informację o koncie, którego dane
+        są aktualnie przeglądane — dla konta firmowego to wybrany pracownik
+        (albo None, jeśli żaden nie jest jeszcze wybrany), dla pozostałych
+        kont zawsze ono samo. Pozwala np. ukryć przycisk "Dodaj dzień", gdy
+        nie ma kogo edytować, bez przekazywania tego ręcznie z każdej route.
+        """
+        from flask_login import current_user as _current_user
+        if not _current_user.is_authenticated:
+            return {}
+
+        if _current_user.account_type == 'company':
+            from wlogio_app.scope import get_effective_user
+            nav_effective_user = get_effective_user()
+        else:
+            nav_effective_user = _current_user
+
+        nav_display_name = _current_user.name or _current_user.email or _current_user.login or '?'
+
+        return {
+            'nav_effective_user': nav_effective_user,
+            'nav_display_name': nav_display_name,
+        }
+
     # --- Landing page (statyczna strona www.wlogio.pl, folder /landing w korzeniu repo) ---
     landing_dir = os.path.join(base_dir, '..', 'landing')
 

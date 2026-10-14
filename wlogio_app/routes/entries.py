@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
-from flask_login import login_required, current_user
+from flask_login import login_required
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 
 from wlogio_app import db
 from wlogio_app.models import WorkEntry, MonthConfig
+from wlogio_app.scope import require_effective_user
 from wlogio_app.calculator import (
     calculate_hours, get_billing_period,
     get_next_vacation_number, get_next_remote_number,
@@ -102,6 +103,10 @@ def get_working_days_in_range(date_from, date_to):
 @entries_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
+    target, resp = require_effective_user()
+    if resp:
+        return resp
+
     today = date.today()
 
     if request.method == 'POST':
@@ -115,7 +120,7 @@ def add():
             return redirect(url_for('entries.add'))
 
         existing = WorkEntry.query.filter_by(
-            user_id=current_user.id,
+            user_id=target.id,
             date=entry_date
         ).first()
         if existing:
@@ -123,10 +128,10 @@ def add():
             return redirect(url_for('entries.add'))
 
         billing_year, billing_month = get_billing_period(entry_date)
-        get_or_create_month_config(current_user.id, billing_year, billing_month)
+        get_or_create_month_config(target.id, billing_year, billing_month)
 
         entry = WorkEntry(
-            user_id=current_user.id,
+            user_id=target.id,
             date=entry_date,
             billing_year=billing_year,
             billing_month=billing_month,
@@ -141,7 +146,7 @@ def add():
             entry.is_remote = request.form.get('is_remote') == 'on'
             if entry.is_remote:
                 entry.remote_trip_number = get_next_remote_number(
-                    current_user.id, entry_date.year, db.session
+                    target.id, entry_date.year, db.session
                 )
         elif entry_type == 'unpaid':
             entry.hours_worked = Decimal('0')
@@ -152,7 +157,7 @@ def add():
 
         if entry_type in ('vacation', 'on_demand'):
             entry.vacation_day_number = get_next_vacation_number(
-                current_user.id, entry_date.year, db.session
+                target.id, entry_date.year, db.session
             )
 
         entry.notes = request.form.get('notes', '').strip() or None
@@ -163,11 +168,11 @@ def add():
         flash(f'Dodano wpis dla {entry_date.strftime("%d.%m.%Y")}.', 'success')
         return redirect(url_for('dashboard.index'))
 
-    next_vacation = get_next_vacation_number(current_user.id, today.year, db.session)
-    next_remote = get_next_remote_number(current_user.id, today.year, db.session)
+    next_vacation = get_next_vacation_number(target.id, today.year, db.session)
+    next_remote = get_next_remote_number(target.id, today.year, db.session)
 
-    balance = get_or_create_vacation_balance(current_user.id, db.session)
-    used = calculate_vacation_used(current_user.id, today.year, db.session)
+    balance = get_or_create_vacation_balance(target.id, db.session)
+    used = calculate_vacation_used(target.id, today.year, db.session)
     remaining_vacation = balance.vacation_total - used['used_vacation']
 
     return render_template('entries/form.html',
@@ -184,6 +189,10 @@ def add():
 @login_required
 def range_preview():
     """Zwraca podgląd zakresu dni (JSON)."""
+    target, resp = require_effective_user()
+    if resp:
+        return jsonify({'ok': False, 'error': 'Brak uprawnień.'}), 403
+
     data = request.get_json()
     date_from_str = data.get('date_from', '')
     date_to_str   = data.get('date_to', '')
@@ -207,7 +216,7 @@ def range_preview():
         return jsonify({'ok': False, 'error': 'Wybrany zakres nie zawiera dni roboczych.'}), 400
 
     existing = WorkEntry.query.filter(
-        WorkEntry.user_id == current_user.id,
+        WorkEntry.user_id == target.id,
         WorkEntry.date >= date_from,
         WorkEntry.date <= date_to,
         WorkEntry.date.in_(working_days)
@@ -223,8 +232,8 @@ def range_preview():
     today = date.today()
 
     if range_type == 'vacation':
-        balance = get_or_create_vacation_balance(current_user.id, db.session)
-        used = calculate_vacation_used(current_user.id, today.year, db.session)
+        balance = get_or_create_vacation_balance(target.id, db.session)
+        used = calculate_vacation_used(target.id, today.year, db.session)
         remaining = balance.vacation_total - used['used_vacation']
         remaining = max(0, remaining)
 
@@ -297,6 +306,10 @@ def range_preview():
 @login_required
 def add_range():
     """Zapisuje zakres dni do bazy."""
+    target, resp = require_effective_user()
+    if resp:
+        return resp
+
     date_from_str = request.form.get('date_from', '')
     date_to_str   = request.form.get('date_to', '')
     range_type    = request.form.get('range_type', 'vacation')
@@ -320,7 +333,7 @@ def add_range():
         return redirect(url_for('entries.add'))
 
     existing = WorkEntry.query.filter(
-        WorkEntry.user_id == current_user.id,
+        WorkEntry.user_id == target.id,
         WorkEntry.date >= date_from,
         WorkEntry.date <= date_to,
         WorkEntry.date.in_(working_days)
@@ -335,8 +348,8 @@ def add_range():
 
     remaining = 0
     if range_type == 'vacation':
-        balance = get_or_create_vacation_balance(current_user.id, db.session)
-        used = calculate_vacation_used(current_user.id, today.year, db.session)
+        balance = get_or_create_vacation_balance(target.id, db.session)
+        used = calculate_vacation_used(target.id, today.year, db.session)
         remaining = max(0, balance.vacation_total - used['used_vacation'])
 
     added = 0
@@ -352,7 +365,7 @@ def add_range():
             entry_type = 'unpaid'
 
         billing_year, billing_month = get_billing_period(entry_date)
-        get_or_create_month_config(current_user.id, billing_year, billing_month)
+        get_or_create_month_config(target.id, billing_year, billing_month)
 
         # sick_leave i vacation mają 8h, unpaid ma 0h
         if entry_type == 'unpaid':
@@ -361,7 +374,7 @@ def add_range():
             hours = Decimal('8')
 
         entry = WorkEntry(
-            user_id=current_user.id,
+            user_id=target.id,
             date=entry_date,
             billing_year=billing_year,
             billing_month=billing_month,
@@ -373,7 +386,7 @@ def add_range():
 
         if entry_type in ('vacation', 'on_demand'):
             entry.vacation_day_number = get_next_vacation_number(
-                current_user.id, entry_date.year, db.session
+                target.id, entry_date.year, db.session
             )
 
         db.session.add(entry)
@@ -404,8 +417,12 @@ def renumber_vacations(user_id, year):
 @entries_bp.route('/edit/<int:entry_id>', methods=['GET', 'POST'])
 @login_required
 def edit(entry_id):
+    target, resp = require_effective_user()
+    if resp:
+        return resp
+
     entry = WorkEntry.query.filter_by(
-        id=entry_id, user_id=current_user.id
+        id=entry_id, user_id=target.id
     ).first_or_404()
 
     if request.method == 'POST':
@@ -450,7 +467,7 @@ def edit(entry_id):
         needs_renumber = (was_vacation != is_vacation)
         if needs_renumber:
             db.session.flush()
-            renumber_vacations(current_user.id, entry_year)
+            renumber_vacations(target.id, entry_year)
 
         db.session.commit()
 
@@ -478,8 +495,12 @@ def edit(entry_id):
 @entries_bp.route('/delete/<int:entry_id>', methods=['POST'])
 @login_required
 def delete(entry_id):
+    target, resp = require_effective_user()
+    if resp:
+        return resp
+
     entry = WorkEntry.query.filter_by(
-        id=entry_id, user_id=current_user.id
+        id=entry_id, user_id=target.id
     ).first_or_404()
 
     date_str      = entry.date.strftime('%d.%m.%Y')
@@ -492,14 +513,14 @@ def delete(entry_id):
     db.session.flush()
 
     remaining = WorkEntry.query.filter_by(
-        user_id=current_user.id,
+        user_id=target.id,
         billing_year=billing_year,
         billing_month=billing_month,
     ).count()
 
     if remaining == 0:
         config = MonthConfig.query.filter_by(
-            user_id=current_user.id,
+            user_id=target.id,
             billing_year=billing_year,
             billing_month=billing_month,
         ).first()
@@ -507,7 +528,7 @@ def delete(entry_id):
             db.session.delete(config)
 
     if was_vacation:
-        renumber_vacations(current_user.id, entry_year)
+        renumber_vacations(target.id, entry_year)
 
     db.session.commit()
 

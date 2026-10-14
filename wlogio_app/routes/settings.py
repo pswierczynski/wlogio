@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from wlogio_app import db
 from wlogio_app.models import MonthConfig, VacationBalance, User
+from wlogio_app.scope import get_effective_user, require_effective_user
 from wlogio_app.calculator import (
     get_working_days_in_billing_period_from_config,
     get_or_create_vacation_balance,
@@ -95,20 +96,30 @@ def delete_avatar_from_supabase(user_id):
 @settings_bp.route('/')
 @login_required
 def index():
+    target = get_effective_user()
+    if target is None:
+        flash('Najpierw wybierz pracownika z listy.', 'error')
+        return redirect(url_for('dashboard.index'))
+
     configs = (
         MonthConfig.query
-        .filter_by(user_id=current_user.id)
+        .filter_by(user_id=target.id)
         .order_by(MonthConfig.billing_year.desc(), MonthConfig.billing_month.desc())
         .all()
     )
-    balance = get_or_create_vacation_balance(current_user.id, db.session)
-    return render_template('settings/index.html', configs=configs, balance=balance, MONTH_NAMES=MONTH_NAMES)
+    balance = get_or_create_vacation_balance(target.id, db.session)
+    return render_template('settings/index.html', configs=configs, balance=balance,
+                           MONTH_NAMES=MONTH_NAMES, profile_user=target)
 
 
 @settings_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
     if request.method == 'POST':
+        target, resp = require_effective_user()
+        if resp:
+            return resp
+        is_self = (target.id == current_user.id)
         action = request.form.get('action')
 
         if action == 'upload_avatar':
@@ -131,22 +142,22 @@ def profile():
                 return redirect(url_for('settings.profile'))
 
             ext = file.filename.rsplit('.', 1)[1].lower()
-            filename = f'{current_user.id}.{ext}'
+            filename = f'{target.id}.{ext}'
             content_type = file.content_type or f'image/{ext}'
 
-            url, error = upload_avatar_to_supabase(file_data, current_user.id, filename, content_type)
+            url, error = upload_avatar_to_supabase(file_data, target.id, filename, content_type)
 
             if url:
-                current_user.avatar = url
+                target.avatar = url
                 db.session.commit()
                 flash('Zdjęcie profilowe zaktualizowane.', 'success')
             else:
                 flash(f'Błąd wgrywania zdjęcia: {error}', 'error')
 
         elif action == 'delete_avatar':
-            if current_user.avatar:
-                delete_avatar_from_supabase(current_user.id)
-                current_user.avatar = None
+            if target.avatar:
+                delete_avatar_from_supabase(target.id)
+                target.avatar = None
                 db.session.commit()
                 flash('Zdjęcie profilowe usunięte.', 'success')
             else:
@@ -155,36 +166,53 @@ def profile():
         elif action == 'update_name':
             name = request.form.get('name', '').strip()
             if name:
-                current_user.name = name
+                target.name = name
                 db.session.commit()
                 flash('Imię i nazwisko zaktualizowane.', 'success')
 
         elif action == 'change_password':
-            current_password = request.form.get('current_password', '')
             new_password = request.form.get('new_password', '')
             new_password2 = request.form.get('new_password2', '')
 
-            if not current_user.check_password(current_password):
+            # Przy edycji własnego konta wymagane jest aktualne hasło; admin
+            # konta firmowego resetuje hasło pracownika bez jego znajomości.
+            if is_self and not target.check_password(request.form.get('current_password', '')):
                 flash('Nieprawidłowe aktualne hasło.', 'error')
             elif len(new_password) < 6:
                 flash('Nowe hasło musi mieć minimum 6 znaków.', 'error')
             elif new_password != new_password2:
                 flash('Nowe hasła nie są identyczne.', 'error')
             else:
-                current_user.set_password(new_password)
+                target.set_password(new_password)
                 db.session.commit()
                 flash('Hasło zmienione.', 'success')
 
         return redirect(url_for('settings.profile'))
 
-    return render_template('settings/profile.html')
+    target = get_effective_user()
+    if target is None:
+        flash('Najpierw wybierz pracownika z listy.', 'error')
+        return redirect(url_for('dashboard.index'))
+
+    return render_template('settings/profile.html', profile_user=target,
+                           is_self=(target.id == current_user.id))
 
 
 @settings_bp.route('/month/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
 def month_config(year, month):
+    if request.method == 'POST':
+        target, resp = require_effective_user()
+        if resp:
+            return resp
+    else:
+        target = get_effective_user()
+        if target is None:
+            flash('Najpierw wybierz pracownika z listy.', 'error')
+            return redirect(url_for('dashboard.index'))
+
     config = MonthConfig.query.filter_by(
-        user_id=current_user.id, billing_year=year, billing_month=month
+        user_id=target.id, billing_year=year, billing_month=month
     ).first_or_404()
 
     if request.method == 'POST':
@@ -237,7 +265,17 @@ def month_config(year, month):
 @settings_bp.route('/vacation', methods=['GET', 'POST'])
 @login_required
 def vacation_balance():
-    balance = get_or_create_vacation_balance(current_user.id, db.session)
+    if request.method == 'POST':
+        target, resp = require_effective_user()
+        if resp:
+            return resp
+    else:
+        target = get_effective_user()
+        if target is None:
+            flash('Najpierw wybierz pracownika z listy.', 'error')
+            return redirect(url_for('dashboard.index'))
+
+    balance = get_or_create_vacation_balance(target.id, db.session)
 
     if request.method == 'POST':
         try:

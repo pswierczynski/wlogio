@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Pracownicy{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4 sm:mb-6">
+    <h1 class="text-xl font-bold">Pracownicy</h1>
+    <a href="{{ url_for('dashboard.employee_new') }}" class="btn btn-primary btn-sm gap-1">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Dodaj pracownika
+    </a>
+</div>
+
+{% if not employees %}
+<div class="card bg-base-100 shadow-sm">
+    <div class="card-body items-center text-center py-10">
+        <p class="text-base-content/50">Brak dodanych pracowników.</p>
+        <a href="{{ url_for('dashboard.employee_new') }}" class="btn btn-primary btn-sm mt-2">
+            Dodaj pierwszego pracownika
+        </a>
+    </div>
+</div>
+{% else %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    {% for employee in employees %}
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-3 p-4">
+            <div class="flex items-center gap-3">
+                {% if employee.avatar %}
+                <div class="w-12 h-12 rounded-full overflow-hidden ring-2 ring-base-300 shrink-0">
+                    <img src="{{ employee.avatar }}" alt="" class="w-full h-full object-cover"/>
+                </div>
+                {% else %}
+                <div class="w-12 h-12 rounded-full bg-neutral flex items-center justify-center ring-2 ring-base-300 shrink-0">
+                    {% set parts = (employee.name or employee.login).split(' ') %}
+                    <span class="text-lg font-bold text-white">
+                        {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                <div class="min-w-0">
+                    <div class="font-semibold truncate">{{ employee.name or employee.login }}</div>
+                    <div class="text-xs text-base-content/40 truncate">login: {{ employee.login }}</div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}" class="flex-1">
+                    <button type="submit" class="btn btn-neutral btn-sm w-full">Otwórz</button>
+                </form>
+                <form method="POST" action="{{ url_for('dashboard.employee_delete', employee_id=employee.id) }}"
+                      onsubmit="return confirm('Usunąć pracownika {{ employee.name or employee.login }} wraz z wszystkimi jego wpisami? Tej operacji nie można cofnąć.')">
+                    <button type="submit" class="btn btn-ghost btn-sm text-error">Usuń</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
