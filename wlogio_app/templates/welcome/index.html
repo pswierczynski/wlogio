@@ -52,6 +52,26 @@
         .ring-status-break   { box-shadow: 0 0 0 4px #f59e0b; }
         .ring-status-idle    { box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
 
+        /* Pulsowanie obramowania — tylko na ekranie głównym avatarów, tylko rozmiar, bez zmiany koloru */
+        .avatars-screen .ring-status-working {
+            animation: pulseWorking 1.7s ease-in-out infinite;
+        }
+        .avatars-screen .ring-status-break {
+            animation: pulseBreak 1.7s ease-in-out infinite;
+        }
+        @keyframes pulseWorking {
+            0%, 100% { box-shadow: 0 0 0 4px #22c55e; }
+            50%      { box-shadow: 0 0 0 7px #22c55e; }
+        }
+        @keyframes pulseBreak {
+            0%, 100% { box-shadow: 0 0 0 4px #f59e0b; }
+            50%      { box-shadow: 0 0 0 7px #f59e0b; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .avatars-screen .ring-status-working,
+            .avatars-screen .ring-status-break { animation: none; }
+        }
+
         .avatar-idle    { opacity: 0.5; }
         .avatar-working { opacity: 1; }
         .avatar-break   { opacity: 1; }
@@ -72,7 +92,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2.5px solid #fff;
+            border: 2.5px solid oklch(var(--b2));
             z-index: 10;
         }
         .status-badge svg {
@@ -225,7 +245,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
 <div x-data="welcomeApp()" x-init="init()" class="min-h-screen flex flex-col">
 
-    <div class="flex items-center justify-between px-6 py-4">
+    <div class="sticky top-0 z-10 bg-base-200 flex items-center justify-between px-6 py-4 shadow-sm">
         <div class="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none"
                  viewBox="0 0 24 24" stroke="currentColor">
@@ -242,7 +262,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
     <!-- EKRAN 1: Siatka avatarów -->
     <div x-show="screen === 'avatars'"
-         class="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto animate-fade-in">
+         class="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto animate-fade-in avatars-screen">
 
         <h1 class="text-3xl font-bold mb-1 text-center">Dzień dobry!</h1>
         <p class="text-base-content/50 text-sm mb-10 text-center">Wybierz swój profil</p>
@@ -265,8 +285,8 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                 <!-- Wrapper z relatywną pozycją dla badge'a -->
                 <div class="avatar-wrapper w-32 h-32 shrink-0">
                     <div id="av-{{ uid }}"
-                         class="rounded-full overflow-hidden w-32 h-32
-                                ring-status-{{ status }} avatar-{{ status }}"
+                         class="rounded-full overflow-hidden w-32 h-32"
+                         :class="'ring-status-' + (statuses[String({{ uid }})] || 'idle') + ' avatar-' + (statuses[String({{ uid }})] || 'idle')"
                          style="border-radius: 50%;">
                         {% if user.avatar %}
                         <img src="{{ user.avatar }}" alt="{{ user.name or '' }}"
@@ -437,7 +457,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
                     Nieprawidłowy PIN. Spróbuj ponownie.
                 </div>
 
-                <button @click="screen = 'avatars'; pin = ''; pinError = false"
+                <button @click="screen = 'avatars'; pin = ''; pinError = false; restartPulseAnimation()"
                         class="btn btn-ghost btn-sm text-base-content/40">
                     ← Wróć
                 </button>
@@ -679,13 +699,7 @@ function welcomeApp() {
                         this.statuses[uid] = status;
                         this.badges[uid]   = badge;
 
-                        /* Aktualizuj obramowanie avatara */
-                        const el = document.getElementById('av-' + uid);
-                        if (el) {
-                            el.className = el.className
-                                .replace(/ring-status-\w+/g, 'ring-status-' + status)
-                                .replace(/avatar-\w+/g, 'avatar-' + status);
-                        }
+                        /* Obramowanie avatara aktualizuje się samo przez :class (reaktywnie z this.statuses) */
                         /* Aktualizuj badge */
                         this.updateAvatarBadge(uid, status, badge);
                     });
@@ -786,6 +800,18 @@ function welcomeApp() {
             }
         },
 
+        /* Wymusza restart animacji pulsowania (przeglądarki potrafią "zamrozić"
+           animację CSS na elementach ukrywanych przez x-show/display:none) */
+        restartPulseAnimation() {
+            this.$nextTick(() => {
+                const grid = document.querySelector('.avatars-screen');
+                if (!grid) return;
+                grid.classList.remove('avatars-screen');
+                void grid.offsetWidth; /* wymuszenie przeliczenia stylów */
+                grid.classList.add('avatars-screen');
+            });
+        },
+
         logout() {
             this.screen         = 'avatars';
             this.selectedUserId = null;
@@ -798,6 +824,7 @@ function welcomeApp() {
             this.clockStatus    = 'idle';
             this.selectedBadge  = null;
             this.fetchStatuses();
+            this.restartPulseAnimation();
         }
     }
 }
