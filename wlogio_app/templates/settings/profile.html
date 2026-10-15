@@ -4,7 +4,7 @@
 {% block content %}
 <div class="max-w-lg mx-auto">
     <div class="flex items-center gap-3 mb-6">
-        <a href="{{ url_for('settings.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
+        <a href="{{ back_url or url_for('settings.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
         <h1 class="text-xl font-bold">
             {% if is_self %}Ustawienia konta{% else %}Ustawienia pracownika: {{ profile_user.name or profile_user.login }}{% endif %}
         </h1>

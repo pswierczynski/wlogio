@@ -19,6 +19,22 @@
 
             <form method="POST" action="{{ url_for('export.generate') }}" class="flex flex-col gap-6">
 
+                {% if employees is not none %}
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Pracownik</span>
+                    </label>
+                    <select name="employee_id" required class="select select-bordered w-full">
+                        <option value="" disabled {% if not selected_id %}selected{% endif %}>Wybierz pracownika</option>
+                        {% for e in employees %}
+                        <option value="{{ e.id }}" {% if e.id == selected_id %}selected{% endif %}>
+                            {{ e.name or e.login }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-medium">Format pliku</span>

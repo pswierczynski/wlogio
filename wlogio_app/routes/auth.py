@@ -53,6 +53,9 @@ def register():
         if account_type not in REGISTRATION_ACCOUNT_TYPES:
             flash('Wybierz typ konta.', 'error')
             return render_template('auth/register.html')
+        if account_type == 'company' and not name:
+            flash('Nazwa firmy jest wymagana.', 'error')
+            return render_template('auth/register.html')
         if password != password2:
             flash('Hasła nie są identyczne.', 'error')
             return render_template('auth/register.html')

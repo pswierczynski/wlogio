@@ -25,7 +25,7 @@
 {% else %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
     {% for employee in employees %}
-    <div class="card bg-base-100 shadow-sm">
+    <div class="card bg-base-100 shadow-sm" x-data="{ showDelete: false, pin: '' }">
         <div class="card-body gap-3 p-4">
             <div class="flex items-center gap-3">
                 {% if employee.avatar %}
@@ -50,9 +50,37 @@
                 <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}" class="flex-1">
                     <button type="submit" class="btn btn-neutral btn-sm w-full">Otwórz</button>
                 </form>
+                <a href="{{ url_for('dashboard.employee_profile', employee_id=employee.id) }}" class="btn btn-ghost btn-sm">
+                    Ustawienia
+                </a>
+                <button type="button" class="btn btn-ghost btn-sm text-error border border-error"
+                        @click="showDelete = true">
+                    Usuń
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal potwierdzenia usunięcia (wymaga podania PIN-u pracownika) -->
+        <div x-show="showDelete" x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div class="card bg-base-100 shadow-xl w-full max-w-sm" @click.outside="showDelete = false">
                 <form method="POST" action="{{ url_for('dashboard.employee_delete', employee_id=employee.id) }}"
-                      onsubmit="return confirm('Usunąć pracownika {{ employee.name or employee.login }} wraz z wszystkimi jego wpisami? Tej operacji nie można cofnąć.')">
-                    <button type="submit" class="btn btn-ghost btn-sm text-error">Usuń</button>
+                      class="card-body gap-4">
+                    <h3 class="font-semibold">
+                        Usunąć pracownika {{ employee.name or employee.login }}?
+                    </h3>
+                    <p class="text-sm text-base-content/50">
+                        Tej operacji nie można cofnąć — zniknie cała historia wpisów.
+                        Wpisz PIN pracownika, aby potwierdzić.
+                    </p>
+                    <input type="text" inputmode="numeric" name="pin" x-model="pin" maxlength="4"
+                           placeholder="PIN" class="input input-bordered w-full text-center tracking-widest"/>
+                    <div class="flex gap-2">
+                        <button type="button" class="btn btn-ghost flex-1" @click="showDelete = false">Anuluj</button>
+                        <button type="submit" class="btn btn-error flex-1" :disabled="pin.length !== 4">
+                            Usuń pracownika
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

@@ -15,7 +15,8 @@ Badge (niezależny od statusu, oparty na wpisie na dziś):
 None = brak badge'a (zwykła praca stacjonarna lub brak wpisu)
 """
 
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, abort
+from flask_login import login_required, current_user
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
@@ -446,6 +447,20 @@ def verify_password():
         session['terminal_owner_id'] = user.id
         return jsonify({'ok': True})
     return jsonify({'ok': False}), 401
+
+
+@welcome_bp.route('/open', methods=['POST'])
+@login_required
+def open_mine():
+    """
+    Link "Terminal" w menu — osoba jest już zalogowana do panelu pracy
+    (kontem indywidualnym lub firmowym), więc od razu otwiera własny
+    terminal bez ponownego podawania emaila i hasła.
+    """
+    if current_user.account_type not in ('individual', 'company'):
+        abort(403)
+    session['terminal_owner_id'] = current_user.id
+    return redirect(url_for('welcome.index'))
 
 
 @welcome_bp.route('/verify-pin', methods=['POST'])

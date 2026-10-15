@@ -122,6 +122,20 @@
                         Ustawienia
                     </a>
                 </li>
+                {% if current_user.account_type != 'employee' %}
+                <li>
+                    <form method="POST" action="{{ url_for('welcome.open_mine') }}">
+                        <button type="submit" class="w-full text-left flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                 viewBox="0 0 24 24" stroke="currentColor">
+                                <rect x="3" y="4" width="18" height="13" rx="2" stroke-width="2"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21h8M12 17v4"/>
+                            </svg>
+                            Terminal
+                        </button>
+                    </form>
+                </li>
+                {% endif %}
                 <li class="border-t border-base-300 mt-1 pt-1">
                     <a href="{{ url_for('auth.logout') }}" class="text-error">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"

@@ -427,6 +427,12 @@ def employee_delete(employee_id):
         id=employee_id, company_id=current_user.id, account_type='employee'
     ).first_or_404()
 
+    # Dodatkowe potwierdzenie — usunięcie wymaga podania PIN-u pracownika.
+    pin = request.form.get('pin', '')
+    if not employee.pin or pin != employee.pin:
+        flash('Nieprawidłowy PIN — pracownik nie został usunięty.', 'error')
+        return redirect(url_for('dashboard.index'))
+
     name = employee.name
     db.session.delete(employee)
     db.session.commit()
@@ -434,3 +440,29 @@ def employee_delete(employee_id):
 
     flash(f'Usunięto pracownika: {name}.', 'success')
     return redirect(url_for('dashboard.index'))
+
+
+@dashboard_bp.route('/employees/<int:employee_id>/profile', methods=['GET', 'POST'])
+@login_required
+def employee_profile(employee_id):
+    """
+    Ustawienia konkretnego pracownika (zdjęcie, PIN, imię, hasło) — osobno
+    od "Moje konto" w nawigacji, które dotyczy zawsze zalogowanego konta.
+    """
+    if not current_user.is_company:
+        abort(403)
+    employee = User.query.filter_by(
+        id=employee_id, company_id=current_user.id, account_type='employee'
+    ).first_or_404()
+
+    if request.method == 'POST':
+        from wlogio_app.routes.settings import apply_profile_action
+        apply_profile_action(employee, is_self=False)
+        return redirect(url_for('dashboard.employee_profile', employee_id=employee.id))
+
+    return render_template(
+        'settings/profile.html',
+        profile_user=employee,
+        is_self=False,
+        back_url=url_for('dashboard.index'),
+    )

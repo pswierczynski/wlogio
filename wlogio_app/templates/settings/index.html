@@ -5,6 +5,13 @@
 <div class="max-w-5xl mx-auto">
     <h1 class="text-xl font-bold mb-6">Ustawienia</h1>
 
+    {% if company_placeholder %}
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body items-center text-center py-10">
+            <p class="text-base-content/50">Strona w przygotowaniu.</p>
+        </div>
+    </div>
+    {% else %}
     <div class="flex flex-col gap-6">
 
         <!-- Bilans urlopowy -->
@@ -157,5 +164,6 @@
         </div>
 
     </div>
+    {% endif %}
 </div>
 {% endblock %}

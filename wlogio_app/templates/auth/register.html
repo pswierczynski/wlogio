@@ -76,12 +76,13 @@
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Imię i nazwisko</span>
-                        <span class="label-text-alt text-base-content/40">opcjonalne</span>
+                        <span class="label-text font-medium" x-text="accountType === 'company' ? 'Nazwa firmy' : 'Imię i nazwisko'"></span>
+                        <span class="label-text-alt text-base-content/40" x-show="accountType !== 'company'">opcjonalne</span>
                     </label>
                     <input type="text" name="name" autocomplete="name"
+                           :required="accountType === 'company'"
                            class="input input-bordered w-full"
-                           placeholder="Jan Kowalski"/>
+                           :placeholder="accountType === 'company' ? 'Nazwa Sp. z o.o.' : 'Jan Kowalski'"/>
                 </div>
 
                 <div class="form-control">

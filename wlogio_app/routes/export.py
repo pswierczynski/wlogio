@@ -10,11 +10,11 @@ import io
 import os
 from datetime import date, timedelta
 
-from flask import Blueprint, render_template, request, Response, flash, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, Response, flash, redirect, url_for, current_app, session
 from flask_login import login_required, current_user
 
 from wlogio_app.routes.dashboard import build_months_data
-from wlogio_app.models import MonthConfig
+from wlogio_app.models import MonthConfig, User
 from wlogio_app.calculator import (
     format_currency,
     _get_config_value,
@@ -314,7 +314,7 @@ def generate_pdf(months_data, user):
     normal_style = ParagraphStyle('NormalPL', parent=styles['Normal'], fontName='DejaVuSans', fontSize=9, leading=13)
 
     elements = [
-        Paragraph(f"Eksport czasu pracy — {user.name}", title_style),
+        Paragraph(f"Eksport czasu pracy — {user.name or user.login or user.email}", title_style),
         Spacer(1, 12),
     ]
 
@@ -403,10 +403,22 @@ def generate_pdf(months_data, user):
 
 # --------------------------------------------------------------- ROUTES ----
 
+def _company_employees():
+    """Pracownicy zalogowanego konta firmowego (posortowani po nazwie)."""
+    return (
+        User.query
+        .filter_by(company_id=current_user.id, account_type='employee')
+        .order_by(User.name, User.login)
+        .all()
+    )
+
+
 @export_bp.route('/', methods=['GET'])
 @login_required
 def index():
-    return render_template('export/index.html')
+    employees = _company_employees() if current_user.is_company else None
+    selected_id = session.get('viewing_employee_id') if employees else None
+    return render_template('export/index.html', employees=employees, selected_id=selected_id)
 
 
 @export_bp.route('/', methods=['POST'])
@@ -421,18 +433,36 @@ def generate():
         flash('Nieznany format eksportu.', 'error')
         return redirect(url_for('export.index'))
 
+    # Konto firmowe samo nie ma wpisów — eksport dotyczy wybranego pracownika
+    # (musi należeć do tej firmy). Pozostałe konta eksportują własne dane.
+    if current_user.is_company:
+        try:
+            employee_id = int(request.form.get('employee_id', ''))
+        except ValueError:
+            employee_id = None
+        target = None
+        if employee_id:
+            target = User.query.filter_by(
+                id=employee_id, company_id=current_user.id, account_type='employee'
+            ).first()
+        if target is None:
+            flash('Wybierz pracownika, którego dane chcesz wyeksportować.', 'error')
+            return redirect(url_for('export.index'))
+    else:
+        target = current_user
+
     if range_key == 'custom' and (not date_from_str or not date_to_str):
         flash('Podaj obie daty zakresu (od — do).', 'error')
         return redirect(url_for('export.index'))
 
-    date_from, date_to = resolve_date_range(current_user.id, range_key, date_from_str, date_to_str)
+    date_from, date_to = resolve_date_range(target.id, range_key, date_from_str, date_to_str)
 
     if date_from and date_to and date_from > date_to:
         flash('Data "od" musi być wcześniejsza niż data "do".', 'error')
         return redirect(url_for('export.index'))
 
     months_data, _ = build_months_data(
-        current_user.id, date_from=date_from, date_to=date_to, include_empty_current=False
+        target.id, date_from=date_from, date_to=date_to, include_empty_current=False
     )
 
     filename_base = f"wlogio_eksport_{date.today().isoformat()}"
@@ -450,7 +480,7 @@ def generate():
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             headers={'Content-Disposition': f'attachment; filename={filename_base}.xlsx'},
         )
-    content = generate_pdf(months_data, current_user)
+    content = generate_pdf(months_data, target)
     return Response(
         content, mimetype='application/pdf',
         headers={'Content-Disposition': f'attachment; filename={filename_base}.pdf'},
