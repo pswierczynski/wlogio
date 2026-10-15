@@ -214,7 +214,9 @@ def profile():
         apply_profile_action(current_user, is_self=True)
         return redirect(url_for('settings.profile'))
 
-    return render_template('settings/profile.html', profile_user=current_user, is_self=True)
+    back_url = url_for('dashboard.index', list=1) if current_user.is_company else None
+    return render_template('settings/profile.html', profile_user=current_user, is_self=True,
+                           back_url=back_url)
 
 
 @settings_bp.route('/month/<int:year>/<int:month>', methods=['GET', 'POST'])

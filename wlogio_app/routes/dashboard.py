@@ -248,6 +248,9 @@ def get_last_employee_defaults(company_id):
 @login_required
 def index():
     if current_user.is_company:
+        # ?list=1 — powrót z "Moje konto"/ustawień pracownika: zawsze lista pracowników
+        if request.args.get('list'):
+            clear_viewing_employee()
         target = get_effective_user()
         if target is None:
             employees = get_company_employees(current_user.id)
@@ -495,5 +498,5 @@ def employee_profile(employee_id):
         'settings/profile.html',
         profile_user=employee,
         is_self=False,
-        back_url=url_for('dashboard.index'),
+        back_url=url_for('dashboard.index', list=1),
     )
