@@ -11,7 +11,10 @@
         <form id="exit-employee" method="POST" action="{{ url_for('dashboard.employee_exit') }}" class="hidden"></form>
     </div>
     {% else %}
-    <h1 class="text-xl font-bold mb-6">Ustawienia</h1>
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
+        <h1 class="text-xl font-bold">Ustawienia</h1>
+    </div>
     {% endif %}
 
     {% if company_placeholder %}
