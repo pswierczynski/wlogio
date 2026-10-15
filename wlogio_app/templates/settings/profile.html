@@ -85,13 +85,13 @@
         <!-- Imię i nazwisko -->
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body gap-4">
-                <h2 class="font-semibold">Imię i nazwisko</h2>
+                <h2 class="font-semibold">{% if profile_user.account_type == 'company' %}Nazwa firmy{% else %}Imię i nazwisko{% endif %}</h2>
                 <form method="POST" class="flex gap-3">
                     <input type="hidden" name="action" value="update_name"/>
                     <input type="text" name="name"
                            value="{{ profile_user.name or '' }}"
                            class="input input-bordered flex-1"
-                           placeholder="Jan Kowalski"/>
+                           placeholder="{% if profile_user.account_type == 'company' %}Nazwa Sp. z o.o.{% else %}Jan Kowalski{% endif %}"/>
                     <button type="submit" class="btn btn-primary btn-sm shrink-0">Zapisz</button>
                 </form>
             </div>

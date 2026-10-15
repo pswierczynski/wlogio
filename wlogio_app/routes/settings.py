@@ -113,6 +113,15 @@ def index():
                            MONTH_NAMES=MONTH_NAMES, company_placeholder=False)
 
 
+def _settings_home():
+    """Powrót z podstron edycji: dla konta firmowego — ustawienia wybranego pracownika."""
+    if current_user.is_company:
+        target = get_effective_user()
+        if target is not None:
+            return url_for('dashboard.employee_settings', employee_id=target.id)
+    return None
+
+
 def apply_profile_action(target, is_self):
     """
     Wykonuje akcję profilu (avatar/imię/hasło) na koncie `target`, na
@@ -269,7 +278,8 @@ def month_config(year, month):
                            expected_hours=expected_hours,
                            working_days=working_days,
                            work_days_set=work_days_set,
-                           MONTH_NAMES=MONTH_NAMES)
+                           MONTH_NAMES=MONTH_NAMES,
+                           settings_home=_settings_home())
 
 
 @settings_bp.route('/vacation', methods=['GET', 'POST'])
@@ -302,7 +312,8 @@ def vacation_balance():
             flash(f'Błąd: {e}', 'error')
             return redirect(url_for('settings.vacation_balance'))
 
-    return render_template('settings/vacation_balance.html', balance=balance)
+    return render_template('settings/vacation_balance.html', balance=balance,
+                           settings_home=_settings_home())
 
 
 @settings_bp.route('/working-days-preview', methods=['POST'])

@@ -51,9 +51,12 @@
                     <button type="submit" class="btn btn-neutral btn-sm w-full">Otwórz</button>
                 </form>
                 <a href="{{ url_for('dashboard.employee_profile', employee_id=employee.id) }}" class="btn btn-ghost btn-sm">
+                    Konto
+                </a>
+                <a href="{{ url_for('dashboard.employee_settings', employee_id=employee.id) }}" class="btn btn-ghost btn-sm">
                     Ustawienia
                 </a>
-                <button type="button" class="btn btn-ghost btn-sm text-error border border-error"
+                <button type="button" class="btn btn-ghost btn-sm text-error"
                         @click="showDelete = true">
                     Usuń
                 </button>

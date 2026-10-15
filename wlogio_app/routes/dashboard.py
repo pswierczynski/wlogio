@@ -442,6 +442,37 @@ def employee_delete(employee_id):
     return redirect(url_for('dashboard.index'))
 
 
+@dashboard_bp.route('/employees/<int:employee_id>/settings')
+@login_required
+def employee_settings(employee_id):
+    """
+    Ustawienia pracy konkretnego pracownika: bilans urlopowy oraz
+    konfiguracje miesięcy (stawki, premie, dni robocze). Wybiera pracownika
+    w sesji, bo podstrony edycji (bilans/miesiąc) korzystają z wybranego.
+    """
+    if not current_user.is_company:
+        abort(403)
+    employee = User.query.filter_by(
+        id=employee_id, company_id=current_user.id, account_type='employee'
+    ).first_or_404()
+    set_viewing_employee(employee.id)
+
+    from wlogio_app.routes.settings import MONTH_NAMES
+    configs = (
+        MonthConfig.query
+        .filter_by(user_id=employee.id)
+        .order_by(MonthConfig.billing_year.desc(), MonthConfig.billing_month.desc())
+        .all()
+    )
+    balance = get_or_create_vacation_balance(employee.id, db.session)
+    return render_template(
+        'settings/index.html',
+        configs=configs, balance=balance, MONTH_NAMES=MONTH_NAMES,
+        company_placeholder=False, settings_employee=employee,
+        settings_home=url_for('dashboard.employee_settings', employee_id=employee.id),
+    )
+
+
 @dashboard_bp.route('/employees/<int:employee_id>/profile', methods=['GET', 'POST'])
 @login_required
 def employee_profile(employee_id):
