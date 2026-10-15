@@ -129,48 +129,44 @@
                     </div>
 
                     <div x-show="activeTab === 'terminal'" x-cloak class="flex-1 flex flex-col justify-center">
-                        <div class="form-control">
-                            <label class="label"><span class="label-text font-medium">Adres email</span></label>
-                            <input type="email" x-model="terminalEmail"
-                                   @keydown.enter="verify()"
-                                   autocomplete="email"
-                                   class="input input-bordered w-full"
-                                   :class="error ? 'input-error' : ''"
-                                   placeholder="twoj@email.com"/>
-                        </div>
-                        <div class="form-control mt-2">
-                            <label class="label"><span class="label-text font-medium">Hasło</span></label>
-                            <input type="password" x-model="terminalPassword"
-                                   @keydown.enter="verify()"
-                                   autocomplete="current-password"
-                                   class="input input-bordered w-full"
-                                   :class="error ? 'input-error' : ''"
-                                   placeholder="••••••••"/>
-                            <div x-show="error" x-cloak class="label">
-                                <span class="label-text-alt text-error">Nieprawidłowy email lub hasło</span>
+                        <div class="flex flex-col gap-3 sm:gap-4">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text font-medium">Adres email</span></label>
+                                <input type="email" x-model="terminalEmail"
+                                       @keydown.enter="verify()"
+                                       autocomplete="email"
+                                       class="input input-bordered w-full"
+                                       :class="error ? 'input-error' : ''"
+                                       placeholder="twoj@email.com"/>
                             </div>
+                            <div class="form-control">
+                                <label class="label"><span class="label-text font-medium">Hasło</span></label>
+                                <input type="password" x-model="terminalPassword"
+                                       @keydown.enter="verify()"
+                                       autocomplete="current-password"
+                                       class="input input-bordered w-full"
+                                       :class="error ? 'input-error' : ''"
+                                       placeholder="••••••••"/>
+                            </div>
+                            {# Wiersz zajmuje dokładnie tyle miejsca co "Zapamiętaj mnie" w panelu —
+                               dzięki temu przycisk nie przeskakuje; w tym miejscu pokazuje się błąd. #}
+                            <div class="relative flex items-center gap-2" aria-live="polite">
+                                <input type="checkbox" class="checkbox checkbox-sm invisible" tabindex="-1" aria-hidden="true"/>
+                                <span class="text-sm invisible" aria-hidden="true">Zapamiętaj mnie</span>
+                                <span x-show="error" x-cloak class="absolute inset-0 flex items-center text-sm text-error">
+                                    Nieprawidłowy email lub hasło
+                                </span>
+                            </div>
+                            <button type="button" @click="verify()" :disabled="loading"
+                                    class="btn btn-primary w-full">
+                                <span x-show="!loading">Zaloguj się</span>
+                                <span x-show="loading" x-cloak class="loading loading-spinner loading-sm"></span>
+                            </button>
                         </div>
-                        <button type="button" @click="verify()" :disabled="loading"
-                                class="btn btn-primary w-full mt-3 sm:mt-4">
-                            <span x-show="!loading">Wejdź do terminala</span>
-                            <span x-show="loading" x-cloak class="loading loading-spinner loading-sm"></span>
-                        </button>
 
-                        <div class="flex flex-col items-center text-center mt-5">
-                            <h3 class="font-semibold text-base-content/90">Terminal pracy</h3>
-                            <div class="w-14 h-14 rounded-full bg-base-200 flex items-center justify-center my-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-base-content/70" fill="none"
-                                     viewBox="0 0 24 24" stroke="currentColor">
-                                    <rect x="3" y="4" width="18" height="13" rx="2" stroke-width="2"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21h8M12 17v4"/>
-                                    <circle cx="12" cy="10.5" r="2.4" stroke-width="1.8"/>
-                                    <path stroke-linecap="round" stroke-width="1.8" d="M12 10.5v-1.3M12 10.5h1.2"/>
-                                </svg>
-                            </div>
-                            <p class="text-base-content/50 text-sm leading-snug max-w-[280px]">
-                                Zaloguj się kontem indywidualnym lub firmowym, aby otworzyć
-                                jego terminal — pracownicy odbijają wejścia i wyjścia własnym PIN-em.
-                            </p>
+                        <div class="text-center text-sm mt-3 sm:mt-4 invisible" aria-hidden="true">
+                            Nie masz konta?
+                            <span class="font-medium">Zarejestruj się</span>
                         </div>
                     </div>
 
