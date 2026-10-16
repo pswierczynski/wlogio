@@ -1,0 +1,15 @@
+# Jednolite końce linii (LF) w całym repozytorium — bez ostrzeżeń LF/CRLF na Windows
+* text=auto eol=lf
+
+# Pliki binarne — bez konwersji
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+*.zip binary
