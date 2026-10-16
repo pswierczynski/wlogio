@@ -84,6 +84,13 @@
                     <p class="text-base-content/60 text-xs sm:text-sm">Rejestr czasu pracy</p>
                 </div>
 
+                {% if kiosk %}
+                <div class="flex gap-1.5 bg-base-200 rounded-lg p-1 mb-2 sm:mb-3">
+                    <div class="flex-1 py-2 rounded-md text-sm text-center bg-base-100 border border-base-content font-medium">
+                        Terminal pracy
+                    </div>
+                </div>
+                {% else %}
                 <div class="flex gap-1.5 bg-base-200 rounded-lg p-1 mb-2 sm:mb-3">
                     <button type="button"
                             @click="activeTab = 'panel'"
@@ -98,13 +105,15 @@
                         Terminal pracy
                     </button>
                 </div>
+                {% endif %}
 
                 <div class="h-[360px] sm:h-[380px] flex flex-col">
 
+                    {% if not kiosk %}
                     <div x-show="activeTab === 'panel'" x-cloak class="flex-1 flex flex-col justify-center">
                         <form method="POST" action="{{ url_for('auth.login') }}" class="flex flex-col gap-3 sm:gap-4">
                             <div class="form-control">
-                                <label class="label"><span class="label-text font-medium">Adres email lub login</span></label>
+                                <label class="label"><span class="label-text font-medium">Adres email lub login do Panelu pracy</span></label>
                                 <input type="text" name="identifier" required autocomplete="username"
                                        class="input input-bordered w-full" placeholder="twoj@email.com lub login"/>
                             </div>
@@ -127,11 +136,12 @@
                             </a>
                         </div>
                     </div>
+                    {% endif %}
 
                     <div x-show="activeTab === 'terminal'" x-cloak class="flex-1 flex flex-col justify-center">
                         <div class="flex flex-col gap-3 sm:gap-4">
                             <div class="form-control">
-                                <label class="label"><span class="label-text font-medium">Adres email</span></label>
+                                <label class="label"><span class="label-text font-medium">Adres email do Terminalu pracy</span></label>
                                 <input type="email" x-model="terminalEmail"
                                        @keydown.enter="verify()"
                                        autocomplete="email"
