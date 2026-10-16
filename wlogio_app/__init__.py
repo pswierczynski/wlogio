@@ -37,7 +37,7 @@ def create_app(config_name='default'):
     from wlogio_app.routes.dashboard import dashboard_bp
     from wlogio_app.routes.entries import entries_bp
     from wlogio_app.routes.settings import settings_bp
-    from wlogio_app.routes.welcome import welcome_bp
+    from wlogio_app.routes.welcome import welcome_bp, kiosk_bp
     from wlogio_app.routes.export import export_bp
 
     # UWAGA: nazwy endpointów (np. 'auth.login', 'dashboard.index') się NIE zmieniają —
@@ -47,6 +47,7 @@ def create_app(config_name='default'):
     app.register_blueprint(entries_bp, url_prefix='/entries')
     app.register_blueprint(settings_bp, url_prefix='/settings')
     app.register_blueprint(welcome_bp, url_prefix='/terminal')
+    app.register_blueprint(kiosk_bp, url_prefix='/kiosk')
     app.register_blueprint(export_bp, url_prefix='/app/export')
 
     @app.context_processor

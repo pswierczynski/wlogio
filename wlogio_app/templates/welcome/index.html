@@ -365,10 +365,12 @@ const INIT_BADGES   = {{ user_badges | tojson }};
         </div>
         {% endif %}
 
+        {% if not kiosk %}
         <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}"
            class="mt-10 btn btn-ghost btn-sm text-base-content/30">
             ← Wróć
         </a>
+        {% endif %}
     </div>
 
     <!-- EKRAN 2: PIN -->

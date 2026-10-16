@@ -32,7 +32,9 @@ def login():
 
         flash('Nieprawidłowy email/login lub hasło.', 'error')
 
-    return render_template('auth/login.html')
+    # Wejście z wlogio.pl/kiosk/ — od razu zakładka terminala i powrót do kiosku.
+    kiosk = request.args.get('next') == '/kiosk/'
+    return render_template('auth/login.html', kiosk=kiosk)
 
 
 @auth_bp.route('/register/', methods=['GET', 'POST'])

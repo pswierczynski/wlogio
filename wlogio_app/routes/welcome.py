@@ -36,6 +36,9 @@ from wlogio_app.calculator import (
 )
 
 welcome_bp = Blueprint('welcome', __name__)
+# Wersja kiosk terminala (wlogio.pl/kiosk/) — ten sam ekran, ale bez przycisku
+# powrotu do logowania, żeby z ekranu dotykowego nie dało się opuścić aplikacji.
+kiosk_bp = Blueprint('kiosk', __name__)
 
 
 def get_terminal_owner():
@@ -296,9 +299,19 @@ def get_today_entry(user_id):
 
 @welcome_bp.route('/')
 def index():
+    return render_terminal(kiosk=False)
+
+
+@kiosk_bp.route('/')
+def kiosk_index():
+    return render_terminal(kiosk=True)
+
+
+def render_terminal(kiosk):
     owner = get_terminal_owner()
     if not owner:
-        return redirect(url_for('auth.login'))
+        # Po zalogowaniu (zakładka "Terminal pracy") wracamy do właściwej wersji.
+        return redirect(url_for('auth.login', next='/kiosk/') if kiosk else url_for('auth.login'))
 
     users = get_terminal_users(owner)
     today = datetime.now(TIMEZONE).date()
@@ -316,6 +329,7 @@ def index():
         users=users,
         user_statuses=user_statuses,
         user_badges=user_badges,
+        kiosk=kiosk,
     )
 
 

@@ -45,7 +45,7 @@
     {% endwith %}
 
     <div x-data="{
-            activeTab: 'panel',
+            activeTab: '{{ 'terminal' if kiosk else 'panel' }}',
             terminalEmail: '',
             terminalPassword: '',
             error: false,
@@ -60,7 +60,7 @@
                 });
                 this.loading = false;
                 if (r.ok) {
-                    window.location.href = '/terminal/';
+                    window.location.href = '{{ '/kiosk/' if kiosk else '/terminal/' }}';
                 } else {
                     this.error = true;
                     this.terminalPassword = '';
