@@ -46,9 +46,29 @@
                 </div>
             </div>
 
+            {% set st = stats.get(employee.id) %}
+            <div class="flex flex-col gap-1 text-sm border-t border-base-200 pt-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-base-content/50">Stawka godzinowa</span>
+                    <span class="font-medium">
+                        {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-base-content/50">Prognoza w tym miesiącu</span>
+                    <span class="font-medium">
+                        {% if st and st.hourly_rate %}{{ format_currency(st.forecast) }}{% else %}—{% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-base-content/50">Przepracowane dni</span>
+                    <span class="font-medium">{% if st %}{{ st.worked_days }} / {{ st.working_days }}{% else %}—{% endif %}</span>
+                </div>
+            </div>
+
             <div class="flex gap-2">
                 <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}" class="flex-1">
-                    <button type="submit" class="btn btn-neutral btn-sm w-full">Otwórz</button>
+                    <button type="submit" class="btn btn-outline btn-neutral btn-sm w-full">Otwórz</button>
                 </form>
                 <a href="{{ url_for('dashboard.employee_profile', employee_id=employee.id) }}" class="btn btn-ghost btn-sm">
                     Konto

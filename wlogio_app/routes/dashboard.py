@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from collections import defaultdict
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from wlogio_app import db
@@ -215,6 +215,28 @@ def get_company_employees(company_id):
     )
 
 
+def get_employee_month_stats(user_id):
+    """
+    Skrót bieżącego okresu rozliczeniowego pracownika do karty na liście:
+    stawka godzinowa, prognoza wynagrodzenia (te same obliczenia co panel
+    pracy) oraz przepracowane dni / dni robocze w okresie.
+    """
+    # Okres rozliczeniowy trwa ok. miesiąca — wystarczy zawęzić wpisy do
+    # ostatnich ~2 miesięcy zamiast ładować całą historię każdego pracownika.
+    months_data, current_key = build_months_data(
+        user_id, date_from=date.today() - timedelta(days=62)
+    )
+    current = next((m for m in months_data if m['is_current']), None)
+    if current is None:
+        return None
+    return {
+        'hourly_rate':  current['hourly_rate'],
+        'forecast':     current['forecast'],
+        'worked_days':  current['summary']['work_days'],
+        'working_days': current['working_days'],
+    }
+
+
 def get_last_employee_defaults(company_id):
     """
     Konfiguracja i bilans urlopowy ostatnio dodanego pracownika danej firmy
@@ -254,7 +276,9 @@ def index():
         target = get_effective_user()
         if target is None:
             employees = get_company_employees(current_user.id)
-            return render_template('dashboard/employees.html', employees=employees)
+            stats = {e.id: get_employee_month_stats(e.id) for e in employees}
+            return render_template('dashboard/employees.html', employees=employees,
+                                   stats=stats, format_currency=format_currency)
     else:
         target = current_user
 
