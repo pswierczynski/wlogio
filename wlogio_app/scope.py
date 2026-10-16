@@ -10,6 +10,8 @@ pracownika, wybranego z listy i zapamiętanego w sesji przeglądarki
 Dla konta indywidualnego i konta pracowniczego "efektywnym użytkownikiem"
 jest zawsze ono samo.
 """
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from flask import session, flash, redirect, url_for
 from flask_login import current_user
 
@@ -65,3 +67,49 @@ def set_viewing_employee(employee_id):
 
 def clear_viewing_employee():
     session.pop('viewing_employee_id', None)
+
+
+# --- Konto pracownicze: ograniczony zapis w panelu pracy -------------------
+# Pracownik może dodawać/edytować wyłącznie bieżący dzień (dowolnego typu).
+# Inne dni (przeszłe i przyszłe) może ustawiać tylko jako urlopy (wszystkie
+# rodzaje), święta i zwolnienia — i tylko wtedy, gdy ten dzień nie jest już
+# ustawiony jako dzień pracy.
+EMPLOYEE_OTHER_DAY_TYPES = (
+    'vacation', 'on_demand', 'unpaid', 'holiday',
+    'sick_leave', 'care_leave', 'force_majeure', 'child_care',
+)
+
+
+def local_today():
+    """Dzisiejsza data w strefie Europe/Warsaw (tak samo jak w terminalu)."""
+    return datetime.now(ZoneInfo('Europe/Warsaw')).date()
+
+
+def employee_set_error(entry_date, new_type, existing_type=None):
+    """
+    Zwraca komunikat błędu, jeśli pracownik NIE może ustawić na dzień
+    `entry_date` wpisu typu `new_type` (istniejący wpis ma typ `existing_type`
+    albo brak wpisu = None); None, gdy wolno.
+    """
+    if entry_date == local_today():
+        return None
+    if existing_type == 'work':
+        return 'Ten dzień jest ustawiony jako dzień pracy — pracownik może zmieniać tylko bieżący dzień.'
+    if new_type not in EMPLOYEE_OTHER_DAY_TYPES:
+        return 'Poza bieżącym dniem możesz ustawić tylko urlop, święto lub zwolnienie.'
+    return None
+
+
+def employee_can_delete(entry):
+    return entry.date == local_today() or entry.entry_type != 'work'
+
+
+def require_entry_user():
+    """
+    Jak require_effective_user(), ale dopuszcza konto pracownicze (zapis
+    własnych wpisów) — szczegółowe ograniczenia dni/typów egzekwują routy
+    przez employee_set_error() / employee_can_delete().
+    """
+    if current_user.account_type == 'employee':
+        return current_user, None
+    return require_effective_user()

@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from wlogio_app import db
 from wlogio_app.models import User, WorkEntry, MonthConfig, VacationBalance
-from wlogio_app.scope import get_effective_user, set_viewing_employee, clear_viewing_employee
+from wlogio_app.scope import local_today, get_effective_user, set_viewing_employee, clear_viewing_employee
 from wlogio_app.calculator import (
     calculate_month_summary,
     calculate_vacation_used,
@@ -320,6 +320,7 @@ def index():
         format_currency=format_currency,
         MONTH_NAMES=MONTH_NAMES,
         viewing_employee=(target if current_user.is_company else None),
+        employee_today=local_today(),
     )
 
 

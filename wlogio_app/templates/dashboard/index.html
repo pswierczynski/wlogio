@@ -368,7 +368,9 @@
                                                 {% else %}—{% endif %}
                                             </td>
                                             <td class="col-actions text-right whitespace-nowrap">
+                                                {% set can_modify = current_user.account_type != 'employee' or entry.date == employee_today or entry.entry_type != 'work' %}
                                                 <div class="flex items-center justify-end gap-1">
+                                                    {% if can_modify %}
                                                     <a href="{{ url_for('entries.edit', entry_id=entry.id) }}"
                                                        class="btn btn-ghost btn-xs">Edytuj</a>
                                                     <form method="POST"
@@ -376,6 +378,7 @@
                                                           onsubmit="return confirm('Usunąć wpis?')">
                                                         <button type="submit" class="btn btn-ghost btn-xs text-error">Usuń</button>
                                                     </form>
+                                                    {% endif %}
                                                 </div>
                                             </td>
                                         </tr>

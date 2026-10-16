@@ -15,7 +15,10 @@
         <div class="card-body gap-5 p-4 sm:p-8">
             <form method="POST"
                   action="{% if entry %}{{ url_for('entries.edit', entry_id=entry.id) }}{% else %}{{ url_for('entries.add') }}{% endif %}"
+                  x-init="$watch('dateFrom', v => { if (employeeMode && entryType === 'work' && v !== employeeToday) { entryType = 'vacation'; onEntryTypeChange(); } })"
                   x-data="{
+                    employeeMode: {{ 'true' if employee_mode else 'false' }},
+                    employeeToday: '{{ employee_today or '' }}',
                     entryType: '{% if entry %}{{ entry.entry_type }}{% else %}work{% endif %}',
 
                     /* --- Godziny pracy --- */
@@ -255,7 +258,8 @@
                             'child_care': 'Opieka nad dzieckiem'
                         } %}
                         {% for type_key, type_label in type_labels.items() %}
-                        <label class="cursor-pointer">
+                        <label class="cursor-pointer"
+                               {% if type_key == 'work' %}x-show="!employeeMode || dateFrom === employeeToday"{% endif %}>
                             <input type="radio" name="entry_type" value="{{ type_key }}"
                                    class="sr-only" x-model="entryType"
                                    @change="onEntryTypeChange()"

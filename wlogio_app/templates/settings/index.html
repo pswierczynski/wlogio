@@ -32,7 +32,7 @@
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="card-title text-base">Bilans urlopowy</h2>
                     <a href="{{ url_for('settings.vacation_balance') }}"
-                       class="btn btn-outline btn-sm">Edytuj</a>
+                       class="btn btn-outline btn-sm">{% if current_user.account_type == 'employee' %}Podgląd{% else %}Edytuj{% endif %}</a>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="text-center p-3 bg-base-200 rounded-xl">
@@ -151,7 +151,7 @@
                                             </td>
                                             <td class="whitespace-nowrap">
                                                 <a href="{{ url_for('settings.month_config', year=config.billing_year, month=config.billing_month) }}"
-                                                   class="btn btn-ghost btn-xs">Edytuj</a>
+                                                   class="btn btn-ghost btn-xs">{% if current_user.account_type == 'employee' %}Podgląd{% else %}Edytuj{% endif %}</a>
                                             </td>
                                         </tr>
                                         {% endfor %}

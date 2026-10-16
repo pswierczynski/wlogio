@@ -5,7 +5,10 @@ from decimal import Decimal
 
 from wlogio_app import db
 from wlogio_app.models import WorkEntry, MonthConfig
-from wlogio_app.scope import require_effective_user
+from wlogio_app.scope import (
+    require_entry_user, local_today, employee_set_error, employee_can_delete,
+)
+from flask_login import current_user
 from wlogio_app.calculator import (
     calculate_hours, get_billing_period,
     get_next_vacation_number, get_next_remote_number,
@@ -103,11 +106,12 @@ def get_working_days_in_range(date_from, date_to):
 @entries_bp.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
-    target, resp = require_effective_user()
+    target, resp = require_entry_user()
     if resp:
         return resp
 
-    today = date.today()
+    is_employee = current_user.account_type == 'employee'
+    today = local_today() if is_employee else date.today()
 
     if request.method == 'POST':
         entry_date_str = request.form.get('date', '')
@@ -126,6 +130,12 @@ def add():
         if existing:
             flash(f'Wpis dla {entry_date.strftime("%d.%m.%Y")} już istnieje.', 'error')
             return redirect(url_for('entries.add'))
+
+        if current_user.account_type == 'employee':
+            err = employee_set_error(entry_date, entry_type, None)
+            if err:
+                flash(err, 'error')
+                return redirect(url_for('entries.add'))
 
         billing_year, billing_month = get_billing_period(entry_date)
         get_or_create_month_config(target.id, billing_year, billing_month)
@@ -182,14 +192,16 @@ def add():
                            next_vacation=next_vacation,
                            next_remote=next_remote,
                            remaining_vacation=max(0, remaining_vacation),
-                           existing_breaks=[])
+                           existing_breaks=[],
+                           employee_mode=is_employee,
+                           employee_today=local_today().strftime('%Y-%m-%d') if is_employee else '')
 
 
 @entries_bp.route('/range-preview', methods=['POST'])
 @login_required
 def range_preview():
     """Zwraca podgląd zakresu dni (JSON)."""
-    target, resp = require_effective_user()
+    target, resp = require_entry_user()
     if resp:
         return jsonify({'ok': False, 'error': 'Brak uprawnień.'}), 403
 
@@ -306,7 +318,7 @@ def range_preview():
 @login_required
 def add_range():
     """Zapisuje zakres dni do bazy."""
-    target, resp = require_effective_user()
+    target, resp = require_entry_user()
     if resp:
         return resp
 
@@ -417,7 +429,7 @@ def renumber_vacations(user_id, year):
 @entries_bp.route('/edit/<int:entry_id>', methods=['GET', 'POST'])
 @login_required
 def edit(entry_id):
-    target, resp = require_effective_user()
+    target, resp = require_entry_user()
     if resp:
         return resp
 
@@ -425,10 +437,21 @@ def edit(entry_id):
         id=entry_id, user_id=target.id
     ).first_or_404()
 
+    is_employee = current_user.account_type == 'employee'
+    if is_employee and entry.date != local_today() and entry.entry_type == 'work':
+        flash('Pracownik może edytować tylko bieżący dzień — ten dzień jest ustawiony jako dzień pracy.', 'error')
+        return redirect(url_for('dashboard.index'))
+
     if request.method == 'POST':
         old_type   = entry.entry_type
         entry_year = entry.date.year
         entry_type = request.form.get('entry_type', 'work')
+
+        if is_employee:
+            err = employee_set_error(entry.date, entry_type, old_type)
+            if err:
+                flash(err, 'error')
+                return redirect(url_for('entries.edit', entry_id=entry_id))
 
         VACATION_TYPES = ('vacation', 'on_demand')
         was_vacation = old_type in VACATION_TYPES
@@ -489,19 +512,25 @@ def edit(entry_id):
                            next_vacation=entry.vacation_day_number,
                            next_remote=entry.remote_trip_number,
                            remaining_vacation=0,
-                           existing_breaks=existing_breaks)
+                           existing_breaks=existing_breaks,
+                           employee_mode=is_employee,
+                           employee_today=local_today().strftime('%Y-%m-%d') if is_employee else '')
 
 
 @entries_bp.route('/delete/<int:entry_id>', methods=['POST'])
 @login_required
 def delete(entry_id):
-    target, resp = require_effective_user()
+    target, resp = require_entry_user()
     if resp:
         return resp
 
     entry = WorkEntry.query.filter_by(
         id=entry_id, user_id=target.id
     ).first_or_404()
+
+    if current_user.account_type == 'employee' and not employee_can_delete(entry):
+        flash('Pracownik może usuwać tylko bieżący dzień lub dni urlopu/święta/zwolnienia.', 'error')
+        return redirect(url_for('dashboard.index'))
 
     date_str      = entry.date.strftime('%d.%m.%Y')
     billing_year  = entry.billing_year

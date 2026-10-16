@@ -8,7 +8,7 @@
         <h1 class="text-xl font-bold">Bilans urlopowy</h1>
     </div>
 
-    <div class="card bg-base-100 shadow-sm">
+    <div class="card bg-base-100 shadow-sm" {% if current_user.account_type == 'employee' %}inert{% endif %}>
         <div class="card-body gap-5">
 
             <div class="alert alert-info text-sm">
