@@ -2,6 +2,14 @@
 {% block title %}Pracownicy{% endblock %}
 
 {% block content %}
+<style>
+    /* Cienkie obramowanie kart pracowników: czerwone = minione dni bez godziny
+       zakończenia pracy, zielone = aktualnie w pracy. Bez obramowania karta ma
+       przezroczysty obrys 1px, żeby nic się nie przesuwało. */
+    .emp-card { border: 1px solid transparent; }
+    .emp-card-missing-end { border-color: oklch(var(--er)); }
+    .emp-card-in-work     { border-color: #22c55e; }
+</style>
 <div class="flex items-center justify-between mb-4 sm:mb-6">
     <h1 class="text-xl font-bold">Pracownicy</h1>
     <a href="{{ url_for('dashboard.employee_new') }}" class="btn btn-primary btn-sm gap-1">
@@ -25,7 +33,10 @@
 {% else %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
     {% for employee in employees %}
-    <div class="card bg-base-100 shadow-sm" x-data="{ showDelete: false, pin: '' }">
+    {% set fl = flags.get(employee.id) %}
+    <div class="card bg-base-100 shadow-sm emp-card{% if fl and fl.missing_end %} emp-card-missing-end{% elif fl and fl.in_work %} emp-card-in-work{% endif %}"
+         {% if fl and fl.missing_end %}title="Brak godziny zakończenia pracy w minionych dniach"{% elif fl and fl.in_work %}title="Aktualnie w pracy"{% endif %}
+         x-data="{ showDelete: false, pin: '' }">
         <div class="card-body gap-3 p-4">
             <div class="flex items-center gap-3">
                 {% if employee.avatar %}

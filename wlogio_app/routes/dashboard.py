@@ -237,6 +237,44 @@ def get_employee_month_stats(user_id):
     }
 
 
+def get_employee_work_flags(employee_ids):
+    """
+    Znaczniki do obramowania kart pracowników na liście:
+    - missing_end: pracownik ma minione dni (data < dziś) z godziną rozpoczęcia
+      pracy, ale bez godziny zakończenia (czerwone obramowanie),
+    - in_work: pracownik jest teraz w pracy — status 'working' lub 'break'
+      wg tej samej logiki co Terminal (zielone obramowanie).
+    """
+    if not employee_ids:
+        return {}
+
+    # Import lokalny — welcome.py to osobny moduł terminala.
+    from wlogio_app.routes.welcome import get_today_entry, compute_status
+
+    today = local_today()
+    missing_end_ids = {
+        row[0] for row in db.session.query(WorkEntry.user_id)
+        .filter(
+            WorkEntry.user_id.in_(employee_ids),
+            WorkEntry.entry_type == 'work',
+            WorkEntry.time_start.isnot(None),
+            WorkEntry.time_end.is_(None),
+            WorkEntry.date < today,
+        )
+        .distinct()
+        .all()
+    }
+
+    flags = {}
+    for uid in employee_ids:
+        status = compute_status(get_today_entry(uid))
+        flags[uid] = {
+            'missing_end': uid in missing_end_ids,
+            'in_work':     status in ('working', 'break'),
+        }
+    return flags
+
+
 def get_last_employee_defaults(company_id):
     """
     Konfiguracja i bilans urlopowy ostatnio dodanego pracownika danej firmy
@@ -277,8 +315,9 @@ def index():
         if target is None:
             employees = get_company_employees(current_user.id)
             stats = {e.id: get_employee_month_stats(e.id) for e in employees}
+            flags = get_employee_work_flags([e.id for e in employees])
             return render_template('dashboard/employees.html', employees=employees,
-                                   stats=stats, format_currency=format_currency)
+                                   stats=stats, flags=flags, format_currency=format_currency)
     else:
         target = current_user
 
