@@ -227,11 +227,14 @@
                                         <tr class="entry-row transition-colors">
 
                                             <td class="col-date font-medium text-sm whitespace-nowrap">
+                                                {# Brak godziny zakończenia oznaczamy tylko w MINIONYCH dniach —
+                                                   w bieżącym dniu praca może jeszcze trwać. #}
+                                                {% set missing_end = entry.entry_type == 'work' and entry.time_start and not entry.time_end and entry.date < employee_today %}
                                                 <div class="flex items-center gap-1">
-                                                    <span class="{% if entry.entry_type == 'work' and entry.time_start and not entry.time_end %}text-error{% endif %}">
+                                                    <span class="{% if missing_end %}text-error{% endif %}">
                                                         {{ entry.date.strftime('%d.%m.%Y') }}
                                                     </span>
-                                                    {% if entry.entry_type == 'work' and entry.time_start and not entry.time_end %}
+                                                    {% if missing_end %}
                                                     <div class="tooltip tooltip-right" data-tip="Brak godziny zakończenia pracy">
                                                         <svg xmlns="http://www.w3.org/2000/svg"
                                                              class="h-3.5 w-3.5 text-error cursor-default shrink-0"

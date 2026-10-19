@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from collections import defaultdict
 from datetime import date, timedelta
@@ -361,6 +361,23 @@ def index():
         viewing_employee=(target if current_user.is_company else None),
         employee_today=local_today(),
     )
+
+
+@dashboard_bp.route('/employees/flags')
+@login_required
+def employees_flags():
+    """
+    JSON z aktualnymi znacznikami obramowań kart pracowników (czerwone/zielone)
+    — odpytywany cyklicznie przez listę pracowników, żeby obramowania
+    aktualizowały się bez przeładowania strony.
+    """
+    if not current_user.is_company:
+        abort(403)
+    employees = get_company_employees(current_user.id)
+    flags = get_employee_work_flags([e.id for e in employees])
+    response = jsonify({str(uid): f for uid, f in flags.items()})
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @dashboard_bp.route('/employees/new', methods=['GET', 'POST'])

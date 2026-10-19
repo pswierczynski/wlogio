@@ -36,6 +36,7 @@
     {% set fl = flags.get(employee.id) %}
     <div class="card bg-base-100 shadow-sm emp-card{% if fl and fl.missing_end %} emp-card-missing-end{% elif fl and fl.in_work %} emp-card-in-work{% endif %}"
          {% if fl and fl.missing_end %}title="Brak godziny zakończenia pracy w minionych dniach"{% elif fl and fl.in_work %}title="Aktualnie w pracy"{% endif %}
+         data-employee-id="{{ employee.id }}"
          x-data="{ showDelete: false, pin: '' }">
         <div class="card-body gap-3 p-4">
             <div class="flex items-center gap-3">
@@ -121,5 +122,43 @@
     </div>
     {% endfor %}
 </div>
+{% endif %}
+
+{% if employees %}
+<script>
+/* Cykliczna aktualizacja obramowań kart (czerwone = minione dni bez godziny
+   zakończenia, zielone = w pracy) — reaguje na kliknięcia w Terminalu oraz
+   uzupełnienie/zmianę godzin w panelu, bez przeładowania strony. */
+(function () {
+    var URL = "{{ url_for('dashboard.employees_flags') }}";
+    var TITLE_MISSING = "Brak godziny zakończenia pracy w minionych dniach";
+    var TITLE_IN_WORK = "Aktualnie w pracy";
+
+    function apply(flags) {
+        document.querySelectorAll('[data-employee-id]').forEach(function (card) {
+            var f = flags[card.getAttribute('data-employee-id')] || {};
+            var missing = !!f.missing_end;
+            var inWork  = !missing && !!f.in_work;
+            card.classList.toggle('emp-card-missing-end', missing);
+            card.classList.toggle('emp-card-in-work', inWork);
+            if (missing)      { card.setAttribute('title', TITLE_MISSING); }
+            else if (inWork)  { card.setAttribute('title', TITLE_IN_WORK); }
+            else              { card.removeAttribute('title'); }
+        });
+    }
+
+    function refresh() {
+        if (document.hidden) { return; }
+        fetch(URL, { headers: { 'Accept': 'application/json' }, cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) { if (data) { apply(data); } })
+            .catch(function () { /* brak sieci — spróbujemy przy następnym cyklu */ });
+    }
+
+    setInterval(refresh, 10000);
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+})();
+</script>
 {% endif %}
 {% endblock %}
