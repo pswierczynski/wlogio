@@ -9,6 +9,24 @@
     .emp-card { border: 1px solid transparent; }
     .emp-card-missing-end { border-color: oklch(var(--er)); }
     .emp-card-in-work     { border-color: #22c55e; }
+
+    /* Obramowanie zdjęcia wg statusu — kolory jak w Terminalu, bez pulsowania */
+    .emp-ring-working { box-shadow: 0 0 0 3px #22c55e; }
+    .emp-ring-break   { box-shadow: 0 0 0 3px #f59e0b; }
+    .emp-ring-idle    { box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08); }
+
+    /* Badge pracownika po prawej stronie bloku; bez badge'a — puste kółko
+       z szarym obrysem (to samo miejsce, nic się nie przesuwa). */
+    .emp-badge {
+        width: 32px; height: 32px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; margin-left: auto;
+    }
+    .emp-badge svg { width: 18px; height: 18px; }
+    .emp-badge-empty { border: 2px solid oklch(var(--b3)); }
+    {% for code, color in badge_colors.items() %}
+    .emp-badge-t-{{ code }} { background-color: {{ color }}; }
+    {% endfor %}
 </style>
 <div class="flex items-center justify-between mb-4 sm:mb-6">
     <h1 class="text-xl font-bold">Pracownicy</h1>
@@ -40,21 +58,24 @@
         <div class="card-body gap-3 p-4">
             <div class="flex items-center gap-3">
                 {% if employee.avatar %}
-                <div class="w-12 h-12 rounded-full overflow-hidden ring-2 ring-base-300 shrink-0">
+                <div data-emp-avatar class="w-12 h-12 rounded-full overflow-hidden shrink-0 emp-ring-{{ fl.status if fl else 'idle' }}">
                     <img src="{{ employee.avatar }}" alt="" class="w-full h-full object-cover"/>
                 </div>
                 {% else %}
-                <div class="w-12 h-12 rounded-full bg-neutral flex items-center justify-center ring-2 ring-base-300 shrink-0">
+                <div data-emp-avatar class="w-12 h-12 rounded-full bg-neutral flex items-center justify-center shrink-0 emp-ring-{{ fl.status if fl else 'idle' }}">
                     {% set parts = (employee.name or employee.login).split(' ') %}
                     <span class="text-lg font-bold text-white">
                         {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
                     </span>
                 </div>
                 {% endif %}
-                <div class="min-w-0">
+                <div class="min-w-0 flex-1">
                     <div class="font-semibold truncate">{{ employee.name or employee.login }}</div>
                     <div class="text-xs text-base-content/40 truncate">login: {{ employee.login }}</div>
                 </div>
+                {% set b = fl.badge if fl else None %}
+                <div data-emp-badge
+                     class="emp-badge {% if b %}emp-badge-t-{{ b }}{% else %}emp-badge-empty{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
             </div>
 
             {% set st = stats.get(employee.id) %}
@@ -125,11 +146,14 @@
 
 {% if employees %}
 <script>
-/* Cykliczna aktualizacja obramowań kart (czerwone = minione dni bez godziny
-   zakończenia, zielone = w pracy) — reaguje na kliknięcia w Terminalu oraz
+/* Cykliczna aktualizacja kart pracowników (obramowanie bloku, obramowanie
+   zdjęcia wg statusu oraz badge) — reaguje na kliknięcia w Terminalu oraz
    uzupełnienie/zmianę godzin w panelu, bez przeładowania strony. */
 (function () {
     var URL = "{{ url_for('dashboard.employees_flags') }}";
+    var BADGE_ICONS = {{ badge_icons | tojson }};
+    var STATUSES = ['working', 'break', 'idle'];
+    var BADGES = {{ badge_colors.keys() | list | tojson }};
 
     function apply(flags) {
         document.querySelectorAll('[data-employee-id]').forEach(function (card) {
@@ -138,6 +162,25 @@
             var inWork  = !missing && !!f.in_work;
             card.classList.toggle('emp-card-missing-end', missing);
             card.classList.toggle('emp-card-in-work', inWork);
+
+            var avatar = card.querySelector('[data-emp-avatar]');
+            if (avatar) {
+                STATUSES.forEach(function (st) { avatar.classList.remove('emp-ring-' + st); });
+                avatar.classList.add('emp-ring-' + (STATUSES.indexOf(f.status) >= 0 ? f.status : 'idle'));
+            }
+
+            var slot = card.querySelector('[data-emp-badge]');
+            if (slot) {
+                BADGES.forEach(function (b) { slot.classList.remove('emp-badge-t-' + b); });
+                slot.classList.remove('emp-badge-empty');
+                if (f.badge && BADGE_ICONS[f.badge]) {
+                    slot.classList.add('emp-badge-t-' + f.badge);
+                    slot.innerHTML = BADGE_ICONS[f.badge];
+                } else {
+                    slot.classList.add('emp-badge-empty');
+                    slot.innerHTML = '';
+                }
+            }
         });
     }
 
@@ -149,9 +192,13 @@
             .catch(function () { /* brak sieci — spróbujemy przy następnym cyklu */ });
     }
 
+    refresh();                                    /* od razu po wczytaniu strony */
     setInterval(refresh, 10000);
     document.addEventListener('visibilitychange', refresh);
     window.addEventListener('focus', refresh);
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) { refresh(); }           /* powrót przyciskiem Wstecz */
+    });
 })();
 </script>
 {% endif %}

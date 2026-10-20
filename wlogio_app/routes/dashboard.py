@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from wlogio_app import db
+from wlogio_app.badges import BADGE_ICONS, BADGE_COLORS
 from wlogio_app.models import User, WorkEntry, MonthConfig, VacationBalance
 from wlogio_app.scope import local_today, get_effective_user, set_viewing_employee, clear_viewing_employee
 from wlogio_app.calculator import (
@@ -243,13 +244,16 @@ def get_employee_work_flags(employee_ids):
     - missing_end: pracownik ma minione dni (data < dziś) z godziną rozpoczęcia
       pracy, ale bez godziny zakończenia (czerwone obramowanie),
     - in_work: pracownik jest teraz w pracy — status 'working' lub 'break'
-      wg tej samej logiki co Terminal (zielone obramowanie).
+      wg tej samej logiki co Terminal (zielone obramowanie karty),
+    - status: 'working' | 'break' | 'idle' — kolor obramowania zdjęcia,
+    - badge: aktualny badge pracownika (P/W/U/N/B/H/Z/O/S/D albo None) —
+      liczony tą samą funkcją co w Terminalu.
     """
     if not employee_ids:
         return {}
 
     # Import lokalny — welcome.py to osobny moduł terminala.
-    from wlogio_app.routes.welcome import get_today_entry, compute_status
+    from wlogio_app.routes.welcome import get_today_entry, compute_status, compute_badge
 
     today = local_today()
     missing_end_ids = {
@@ -267,10 +271,13 @@ def get_employee_work_flags(employee_ids):
 
     flags = {}
     for uid in employee_ids:
-        status = compute_status(get_today_entry(uid))
+        entry  = get_today_entry(uid)
+        status = compute_status(entry)
         flags[uid] = {
             'missing_end': uid in missing_end_ids,
             'in_work':     status in ('working', 'break'),
+            'status':      status,
+            'badge':       compute_badge(entry, status),
         }
     return flags
 
@@ -317,7 +324,8 @@ def index():
             stats = {e.id: get_employee_month_stats(e.id) for e in employees}
             flags = get_employee_work_flags([e.id for e in employees])
             return render_template('dashboard/employees.html', employees=employees,
-                                   stats=stats, flags=flags, format_currency=format_currency)
+                                   stats=stats, flags=flags, format_currency=format_currency,
+                                   badge_icons=BADGE_ICONS, badge_colors=BADGE_COLORS)
     else:
         target = current_user
 
