@@ -32,7 +32,18 @@
     {% endfor %}
 </style>
 <div class="flex items-center justify-between mb-4 sm:mb-6">
-    <h1 class="text-xl font-bold">Pracownicy</h1>
+    <div class="flex items-baseline gap-3 flex-wrap">
+        <h1 class="text-xl font-bold">Pracownicy</h1>
+        <span class="text-sm text-base-content/60" data-emp-pool>
+            {{ employee_count }} / {{ employee_limit }} pracowników
+            <span class="text-base-content/40">({{ current_user.account_type_label }})</span>
+        </span>
+    </div>
+    {% if employee_count >= employee_limit %}
+    <button type="button" class="btn btn-primary btn-sm gap-1" disabled title="Osiągnięto limit pracowników">
+        Limit osiągnięty
+    </button>
+    {% else %}
     <a href="{{ url_for('dashboard.employee_new') }}" class="btn btn-primary btn-sm gap-1">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
              viewBox="0 0 24 24" stroke="currentColor">
@@ -40,6 +51,7 @@
         </svg>
         Dodaj pracownika
     </a>
+    {% endif %}
 </div>
 
 {% if not employees %}

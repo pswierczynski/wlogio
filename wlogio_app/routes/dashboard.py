@@ -325,7 +325,9 @@ def index():
             flags = get_employee_work_flags([e.id for e in employees])
             return render_template('dashboard/employees.html', employees=employees,
                                    stats=stats, flags=flags, format_currency=format_currency,
-                                   badge_icons=BADGE_ICONS, badge_colors=BADGE_COLORS)
+                                   badge_icons=BADGE_ICONS, badge_colors=BADGE_COLORS,
+                                   employee_count=len(employees),
+                                   employee_limit=current_user.employee_limit)
     else:
         target = current_user
 
@@ -388,11 +390,21 @@ def employees_flags():
     return response
 
 
+def count_company_employees(company_id):
+    return User.query.filter_by(company_id=company_id, account_type='employee').count()
+
+
 @dashboard_bp.route('/employees/new', methods=['GET', 'POST'])
 @login_required
 def employee_new():
     if not current_user.is_company:
         abort(403)
+
+    # Limit puli pracowników wg wielkości firmy (mała 10 / średnia 50 / duża 100)
+    if count_company_employees(current_user.id) >= current_user.employee_limit:
+        flash(f'Osiągnięto limit pracowników dla konta: {current_user.account_type_label} '
+              f'({current_user.employee_limit}).', 'error')
+        return redirect(url_for('dashboard.index', list=1))
 
     last_config, last_balance = get_last_employee_defaults(current_user.id)
 

@@ -74,6 +74,7 @@ def create_app(config_name='default'):
         return {
             'nav_effective_user': nav_effective_user,
             'nav_display_name': nav_display_name,
+            'nav_account_label': _current_user.account_type_label,
         }
 
     # --- Landing page (statyczna strona www.wlogio.pl, folder /landing w korzeniu repo) ---

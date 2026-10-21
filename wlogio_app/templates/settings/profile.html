@@ -82,6 +82,17 @@
             </div>
         </div>
 
+        <!-- Rodzaj konta -->
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body gap-2">
+                <h2 class="font-semibold">Rodzaj konta</h2>
+                <p class="text-sm">{{ profile_user.account_type_label|capitalize }}</p>
+                {% if profile_user.is_company %}
+                <p class="text-xs text-base-content/50">Limit pracowników: {{ profile_user.employee_limit }}</p>
+                {% endif %}
+            </div>
+        </div>
+
         <!-- Imię i nazwisko -->
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body gap-4">

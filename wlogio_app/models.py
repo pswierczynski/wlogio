@@ -15,6 +15,12 @@ ACCOUNT_TYPE_LABELS = {
 # wyłącznie ręcznie/niezależnie od samodzielnej rejestracji.
 REGISTRATION_ACCOUNT_TYPES = ('individual', 'company')
 
+# Wielkość firmy (konto 'company') -> maksymalna liczba kont pracowniczych.
+COMPANY_SIZES = ('small', 'medium', 'large')
+COMPANY_SIZE_LIMITS = {'small': 10, 'medium': 50, 'large': 100}
+COMPANY_SIZE_LABELS = {'small': 'mała', 'medium': 'średnia', 'large': 'duża'}
+DEFAULT_COMPANY_SIZE = 'small'
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -37,6 +43,9 @@ class User(UserMixin, db.Model):
     account_type = db.Column(db.String(20), nullable=False, default='employee')
     # Wyłącznie dla kont 'employee' — id konta 'company', do którego należą.
     company_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True, index=True)
+    # Wyłącznie dla kont 'company' — 'small' / 'medium' / 'large'
+    # (limit pracowników: patrz COMPANY_SIZE_LIMITS). NULL traktowany jak 'small'.
+    company_size = db.Column(db.String(10), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Konto firmowe -> jego konta pracownicze (self-referencyjna relacja).
@@ -75,6 +84,27 @@ class User(UserMixin, db.Model):
     @property
     def is_employee_account(self):
         return self.account_type == 'employee'
+
+    @property
+    def effective_company_size(self):
+        if not self.is_company:
+            return None
+        return self.company_size if self.company_size in COMPANY_SIZE_LIMITS else DEFAULT_COMPANY_SIZE
+
+    @property
+    def employee_limit(self):
+        """Maks. liczba pracowników dla konta firmowego (None dla pozostałych)."""
+        size = self.effective_company_size
+        return COMPANY_SIZE_LIMITS[size] if size else None
+
+    @property
+    def account_type_label(self):
+        """Pełna nazwa rodzaju konta, np. 'konto firmowe - firma mała'."""
+        if self.is_company:
+            return 'konto firmowe - firma ' + COMPANY_SIZE_LABELS[self.effective_company_size]
+        if self.is_employee_account:
+            return 'konto pracownicze'
+        return 'konto indywidualne'
 
     def __repr__(self):
         return f'<User {self.email or self.login}>'

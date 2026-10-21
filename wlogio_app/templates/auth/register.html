@@ -57,7 +57,7 @@
                 <p class="text-base-content/60 text-sm">Utwórz nowe konto</p>
             </div>
 
-            <form method="POST" class="flex flex-col gap-4" x-data="{ accountType: 'individual' }">
+            <form method="POST" class="flex flex-col gap-4" x-data="{ accountType: 'individual', companySize: 'small' }">
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-medium">Typ konta</span>
@@ -70,6 +70,26 @@
                         <label class="btn flex-1" :class="accountType === 'company' ? 'btn-neutral' : 'btn-outline'">
                             <input type="radio" name="account_type" value="company" class="hidden" x-model="accountType"/>
                             Firmowe
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-control" x-show="accountType === 'company'" x-cloak>
+                    <label class="label">
+                        <span class="label-text font-medium">Wielkość firmy</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <label class="btn flex-1 h-auto min-h-12 py-2 flex-col gap-0 normal-case" :class="companySize === 'small' ? 'btn-neutral' : 'btn-outline'">
+                            <input type="radio" name="company_size" value="small" class="hidden" x-model="companySize" :disabled="accountType !== 'company'"/>
+                            <span>Mała</span><span class="text-xs font-normal opacity-70">do 10 pracowników</span>
+                        </label>
+                        <label class="btn flex-1 h-auto min-h-12 py-2 flex-col gap-0 normal-case" :class="companySize === 'medium' ? 'btn-neutral' : 'btn-outline'">
+                            <input type="radio" name="company_size" value="medium" class="hidden" x-model="companySize" :disabled="accountType !== 'company'"/>
+                            <span>Średnia</span><span class="text-xs font-normal opacity-70">do 50 pracowników</span>
+                        </label>
+                        <label class="btn flex-1 h-auto min-h-12 py-2 flex-col gap-0 normal-case" :class="companySize === 'large' ? 'btn-neutral' : 'btn-outline'">
+                            <input type="radio" name="company_size" value="large" class="hidden" x-model="companySize" :disabled="accountType !== 'company'"/>
+                            <span>Duża</span><span class="text-xs font-normal opacity-70">do 100 pracowników</span>
                         </label>
                     </div>
                 </div>
