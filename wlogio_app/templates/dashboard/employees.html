@@ -20,8 +20,11 @@
     .emp-badge {
         width: 32px; height: 32px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0; margin-left: auto;
+        flex-shrink: 0;
     }
+    .emp-badges { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .emp-badge-missing { background-color: oklch(var(--er)); }
+    .emp-badge-hidden { display: none; }
     .emp-badge svg { width: 18px; height: 18px; }
     .emp-badge-empty { border: 2px solid oklch(var(--b3)); }
     {% for code, color in badge_colors.items() %}
@@ -74,8 +77,13 @@
                     <div class="text-xs text-base-content/40 truncate">login: {{ employee.login }}</div>
                 </div>
                 {% set b = fl.badge if fl else None %}
-                <div data-emp-badge
-                     class="emp-badge {% if b %}emp-badge-t-{{ b }}{% else %}emp-badge-empty{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
+                {% set miss = fl and fl.missing_end %}
+                <div class="emp-badges">
+                    {# Czerwony badge: minione dni bez godziny zakończenia pracy #}
+                    <div data-emp-missing class="emp-badge emp-badge-missing{% if not miss %} emp-badge-hidden{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v9"/><path d="M12 19h.01"/></svg></div>
+                    <div data-emp-badge
+                         class="emp-badge {% if b %}emp-badge-t-{{ b }}{% elif miss %}emp-badge-hidden{% else %}emp-badge-empty{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
+                </div>
             </div>
 
             {% set st = stats.get(employee.id) %}
@@ -169,15 +177,19 @@
                 avatar.classList.add('emp-ring-' + (STATUSES.indexOf(f.status) >= 0 ? f.status : 'idle'));
             }
 
+            var miss = card.querySelector('[data-emp-missing]');
+            if (miss) { miss.classList.toggle('emp-badge-hidden', !missing); }
+
             var slot = card.querySelector('[data-emp-badge]');
             if (slot) {
                 BADGES.forEach(function (b) { slot.classList.remove('emp-badge-t-' + b); });
-                slot.classList.remove('emp-badge-empty');
+                slot.classList.remove('emp-badge-empty', 'emp-badge-hidden');
                 if (f.badge && BADGE_ICONS[f.badge]) {
                     slot.classList.add('emp-badge-t-' + f.badge);
                     slot.innerHTML = BADGE_ICONS[f.badge];
                 } else {
-                    slot.classList.add('emp-badge-empty');
+                    /* bez badge'a: puste kółko; ale gdy widać czerwony badge — nic */
+                    slot.classList.add(missing ? 'emp-badge-hidden' : 'emp-badge-empty');
                     slot.innerHTML = '';
                 }
             }

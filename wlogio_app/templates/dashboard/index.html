@@ -230,21 +230,9 @@
                                                 {# Brak godziny zakończenia oznaczamy tylko w MINIONYCH dniach —
                                                    w bieżącym dniu praca może jeszcze trwać. #}
                                                 {% set missing_end = entry.entry_type == 'work' and entry.time_start and not entry.time_end and entry.date < employee_today %}
-                                                <div class="flex items-center gap-1">
-                                                    <span class="{% if missing_end %}text-error{% endif %}">
-                                                        {{ entry.date.strftime('%d.%m.%Y') }}
-                                                    </span>
-                                                    {% if missing_end %}
-                                                    <div class="tooltip tooltip-right" data-tip="Brak godziny zakończenia pracy">
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                             class="h-3.5 w-3.5 text-error cursor-default shrink-0"
-                                                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                                  d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                                                        </svg>
-                                                    </div>
-                                                    {% endif %}
-                                                </div>
+                                                <span class="{% if missing_end %}text-error{% endif %}">
+                                                    {{ entry.date.strftime('%d.%m.%Y') }}
+                                                </span>
                                             </td>
 
                                             <td class="col-type">
@@ -308,6 +296,14 @@
                                                 <div class="tooltip tooltip-right" data-tip="Praca zdalna">
                                                     <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style="background-color:#22c55e;">
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="#fff" stroke="none"/></svg>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {# Badge braku godziny zakończenia (tylko minione dni) — czerwony, biały wykrzyknik #}
+                                                {% if missing_end %}
+                                                <div class="tooltip tooltip-right" data-tip="Brak godziny zakończenia pracy">
+                                                    <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style="background-color:oklch(var(--er));">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v9"/><path d="M12 19h.01"/></svg>
                                                     </div>
                                                 </div>
                                                 {% endif %}
