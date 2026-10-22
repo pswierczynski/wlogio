@@ -88,3 +88,7 @@ window.WLOGIO_APP_URL = window.WLOGIO_APP_URL || "https://app.wlogio.pl";
 Zdjęcie tła hero: `assets/img/hero-bg.jpg` (nazwa musi być dokładnie taka, małymi literami).
 Zalecane: JPG, ok. 2400 × 1000 px (proporcje ~2,3:1), do ok. 400 KB. Motyw (laptop + terminal) ma być w środkowo-prawej części, lewa strona zostaje spokojna — pod tekstem.
 Menu leży na zdjęciu (przezroczyste), po przewinięciu strony robi się białe. Boczne marginesy (`.wrap`) bez zmian.
+
+## Hero i logo (aktualizacja)
+- Hero: pełne zdjęcie bez białego gradientu, białe teksty/menu, delikatne przyciemnienie dla czytelności. Plik: `landing/assets/img/hero-bg.jpg`.
+- Logo: wordmark „Wlogio" — `assets/img/wlogio-logo.svg` (landing) i `wlogio_app/static/img/wlogio-logo.svg` (aplikacja). Wyświetlane jako maska CSS (`.wlogio-logo`), więc przyjmuje kolor tekstu rodzica (białe na zdjęciu, ciemne w panelach).

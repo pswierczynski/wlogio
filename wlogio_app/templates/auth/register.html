@@ -7,7 +7,12 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>[x-cloak]{display:none!important}
+    <style>
+        /* Logo Wlogio (wordmark) — kolor dziedziczony z tekstu */
+        .wlogio-logo{display:inline-block;aspect-ratio:3397/1040;background:currentColor;
+            -webkit-mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;
+            mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;}
+        [x-cloak]{display:none!important}
 
         /* Zmiana koloru primary z niebieskiego (#4a00ff) na #1A1A19 */
         .btn-primary { background-color: #1A1A19; border-color: #1A1A19; color: #ffffff; }
@@ -47,12 +52,7 @@
         <div class="card-body gap-6">
             <div class="text-center">
                 <div class="flex items-center justify-center gap-2 mb-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary" fill="none"
-                         viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span class="text-2xl font-bold tracking-tight">wlogio</span>
+                    <span class="wlogio-logo h-8" role="img" aria-label="Wlogio"></span>
                 </div>
                 <p class="text-base-content/60 text-sm">Utwórz nowe konto</p>
             </div>

@@ -8,6 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
+        /* Logo Wlogio (wordmark) — kolor dziedziczony z tekstu */
+        .wlogio-logo{display:inline-block;aspect-ratio:3397/1040;background:currentColor;
+            -webkit-mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;
+            mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;}
+
         [x-cloak] { display: none !important; }
 
         .avatar-btn {
@@ -247,12 +252,7 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 
     <div class="sticky top-0 z-10 bg-base-200 flex items-center justify-between px-6 py-4 shadow-sm">
         <div class="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none"
-                 viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span class="font-bold text-lg">wlogio</span>
+            <span class="wlogio-logo h-6" role="img" aria-label="Wlogio"></span>
         </div>
         <div class="text-right">
             <div class="text-sm font-medium" x-text="currentTime"></div>
