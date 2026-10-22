@@ -5,15 +5,49 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wlogio — nowoczesny system rejestracji czasu pracy</title>
 <meta name="description" content="Wlogio to prosty system wejść/wyjść dla pracowników z eleganckim, dotykowym terminalem. Panel pracy, rejestr czasu pracy i wynagrodzenia, wdrożenie w kilka minut.">
+<link rel="canonical" href="https://wlogio.pl/">
+<meta name="robots" content="index, follow">
+<meta name="theme-color" content="#FFFBF4">
+
+<!-- Open Graph / social sharing — podmień og:url i og:image na docelowe, gdy będą gotowe -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Wlogio">
+<meta property="og:title" content="Wlogio — nowoczesny system rejestracji czasu pracy">
+<meta property="og:description" content="Prosty system wejść/wyjść dla pracowników z eleganckim, dotykowym terminalem. Panel pracy, rejestr czasu pracy i wynagrodzenia.">
+<meta property="og:url" content="https://wlogio.pl/">
+<meta property="og:image" content="https://wlogio.pl/assets/img/og-cover.png">
+<meta property="og:locale" content="pl_PL">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Wlogio — nowoczesny system rejestracji czasu pracy">
+<meta name="twitter:description" content="Prosty system wejść/wyjść dla pracowników z eleganckim, dotykowym terminalem.">
+<meta name="twitter:image" content="https://wlogio.pl/assets/img/og-cover.png">
+
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
 
-<header class="site-header">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Wlogio",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "System rejestracji czasu pracy z panelem pracy i dotykowym terminalem dla firm i użytkowników indywidualnych.",
+  "offers": [
+    { "@type": "Offer", "name": "Indywidualna", "price": "19", "priceCurrency": "PLN" },
+    { "@type": "Offer", "name": "Firma — Mała", "price": "299", "priceCurrency": "PLN" },
+    { "@type": "Offer", "name": "Firma — Średnia", "price": "649", "priceCurrency": "PLN" },
+    { "@type": "Offer", "name": "Firma — Duża", "price": "1499", "priceCurrency": "PLN" }
+  ]
+}
+</script>
+</head>
+<body class="home">
+
+<header class="site-header" id="siteHeader">
   <div class="wrap">
     <a class="brand" href="#top">
       <span class="mark">
@@ -24,12 +58,10 @@
 
     <nav class="main-nav" id="mainNav">
       <a href="#funkcje">Funkcje</a>
+      <a href="#rozwiazania">Rozwiązania</a>
       <a href="#cennik">Cennik</a>
-      <a href="#terminal">Terminal</a>
-      <a href="#integracje">Integracje</a>
       <a href="#o-nas">O nas</a>
       <a href="#kontakt">Kontakt</a>
-      <a class="btn btn-outline btn-block nav-login" data-app-link="/login" href="#">Zaloguj się</a>
     </nav>
 
     <div class="header-actions">
@@ -45,10 +77,10 @@
 <main id="top">
 
   <!-- HERO -->
-  <section class="hero">
+  <section class="hero" id="top">
     <div class="wrap">
       <div class="hero-copy">
-        <h1>Wlogio — nowoczesny system<br>rejestracji <span class="accent">czasu pracy</span></h1>
+        <h1>Wlogio — nowoczesny system rejestracji <span class="accent">czasu pracy</span></h1>
         <p class="lead">Zarządzaj czasem pracy zespołu w prosty sposób. Dane w czasie rzeczywistym, intuicyjna obsługa i pełna kontrola — gdziekolwiek jesteś.</p>
         <div class="hero-cta">
           <a class="btn btn-primary" href="rejestracja.html">Zarejestruj konto</a>
@@ -61,13 +93,37 @@
         </div>
       </div>
 
-      <div class="hero-art">
-    <div class="glow"></div>
+    </div>
+  </section>
 
-    <img
-        src="assets/img/hero.png"
-        alt="Terminal Wlogio"
-        class="hero-image">
+  <!-- JAK TO DZIAŁA -->
+  <section class="howitworks">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">Jak to działa</span>
+        <h2>Od rejestracji do pierwszego wejścia — cztery kroki</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step">
+          <span class="step-num">01</span>
+          <h4>Wybierz plan i załóż konto</h4>
+          <p>Konto indywidualne albo firmowe — z jednym z trzech pakietów, zależnie od wielkości zespołu.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">02</span>
+          <h4>Skonfiguruj zespół</h4>
+          <p>W koncie firmowym dodajesz pracowników, role i uprawnienia z poziomu panelu firmy.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">03</span>
+          <h4>Uruchom terminal</h4>
+          <p>Zaloguj ekran powitalny na dedykowanym terminalu albo na własnym tablecie — to Twój wspólny kiosk.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">04</span>
+          <h4>Rejestrujcie czas pracy</h4>
+          <p>Pracownicy odbijają wejścia, wyjścia i przerwy dotykiem, a dane trafiają do panelu w czasie rzeczywistym.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -95,7 +151,7 @@
   </section>
 
   <!-- USE CASES -->
-  <section class="usecases">
+  <section class="usecases" id="rozwiazania">
     <div class="wrap">
       <div class="head">
         <span class="eyebrow">Zastosowania</span>
@@ -113,6 +169,54 @@
         <span class="chip">Coworki</span>
         <span class="chip">Biura</span>
         <span class="chip">Fundacje i instytucje lokalne</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORÓWNANIE KONT -->
+  <section class="compare">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">Które konto wybrać</span>
+        <h2>Indywidualne czy firmowe?</h2>
+        <p>To dwie oddzielne subskrypcje z różną funkcjonalnością — wybierz tę, która pasuje do Ciebie. Konta nie da się później zmienić z jednego typu na drugi.</p>
+      </div>
+      <div class="compare-table">
+        <div class="compare-row compare-head">
+          <div class="compare-cell compare-label"></div>
+          <div class="compare-cell">Indywidualne</div>
+          <div class="compare-cell">Firmowe</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell compare-label">Dla kogo</div>
+          <div class="compare-cell">Jedna osoba, własny czas pracy</div>
+          <div class="compare-cell">Zespół, zarządzany przez administratora</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell compare-label">Panel pracy</div>
+          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Pełna funkcjonalność osobista</div>
+          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Panel firmy zamiast panelu osobistego</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell compare-label">Zarządzanie pracownikami</div>
+          <div class="compare-cell compare-no">—</div>
+          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Dodawanie, role, uprawnienia</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell compare-label">Terminal / kiosk</div>
+          <div class="compare-cell compare-no">—</div>
+          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Jeden wspólny ekran powitalny dla firmy</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell compare-label">Subkonta pracowników</div>
+          <div class="compare-cell compare-no">—</div>
+          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Ograniczona funkcjonalność, zależna od roli</div>
+        </div>
+        <div class="compare-row">
+          <div class="compare-cell compare-label">Cena</div>
+          <div class="compare-cell">19 zł / mies.</div>
+          <div class="compare-cell">od 299 zł / mies., zależnie od wielkości zespołu</div>
+        </div>
       </div>
     </div>
   </section>
@@ -236,6 +340,42 @@
     </div>
   </section>
 
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <div class="wrap">
+      <div class="head">
+        <span class="eyebrow">Pytania i odpowiedzi</span>
+        <h2>Najczęstsze pytania</h2>
+      </div>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Czym różni się konto indywidualne od firmowego?</summary>
+          <p>Konto indywidualne to panel pracy dla jednej osoby — bez zarządzania zespołem i bez ekranu powitalnego. Konto firmowe daje administratorowi panel firmy, zarządzanie pracownikami i wspólny terminal/kiosk. To dwie osobne subskrypcje — nie da się później zmienić jednej w drugą.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Czy mogę zmienić plan firmowy w trakcie trwania subskrypcji?</summary>
+          <p>Tak — plan firmowy (Mała / Średnia / Duża) możesz w każdej chwili rozszerzyć na wyższy pakiet w miarę wzrostu zespołu.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Czy potrzebuję dedykowanego terminalu, żeby korzystać z Wlogio?</summary>
+          <p>Nie. Ekran powitalny/kiosk możesz uruchomić na naszym dotykowym terminalu 7″ albo na własnym tablecie — działanie jest identyczne. Terminal fizyczny to opcjonalny zakup.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Ile kont pracowników mogę dodać w planie firmowym?</summary>
+          <p>Zależy od wybranego wariantu: Mała firma — do 10 pracowników, Średnia — do 50, Duża — do 100. Limit rośnie razem z planem.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Czy logowanie do terminala i do panelu pracy to to samo hasło?</summary>
+          <p>Nie — to ten sam adres e-mail, ale osobne hasło do terminala pracy i osobne do panelu pracy, dla dodatkowego bezpieczeństwa.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Czy mogę rozliczać się rocznie zamiast miesięcznie?</summary>
+          <p>Tak, każdy plan można rozliczać miesięcznie lub rocznie — rozliczenie roczne odpowiada 10 miesiącom w cenie 12.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
   <!-- TRUST / STATS -->
   <section class="trust" id="o-nas">
     <div class="wrap">
@@ -305,8 +445,8 @@
         <ul>
           <li><a href="#">Centrum pomocy</a></li>
           <li><a href="#">Dokumentacja</a></li>
-          <li><a href="#">Regulamin</a></li>
-          <li><a href="#">Polityka prywatności</a></li>
+          <li><a href="regulamin.html">Regulamin</a></li>
+          <li><a href="polityka-prywatnosci.html">Polityka prywatności</a></li>
         </ul>
       </div>
       <div class="footer-col">

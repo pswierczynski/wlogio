@@ -5,7 +5,7 @@
    logowanie do terminala, właściwa rejestracja konta).
    Ustaw jeden raz poniżej — używane w całym serwisie.
    ========================================================= */
-window.WLOGIO_APP_URL = window.WLOGIO_APP_URL || "https://wlogio.onrender.com";
+window.WLOGIO_APP_URL = window.WLOGIO_APP_URL || "https://app.wlogio.pl";
 
 (function () {
   "use strict";
@@ -26,12 +26,24 @@ window.WLOGIO_APP_URL = window.WLOGIO_APP_URL || "https://wlogio.onrender.com";
       mainNav.classList.toggle("open");
       var expanded = mainNav.classList.contains("open");
       navToggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+      var hd = document.getElementById("siteHeader");
+      if (hd) hd.classList.toggle("menu-open", expanded);
     });
     mainNav.querySelectorAll("a").forEach(function (a) {
       a.addEventListener("click", function () {
         mainNav.classList.remove("open");
+        var hd = document.getElementById("siteHeader");
+        if (hd) hd.classList.remove("menu-open");
       });
     });
+  }
+
+  /* ---- Header: biały po przewinięciu ---- */
+  var siteHeader = document.getElementById("siteHeader");
+  if (siteHeader) {
+    var onScroll = function () { siteHeader.classList.toggle("is-scrolled", window.scrollY > 40); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
   }
 
   /* ---- Pricing billing toggle (monthly / yearly, 2 months free) ---- */
