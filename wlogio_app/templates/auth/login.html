@@ -30,6 +30,16 @@
             border-color: oklch(var(--b3));
             color: oklch(var(--bc));
         }
+
+        /* Autouzupełnianie przeglądarki: bez niebieskiego/żółtego tła pól (Chrome/Edge/Safari/Firefox) */
+        input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px oklch(var(--b1)) inset !important;
+            box-shadow: 0 0 0 1000px oklch(var(--b1)) inset !important;
+            -webkit-text-fill-color: oklch(var(--bc)) !important;
+            caret-color: oklch(var(--bc));
+            transition: background-color 9999s ease-in-out 0s;
+        }
+        input:autofill, input:-moz-autofill { background-color: oklch(var(--b1)) !important; color: oklch(var(--bc)) !important; filter: none; }
     </style>
 </head>
 <body class="bg-base-200 h-dvh sm:min-h-screen flex flex-col items-center justify-center px-4 py-2 sm:py-8">
