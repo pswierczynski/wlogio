@@ -33,6 +33,9 @@ class User(UserMixin, db.Model):
     # konta firmowego (zamiast adresu email).
     login = db.Column(db.String(50), unique=True, nullable=True, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    # Osobne hasło do Terminalu pracy (konta 'individual' / 'company'); musi
+    # być inne niż hasło do panelu. NULL = terminal niedostępny do ustawienia hasła.
+    terminal_password_hash = db.Column(db.String(255), nullable=True)
     name = db.Column(db.String(100), nullable=True)
     is_active = db.Column(db.Boolean, default=True)
     pin = db.Column(db.String(4), nullable=True)
@@ -68,6 +71,14 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def set_terminal_password(self, password):
+        self.terminal_password_hash = generate_password_hash(password, method='pbkdf2:sha256')
+
+    def check_terminal_password(self, password):
+        if not self.terminal_password_hash:
+            return False
+        return check_password_hash(self.terminal_password_hash, password)
 
     def generate_pin(self):
         self.pin = str(random.randint(1000, 9999))

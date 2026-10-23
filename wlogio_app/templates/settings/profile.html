@@ -130,6 +130,29 @@
             </div>
         </div>
 
+        {% if is_self and profile_user.account_type in ('individual', 'company') %}
+        <!-- Hasło do terminala -->
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body gap-4">
+                <h2 class="font-semibold">Hasło do Terminalu pracy</h2>
+                <form method="POST" class="flex flex-col gap-3">
+                    <input type="hidden" name="action" value="change_terminal_password"/>
+                    <input type="password" name="current_password"
+                           class="input input-bordered w-full"
+                           placeholder="Hasło do panelu (potwierdzenie)"/>
+                    <input type="password" name="new_terminal_password"
+                           class="input input-bordered w-full"
+                           placeholder="Nowe hasło do terminala (min. 6 znaków)"/>
+                    <input type="password" name="new_terminal_password2"
+                           class="input input-bordered w-full"
+                           placeholder="Powtórz nowe hasło do terminala"/>
+                    <button type="submit" class="btn btn-primary w-full">Zmień hasło do terminala</button>
+                </form>
+                <p class="text-xs text-base-content/40">Musi być inne niż hasło do panelu pracy.</p>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 {% endblock %}

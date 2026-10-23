@@ -191,10 +191,32 @@ def apply_profile_action(target, is_self):
             flash('Nowe hasło musi mieć minimum 6 znaków.', 'error')
         elif new_password != new_password2:
             flash('Nowe hasła nie są identyczne.', 'error')
+        elif target.check_terminal_password(new_password):
+            flash('Hasło do panelu musi być inne niż hasło do terminala.', 'error')
         else:
             target.set_password(new_password)
             db.session.commit()
             flash('Hasło zmienione.', 'success')
+
+    elif action == 'change_terminal_password':
+        # Tylko własne konto indywidualne/firmowe (pracownik nie ma terminala).
+        new_password = request.form.get('new_terminal_password', '')
+        new_password2 = request.form.get('new_terminal_password2', '')
+
+        if not is_self or target.account_type not in ('individual', 'company'):
+            flash('Brak uprawnień do zmiany hasła terminala.', 'error')
+        elif not target.check_password(request.form.get('current_password', '')):
+            flash('Nieprawidłowe hasło do panelu.', 'error')
+        elif len(new_password) < 6:
+            flash('Hasło do terminala musi mieć minimum 6 znaków.', 'error')
+        elif new_password != new_password2:
+            flash('Hasła do terminala nie są identyczne.', 'error')
+        elif target.check_password(new_password):
+            flash('Hasło do terminala musi być inne niż hasło do panelu pracy.', 'error')
+        else:
+            target.set_terminal_password(new_password)
+            db.session.commit()
+            flash('Hasło do terminala zmienione.', 'success')
 
 
 @settings_bp.route('/profile', methods=['GET', 'POST'])

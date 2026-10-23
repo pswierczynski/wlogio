@@ -46,6 +46,8 @@ def register():
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
         password2 = request.form.get('password2', '')
+        terminal_password = request.form.get('terminal_password', '')
+        terminal_password2 = request.form.get('terminal_password2', '')
         name = request.form.get('name', '').strip()
         account_type = request.form.get('account_type', '')
         company_size = request.form.get('company_size', '')
@@ -68,6 +70,15 @@ def register():
         if len(password) < 6:
             flash('Hasło musi mieć minimum 6 znaków.', 'error')
             return render_template('auth/register.html')
+        if len(terminal_password) < 6:
+            flash('Hasło do terminala musi mieć minimum 6 znaków.', 'error')
+            return render_template('auth/register.html')
+        if terminal_password != terminal_password2:
+            flash('Hasła do terminala nie są identyczne.', 'error')
+            return render_template('auth/register.html')
+        if terminal_password == password:
+            flash('Hasło do terminala musi być inne niż hasło do panelu pracy.', 'error')
+            return render_template('auth/register.html')
         if User.query.filter_by(email=email).first():
             flash('Ten adres email jest już zarejestrowany.', 'error')
             return render_template('auth/register.html')
@@ -75,6 +86,7 @@ def register():
         user = User(email=email, name=name, account_type=account_type,
                     company_size=company_size if account_type == 'company' else None)
         user.set_password(password)
+        user.set_terminal_password(terminal_password)
         user.generate_pin()
         db.session.add(user)
         db.session.commit()

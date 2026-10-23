@@ -443,8 +443,8 @@ def statuses():
 @welcome_bp.route('/verify-password', methods=['POST'])
 def verify_password():
     """
-    Logowanie do terminala — tym samym emailem i hasłem co do panelu pracy,
-    wyłącznie dla kont 'individual' lub 'company' (konto pracownicze nie ma
+    Logowanie do terminala — emailem jak do panelu pracy, ale OSOBNYM hasłem
+    do terminala (terminal_password_hash), wyłącznie dla kont 'individual' lub 'company' (konto pracownicze nie ma
     dostępu do terminalu). Po sukcesie sesja pamięta, czyj terminal jest
     aktywny w tej przeglądarce (session['terminal_owner_id']).
     """
@@ -457,7 +457,7 @@ def verify_password():
         User.account_type.in_(('individual', 'company')),
     ).first()
 
-    if user and user.check_password(password) and user.is_active:
+    if user and user.check_terminal_password(password) and user.is_active:
         session['terminal_owner_id'] = user.id
         return jsonify({'ok': True})
     return jsonify({'ok': False}), 401
