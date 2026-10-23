@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rejestracja — Wlogio</title>
+<meta name="description" content="Załóż konto Wlogio — indywidualne lub firmowe — i zacznij rejestrować czas pracy.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="wlogio-logo" role="img" aria-label="Wlogio"></span>
+    </a>
+    <nav class="main-nav" id="mainNav">
+      <a href="/#funkcje">Funkcje</a>
+      <a href="/#rozwiazania">Rozwiązania</a>
+      <a href="/#cennik">Cennik</a>
+      <a href="/#o-nas">O nas</a>
+      <a href="/#kontakt">Kontakt</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn btn-outline btn-sm" href="{{ url_for('auth.login') }}">Zaloguj się</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Otwórz menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="reg-hero">
+    <div class="wrap">
+      <span class="eyebrow">Rejestracja</span>
+      <h1 style="margin-top:10px;">Załóż konto Wlogio</h1>
+      <p>Konto indywidualne i firmowe to dwie oddzielne subskrypcje z różną funkcjonalnością. Wybierz tę, która pasuje do Ciebie, i uzupełnij dane.</p>
+    </div>
+  </section>
+
+  <div class="reg-wrap">
+    {% if error %}<div class="reg-alert" role="alert">{{ error }}</div>{% endif %}
+
+    <form method="POST" action="{{ url_for('auth.register') }}" id="regForm">
+
+      <div class="reg-card">
+        <h2>1. Typ konta</h2>
+        <div class="opt-grid two">
+          <label class="opt">
+            <input type="radio" name="account_type" value="individual" {% if form.account_type == 'individual' %}checked{% endif %}>
+            <span class="opt-body"><span class="t">Konto indywidualne</span><span class="s">Terminal pracy + panel pracy, 1 użytkownik</span><span class="p">19 <small>zł / mies.</small></span></span>
+          </label>
+          <label class="opt">
+            <input type="radio" name="account_type" value="company" {% if form.account_type == 'company' %}checked{% endif %}>
+            <span class="opt-body"><span class="t">Konto firmowe</span><span class="s">Terminal pracy + panel firmy + panele pracowników</span><span class="p">od 299 <small>zł / mies.</small></span></span>
+          </label>
+        </div>
+
+        <div class="reg-sub" id="sizeBlock" {% if form.account_type != 'company' %}hidden{% endif %}>
+          <div class="opt-grid three">
+            <label class="opt">
+              <input type="radio" name="company_size" value="small" {% if form.company_size == 'small' %}checked{% endif %}>
+              <span class="opt-body"><span class="t">Mała</span><span class="s">1 – 10 pracowników</span><span class="p">299 <small>zł / mies.</small></span></span>
+            </label>
+            <label class="opt">
+              <input type="radio" name="company_size" value="medium" {% if form.company_size == 'medium' %}checked{% endif %}>
+              <span class="opt-body"><span class="t">Średnia</span><span class="s">11 – 50 pracowników</span><span class="p">649 <small>zł / mies.</small></span></span>
+            </label>
+            <label class="opt">
+              <input type="radio" name="company_size" value="large" {% if form.company_size == 'large' %}checked{% endif %}>
+              <span class="opt-body"><span class="t">Duża</span><span class="s">51 – 100 pracowników</span><span class="p">1499 <small>zł / mies.</small></span></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="reg-card">
+        <h2>2. Dane konta</h2>
+        <div class="field">
+          <label for="name" id="nameLabel">Imię i nazwisko <span class="hint">opcjonalne</span></label>
+          <input type="text" id="name" name="name" autocomplete="name" value="{{ form.name }}">
+        </div>
+        <div class="field">
+          <label for="email">Adres e-mail <span class="hint">to Twój login do panelu i terminala</span></label>
+          <input type="email" id="email" name="email" required autocomplete="email" value="{{ form.email }}" placeholder="twoj@email.com">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="password">Hasło do panelu pracy <span class="hint">min. 6 znaków</span></label>
+            <input type="password" id="password" name="password" required autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label for="password2">Powtórz hasło</label>
+            <input type="password" id="password2" name="password2" required autocomplete="new-password">
+          </div>
+        </div>
+      </div>
+
+      <div class="reg-card">
+        <h2>3. Hasło do terminala pracy</h2>
+        <div class="field-row">
+          <div class="field">
+            <label for="terminal_password">Hasło do terminala <span class="hint">inne niż do panelu</span></label>
+            <input type="password" id="terminal_password" name="terminal_password" required autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label for="terminal_password2">Powtórz hasło do terminala</label>
+            <input type="password" id="terminal_password2" name="terminal_password2" required autocomplete="new-password">
+          </div>
+        </div>
+        <p class="reg-legal" style="margin-top:0;">Terminal pracy używa tego samego adresu e-mail, ale osobnego hasła.</p>
+      </div>
+
+      <div class="reg-actions">
+        <span class="alt">Masz już konto? <a href="{{ url_for('auth.login') }}">Zaloguj się</a></span>
+        <button type="submit" class="btn btn-primary">Zarejestruj konto</button>
+      </div>
+      <p class="reg-legal">Rejestrując konto, akceptujesz <a href="/regulamin.html" target="_blank" rel="noopener">Regulamin</a> i <a href="/polityka-prywatnosci.html" target="_blank" rel="noopener">Politykę prywatności</a>.</p>
+    </form>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-bottom" style="border-top:none;padding-top:0;">
+      <span>© 2026 Wlogio. Wszelkie prawa zastrzeżone.</span>
+      <a href="/" style="color:var(--ink-faint);">Wróć na stronę główną</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/js/main.js"></script>
+<script>
+(function () {
+  var radios = document.querySelectorAll('input[name="account_type"]');
+  var size = document.getElementById('sizeBlock');
+  var label = document.getElementById('nameLabel');
+  var name = document.getElementById('name');
+  function sync() {
+    var company = document.querySelector('input[name="account_type"]:checked').value === 'company';
+    size.hidden = !company;
+    size.querySelectorAll('input').forEach(function (i) { i.disabled = !company; });
+    label.innerHTML = company ? 'Nazwa firmy' : 'Imię i nazwisko <span class="hint">opcjonalne</span>';
+    name.required = company;
+    name.placeholder = company ? 'Nazwa Sp. z o.o.' : 'Jan Kowalski';
+  }
+  radios.forEach(function (r) { r.addEventListener('change', sync); });
+  sync();
+})();
+</script>
+</body>
+</html>

@@ -107,7 +107,7 @@
                 </div>
                 {% endif %}
 
-                <div class="h-[360px] sm:h-[380px] flex flex-col">
+                <div class="h-[300px] sm:h-[320px] flex flex-col">
 
                     {% if not kiosk %}
                     <div x-show="activeTab === 'panel'" x-cloak class="flex-1 flex flex-col justify-center">
@@ -128,13 +128,6 @@
                             </div>
                             <button type="submit" class="btn btn-primary w-full">Zaloguj się</button>
                         </form>
-
-                        <div class="text-center text-sm mt-3 sm:mt-4">
-                            Nie masz konta?
-                            <a href="{{ url_for('auth.register') }}" class="link link-primary font-medium">
-                                Zarejestruj się
-                            </a>
-                        </div>
                     </div>
                     {% endif %}
 
@@ -172,11 +165,6 @@
                                 <span x-show="!loading">Zaloguj się</span>
                                 <span x-show="loading" x-cloak class="loading loading-spinner loading-sm"></span>
                             </button>
-                        </div>
-
-                        <div class="text-center text-sm mt-3 sm:mt-4 invisible" aria-hidden="true">
-                            Nie masz konta?
-                            <span class="font-medium">Zarejestruj się</span>
                         </div>
                     </div>
 

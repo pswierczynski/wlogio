@@ -37,51 +37,60 @@ def login():
     return render_template('auth/login.html', kiosk=kiosk)
 
 
-@auth_bp.route('/register/', methods=['GET', 'POST'])
+# Mapowanie parametrów z linków na stronie (cennik) na wartości formularza.
+_TYP_MAP = {'indywidualna': 'individual', 'firmowa': 'company'}
+_PLAN_MAP = {'mala': 'small', 'srednia': 'medium', 'duza': 'large'}
+
+
+def _register_error(message, form):
+    return render_template(
+        'site/rejestracja.html', error=message,
+        form={
+            'account_type': form.get('account_type') if form.get('account_type') in REGISTRATION_ACCOUNT_TYPES else 'individual',
+            'company_size': form.get('company_size') if form.get('company_size') in COMPANY_SIZES else 'small',
+            'name': form.get('name', ''),
+            'email': form.get('email', ''),
+        },
+    ), 400
+
+
+@auth_bp.route('/rejestracja', methods=['GET', 'POST'])
 def register():
+    """Rejestracja konta — jedyny formularz (strona wlogio.pl/rejestracja)."""
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
 
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-        password2 = request.form.get('password2', '')
-        terminal_password = request.form.get('terminal_password', '')
-        terminal_password2 = request.form.get('terminal_password2', '')
-        name = request.form.get('name', '').strip()
-        account_type = request.form.get('account_type', '')
-        company_size = request.form.get('company_size', '')
+        f = request.form
+        email = f.get('email', '').strip().lower()
+        password = f.get('password', '')
+        password2 = f.get('password2', '')
+        terminal_password = f.get('terminal_password', '')
+        terminal_password2 = f.get('terminal_password2', '')
+        name = f.get('name', '').strip()
+        account_type = f.get('account_type', '')
+        company_size = f.get('company_size', '')
 
         if not email or not password:
-            flash('Email i hasło są wymagane.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Email i hasło są wymagane.', f)
         if account_type not in REGISTRATION_ACCOUNT_TYPES:
-            flash('Wybierz typ konta.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Wybierz typ konta.', f)
         if account_type == 'company' and not name:
-            flash('Nazwa firmy jest wymagana.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Nazwa firmy jest wymagana.', f)
         if account_type == 'company' and company_size not in COMPANY_SIZES:
-            flash('Wybierz wielkość firmy.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Wybierz wielkość firmy.', f)
         if password != password2:
-            flash('Hasła nie są identyczne.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Hasła nie są identyczne.', f)
         if len(password) < 6:
-            flash('Hasło musi mieć minimum 6 znaków.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Hasło musi mieć minimum 6 znaków.', f)
         if len(terminal_password) < 6:
-            flash('Hasło do terminala musi mieć minimum 6 znaków.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Hasło do terminala musi mieć minimum 6 znaków.', f)
         if terminal_password != terminal_password2:
-            flash('Hasła do terminala nie są identyczne.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Hasła do terminala nie są identyczne.', f)
         if terminal_password == password:
-            flash('Hasło do terminala musi być inne niż hasło do panelu pracy.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Hasło do terminala musi być inne niż hasło do panelu pracy.', f)
         if User.query.filter_by(email=email).first():
-            flash('Ten adres email jest już zarejestrowany.', 'error')
-            return render_template('auth/register.html')
+            return _register_error('Ten adres email jest już zarejestrowany.', f)
 
         user = User(email=email, name=name, account_type=account_type,
                     company_size=company_size if account_type == 'company' else None)
@@ -106,7 +115,19 @@ def register():
         flash('Konto utworzone. Możesz się zalogować.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('auth/register.html')
+    # GET — wstępny wybór planu z linków w cenniku (?typ=firmowa&plan=srednia)
+    account_type = _TYP_MAP.get(request.args.get('typ', ''), 'individual')
+    company_size = _PLAN_MAP.get(request.args.get('plan', ''), 'small')
+    return render_template('site/rejestracja.html', error=None, form={
+        'account_type': account_type, 'company_size': company_size, 'name': '', 'email': '',
+    })
+
+
+@auth_bp.route('/register/')
+@auth_bp.route('/rejestracja.html')
+def register_legacy():
+    """Stare adresy rejestracji — przekierowanie na /rejestracja (zachowuje parametry)."""
+    return redirect(url_for('auth.register', **request.args), code=301)
 
 
 @auth_bp.route('/logout/')

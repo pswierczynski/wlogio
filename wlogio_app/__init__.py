@@ -86,7 +86,7 @@ def create_app(config_name='default'):
         return send_from_directory(landing_dir, 'index.html')
 
     # Podstrony strony marketingowej (linki w landing/ są względne: rejestracja.html itd.)
-    for _page in ('rejestracja', 'regulamin', 'polityka-prywatnosci'):
+    for _page in ('regulamin', 'polityka-prywatnosci'):
         def _make(page):
             def view():
                 return send_from_directory(landing_dir, page + '.html')
