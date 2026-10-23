@@ -81,12 +81,18 @@ def create_app(config_name='default'):
     landing_dir = os.path.join(base_dir, '..', 'landing')
 
     @app.route('/')
+    @app.route('/index.html')
     def landing_index():
         return send_from_directory(landing_dir, 'index.html')
 
-    @app.route('/rejestracja.html')
-    def landing_rejestracja():
-        return send_from_directory(landing_dir, 'rejestracja.html')
+    # Podstrony strony marketingowej (linki w landing/ są względne: rejestracja.html itd.)
+    for _page in ('rejestracja', 'regulamin', 'polityka-prywatnosci'):
+        def _make(page):
+            def view():
+                return send_from_directory(landing_dir, page + '.html')
+            view.__name__ = 'landing_' + page.replace('-', '_')
+            return view
+        app.add_url_rule('/' + _page + '.html', view_func=_make(_page))
 
     @app.route('/assets/<path:filename>')
     def landing_assets(filename):

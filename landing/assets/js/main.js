@@ -5,7 +5,9 @@
    logowanie do terminala, właściwa rejestracja konta).
    Ustaw jeden raz poniżej — używane w całym serwisie.
    ========================================================= */
-window.WLOGIO_APP_URL = window.WLOGIO_APP_URL || "https://app.wlogio.pl";
+/* Strona i aplikacja działają pod jedną domeną (wlogio.pl) — adres pusty = ten sam serwer.
+   Gdyby aplikacja kiedyś trafiła na osobną domenę, ustaw np. "https://app.wlogio.pl". */
+window.WLOGIO_APP_URL = (typeof window.WLOGIO_APP_URL === "string") ? window.WLOGIO_APP_URL : "";
 
 (function () {
   "use strict";
@@ -110,7 +112,7 @@ window.WLOGIO_APP_URL = window.WLOGIO_APP_URL || "https://app.wlogio.pl";
     var plan = card.getAttribute("data-plan");
     var billing = document.querySelector(".billing-toggle button.active");
     var billingMode = billing ? billing.dataset.billing : "monthly";
-    var path = "/register?plan=" + encodeURIComponent(plan) + "&billing=" + encodeURIComponent(billingMode);
+    var path = "/register/?plan=" + encodeURIComponent(plan) + "&billing=" + encodeURIComponent(billingMode);
     continueBtn.setAttribute("data-app-link", path);
     continueBtn.setAttribute("href", APP_URL + path);
     if (summaryEl) {
