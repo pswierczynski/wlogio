@@ -100,7 +100,7 @@ button{font-family:inherit;}
 /* Hero: pełne zdjęcie na całą szerokość (assets/img/hero-bg.jpg), białe teksty */
 .hero{
   position:relative; min-height:clamp(600px,56.25vw,900px); display:flex; align-items:flex-start;
-  padding:clamp(125px,11.5vw,180px) 0 72px; background:#2a2622 url("../img/hero-bg.jpg") center bottom/cover no-repeat; overflow:hidden; color:#fff;
+  padding:clamp(125px,11.5vw,180px) 0 72px; background:#2a2622 url("../img/hero-bg.jpg") 72% bottom/cover no-repeat; overflow:hidden; color:#fff;
 }
 .hero::before{ /* delikatne przyciemnienie dla czytelności białego tekstu (bez białego gradientu) */
   content:""; position:absolute; inset:0; pointer-events:none;
@@ -340,7 +340,7 @@ body.home .site-header.is-scrolled .btn-register{background:var(--ink); color:#f
 
 /* ---------- Responsive ---------- */
 @media (max-width: 980px){
-  .hero{padding:96px 0 40px; min-height:640px; align-items:center;}
+  .hero{padding:96px 0 40px; min-height:640px; align-items:center; background-position:66% bottom;}
   .hero::before{background:linear-gradient(180deg,rgba(0,0,0,.45) 0,rgba(0,0,0,.42) 50%,rgba(0,0,0,.5) 100%);}
   .hero-copy{margin-top:0;}
   .nav-toggle{flex:none;}
