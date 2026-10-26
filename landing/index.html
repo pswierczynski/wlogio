@@ -171,42 +171,37 @@
         <h2>Indywidualne czy firmowe?</h2>
         <p>To dwie oddzielne subskrypcje z różną funkcjonalnością — wybierz tę, która pasuje do Ciebie. Konta nie da się później zmienić z jednego typu na drugi.</p>
       </div>
-      <div class="compare-table">
-        <div class="compare-row compare-head">
-          <div class="compare-cell compare-label"></div>
-          <div class="compare-cell">Indywidualne</div>
-          <div class="compare-cell">Firmowe</div>
-        </div>
-        <div class="compare-row">
-          <div class="compare-cell compare-label">Dla kogo</div>
-          <div class="compare-cell">Jedna osoba, własny czas pracy</div>
-          <div class="compare-cell">Zespół, zarządzany przez administratora</div>
-        </div>
-        <div class="compare-row">
-          <div class="compare-cell compare-label">Panel pracy</div>
-          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Pełna funkcjonalność osobista</div>
-          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Panel firmy zamiast panelu osobistego</div>
-        </div>
-        <div class="compare-row">
-          <div class="compare-cell compare-label">Zarządzanie pracownikami</div>
-          <div class="compare-cell compare-no">—</div>
-          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Dodawanie, role, uprawnienia</div>
-        </div>
-        <div class="compare-row">
-          <div class="compare-cell compare-label">Terminal / kiosk</div>
-          <div class="compare-cell compare-no">—</div>
-          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Jeden wspólny ekran powitalny dla firmy</div>
-        </div>
-        <div class="compare-row">
-          <div class="compare-cell compare-label">Subkonta pracowników</div>
-          <div class="compare-cell compare-no">—</div>
-          <div class="compare-cell"><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Ograniczona funkcjonalność, zależna od roli</div>
-        </div>
-        <div class="compare-row">
-          <div class="compare-cell compare-label">Cena</div>
-          <div class="compare-cell">19 zł / mies.</div>
-          <div class="compare-cell">od 299 zł / mies., zależnie od wielkości zespołu</div>
-        </div>
+      <div class="acc-grid">
+        <article class="acc-card">
+          <div class="acc-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.6" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c.8-3.6 3.7-5.5 7-5.5s6.2 1.9 7 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <h3>Konto indywidualne</h3>
+          <p class="acc-for">Dla jednej osoby, która prowadzi własny czas pracy.</p>
+          <div class="acc-price"><b>19 zł</b><span>/ mies.</span></div>
+          <ul class="acc-list">
+          <li class=""><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Panel pracy z pełną funkcjonalnością osobistą</span></li>
+          <li class=""><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Rejestr czasu pracy i wynagrodzenia</span></li>
+          <li class=""><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Terminal pracy dla jednego użytkownika</span></li>
+          <li class="off"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Zarządzanie pracownikami</span></li>
+          <li class="off"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Subkonta pracowników</span></li>
+          </ul>
+          <a class="btn btn-outline btn-block" href="/rejestracja?typ=indywidualna">Wybierz konto indywidualne</a>
+        </article>
+
+        <article class="acc-card acc-dark">
+          <span class="acc-tag">Dla zespołów</span>
+          <div class="acc-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V7l8-3 8 3v13M4 20h16M9 20v-5h6v5M9 10h.01M12 10h.01M15 10h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Konto firmowe</h3>
+          <p class="acc-for">Dla zespołu zarządzanego przez administratora firmy.</p>
+          <div class="acc-price"><b>od 299 zł</b><span>/ mies.</span></div>
+          <ul class="acc-list">
+          <li class=""><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Panel firmy zamiast panelu osobistego</span></li>
+          <li class=""><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Dodawanie pracowników, role i uprawnienia</span></li>
+          <li class=""><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Jeden wspólny terminal / kiosk dla całej firmy</span></li>
+          <li class=""><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Subkonta pracowników z ograniczoną funkcjonalnością</span></li>
+          <li class=""><svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Pakiety: do 10, do 50 lub do 100 pracowników</span></li>
+          </ul>
+          <a class="btn btn-on-dark btn-block" href="/rejestracja?typ=firmowa">Wybierz konto firmowe</a>
+        </article>
       </div>
     </div>
   </section>

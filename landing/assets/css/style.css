@@ -174,16 +174,30 @@ body.home .site-header.is-scrolled .btn-register{background:var(--ink); color:#f
 .compare .head{max-width:640px; margin:0 auto 44px; text-align:center;}
 .compare h2{font-size:clamp(24px,3vw,32px);}
 .compare .head p{margin-top:14px; font-size:14.5px; max-width:60ch; margin-left:auto; margin-right:auto;}
-.compare-table{border:1px solid var(--hairline); border-radius:var(--radius); overflow:hidden; background:#fff;}
-.compare-row{display:grid; grid-template-columns:1.1fr 1fr 1fr; border-bottom:1px solid var(--hairline);}
-.compare-row:last-child{border-bottom:none;}
-.compare-row.compare-head{background:var(--paper-alt);}
-.compare-row.compare-head .compare-cell{font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink);}
-.compare-cell{padding:18px 22px; font-size:13.5px; color:var(--ink-soft); display:flex; align-items:center; gap:8px; border-right:1px solid var(--hairline);}
-.compare-cell:last-child{border-right:none;}
-.compare-cell.compare-label{font-weight:600; color:var(--ink); font-size:13px;}
-.compare-cell svg{width:14px; height:14px; color:var(--ink); flex:none;}
-.compare-cell.compare-no{color:var(--ink-faint);}
+.acc-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:24px; max-width:900px; margin:0 auto;}
+.acc-card{position:relative; display:flex; flex-direction:column; background:#fff; border:1px solid var(--hairline); border-radius:var(--radius); padding:36px 34px 32px; transition:transform .25s ease, box-shadow .25s ease;}
+.acc-card:hover{transform:translateY(-3px); box-shadow:0 18px 40px -22px rgba(26,26,25,.35);}
+.acc-dark{background:var(--ink); border-color:var(--ink); color:#fff;}
+.acc-icon{width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:var(--paper-alt); border:1px solid var(--hairline); color:var(--ink); margin-bottom:22px;}
+.acc-icon svg{width:24px; height:24px;}
+.acc-dark .acc-icon{background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.18); color:#fff;}
+.acc-tag{position:absolute; top:26px; right:26px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; padding:5px 11px; border-radius:var(--radius); background:#fff; color:var(--ink);}
+.acc-card h3{font-size:20px; font-weight:700; letter-spacing:-0.01em;}
+.acc-dark h3{color:#fff;}
+.acc-for{margin-top:8px; font-size:14px; color:var(--ink-soft); min-height:44px;}
+.acc-dark .acc-for{color:rgba(255,255,255,.72);}
+.acc-price{display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 8px; margin:22px 0 24px; padding-bottom:24px; border-bottom:1px solid var(--hairline);}
+.acc-price b{font-size:34px; font-weight:600; letter-spacing:-0.02em;}
+.acc-price span{font-size:12.5px; color:var(--ink-faint);}
+.acc-dark .acc-price{border-bottom-color:rgba(255,255,255,.16);}
+.acc-dark .acc-price span{color:rgba(255,255,255,.6);}
+.acc-list{display:flex; flex-direction:column; gap:14px; margin-bottom:30px; flex:1;}
+.acc-list li{display:flex; gap:12px; align-items:flex-start; font-size:14px; color:var(--ink);}
+.acc-list li svg{width:20px; height:20px; padding:3px; border-radius:50%; background:var(--ink); color:#fff; flex:none; margin-top:0;}
+.acc-list li.off{color:var(--ink-faint);}
+.acc-list li.off svg{background:var(--hairline); color:var(--ink-faint);}
+.acc-dark .acc-list li{color:rgba(255,255,255,.92);}
+.acc-dark .acc-list li svg{background:#fff; color:var(--ink);}
 
 /* ---------- FAQ ---------- */
 .faq{padding:80px 0 90px; border-top:1px solid var(--hairline);}
@@ -347,8 +361,8 @@ body.home .site-header.is-scrolled .btn-register{background:var(--ink); color:#f
   .nav-toggle{flex:none;}
   .site-header .btn-sm{padding:10px 14px; font-size:11px;}
   .steps-grid{grid-template-columns:repeat(2,1fr); gap:32px;}
-  .compare-table{overflow-x:auto; -webkit-overflow-scrolling:touch;}
-  .compare-row{grid-template-columns:180px 220px 220px; min-width:620px;}
+  .acc-grid{grid-template-columns:1fr; max-width:520px;}
+  .acc-for{min-height:0;}
   .feature-grid{grid-template-columns:repeat(2,1fr); gap:36px;}
   .plan-row,.plan-row.four-up{grid-template-columns:repeat(2,1fr); gap:16px;}
   .plan-card{border-right:none; border-bottom:1px solid var(--hairline);}
@@ -376,3 +390,9 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 }
 input:autofill{background-color:#fff !important; color:var(--ink) !important; filter:none;}
 input:-moz-autofill{background-color:#fff !important; color:var(--ink) !important; filter:none;}
+
+/* Telefony i ekrany pionowe: osobne zdjęcie tła przygotowane pod pion */
+@media (max-width:980px), (orientation:portrait){
+  .hero{background-image:url("../img/hero-bg-mobile.jpg"); background-position:center bottom; min-height:max(100svh,680px); align-items:flex-start; padding:clamp(110px,17svh,170px) 0 40px;}
+  .hero::before{background:linear-gradient(180deg,rgba(0,0,0,.5) 0,rgba(0,0,0,.4) 45%,rgba(0,0,0,.1) 75%,rgba(0,0,0,0) 100%);}
+}
