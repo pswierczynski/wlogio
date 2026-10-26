@@ -250,6 +250,7 @@ body.home .site-header.is-scrolled .btn-register{background:var(--ink); color:#f
 /* ---------- Terminal ---------- */
 .terminal-sec{padding:100px 0;}
 .terminal-sec .wrap{display:grid; grid-template-columns:.85fr 1.15fr; gap:80px; align-items:center;}
+.terminal-img{width:100%; max-width:640px; height:auto; display:block;}
 .terminal-sec h2{font-size:clamp(24px,3.2vw,32px); margin-top:14px; font-weight:700;}
 .terminal-price{font-weight:400; font-size:22px; color:var(--ink); margin:18px 0 20px;}
 .terminal-feats{display:flex; flex-direction:column; gap:0; margin-bottom:30px; border-top:1px solid var(--hairline);}
