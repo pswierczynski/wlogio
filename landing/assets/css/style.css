@@ -361,7 +361,9 @@ body.home .site-header.is-scrolled .btn-register{background:var(--ink); color:#f
   .nav-toggle{flex:none;}
   .site-header .btn-sm{padding:10px 14px; font-size:11px;}
   .steps-grid{grid-template-columns:repeat(2,1fr); gap:32px;}
-  .acc-grid{grid-template-columns:1fr; max-width:520px;}
+  .acc-grid{grid-template-columns:minmax(0,1fr); max-width:520px;}
+  .acc-card{padding:28px 22px 24px;}
+  .acc-card .btn{white-space:normal; text-align:center; line-height:1.35; padding-left:16px; padding-right:16px;}
   .acc-for{min-height:0;}
   .feature-grid{grid-template-columns:repeat(2,1fr); gap:36px;}
   .plan-row,.plan-row.four-up{grid-template-columns:repeat(2,1fr); gap:16px;}
@@ -398,10 +400,10 @@ input:-moz-autofill{background-color:#fff !important; color:var(--ink) !importan
   .hero{display:block; height:177vw; min-height:0; padding:84px 0 5vw; background-image:url("../img/hero-bg-mobile.jpg");
         background-size:118vw auto; background-position:-17.8vw 0; background-repeat:no-repeat; background-color:#cfc8bd;}
   .hero::before{background:linear-gradient(180deg,rgba(0,0,0,.6) 0,rgba(0,0,0,.42) 22%,rgba(0,0,0,.08) 40%,rgba(0,0,0,0) 62%,rgba(0,0,0,.22) 100%);}
-  .hero .wrap{height:100%; display:flex; flex-direction:column; align-items:center; text-align:center;}
+  .hero .wrap{height:100%; display:flex; flex-direction:column; align-items:flex-start; text-align:left;}
   .hero-copy{display:contents;}
   .hero h1{font-size:clamp(25px,7.6vw,34px); line-height:1.1;}
-  .hero p.lead{font-size:clamp(13.5px,3.9vw,16px); margin-top:12px; max-width:30ch;}
-  .hero-cta{margin-top:auto; margin-bottom:0; justify-content:center; width:100%;}
+  .hero p.lead{font-size:clamp(13.5px,3.9vw,16px); margin-top:12px; max-width:32ch;}
+  .hero-cta{margin-top:auto; margin-bottom:10vw; align-self:center; justify-content:center; width:100%;}
   .hero-cta .btn{width:100%; max-width:340px;}
 }
