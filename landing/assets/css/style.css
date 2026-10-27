@@ -391,8 +391,17 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 input:autofill{background-color:#fff !important; color:var(--ink) !important; filter:none;}
 input:-moz-autofill{background-color:#fff !important; color:var(--ink) !important; filter:none;}
 
-/* Telefony i ekrany pionowe: osobne zdjęcie tła przygotowane pod pion */
-@media (max-width:980px), (orientation:portrait){
-  .hero{background-image:url("../img/hero-bg-mobile.jpg"); background-position:center bottom; min-height:max(100svh,680px); align-items:flex-start; padding:clamp(110px,17svh,170px) 0 40px;}
-  .hero::before{background:linear-gradient(180deg,rgba(0,0,0,.5) 0,rgba(0,0,0,.4) 45%,rgba(0,0,0,.1) 75%,rgba(0,0,0,0) 100%);}
+/* Telefony i ekrany pionowe: osobne zdjęcie (pionowe, 2:3). Zdjęcie jest powiększone do 118% szerokości
+   i przesunięte tak, by laptop + terminal były na środku z równymi marginesami.
+   Tekst jest nad urządzeniami, przycisk pod nimi. Wysokość sekcji = wysokość zdjęcia (177vw). */
+@media (max-width:700px), (orientation:portrait) and (max-width:980px){
+  .hero{display:block; height:177vw; min-height:0; padding:84px 0 5vw; background-image:url("../img/hero-bg-mobile.jpg");
+        background-size:118vw auto; background-position:-17.8vw 0; background-repeat:no-repeat; background-color:#cfc8bd;}
+  .hero::before{background:linear-gradient(180deg,rgba(0,0,0,.6) 0,rgba(0,0,0,.42) 22%,rgba(0,0,0,.08) 40%,rgba(0,0,0,0) 62%,rgba(0,0,0,.22) 100%);}
+  .hero .wrap{height:100%; display:flex; flex-direction:column; align-items:center; text-align:center;}
+  .hero-copy{display:contents;}
+  .hero h1{font-size:clamp(25px,7.6vw,34px); line-height:1.1;}
+  .hero p.lead{font-size:clamp(13.5px,3.9vw,16px); margin-top:12px; max-width:30ch;}
+  .hero-cta{margin-top:auto; margin-bottom:0; justify-content:center; width:100%;}
+  .hero-cta .btn{width:100%; max-width:340px;}
 }
