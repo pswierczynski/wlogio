@@ -93,8 +93,7 @@ button{font-family:inherit;}
     max-height:calc(100vh - 84px); overflow-y:auto;
   }
   .main-nav.open{transform:translateY(0); opacity:1; visibility:visible; pointer-events:auto;}
-  .main-nav a,body.home .site-header .main-nav a{padding:18px 0; border-bottom:1px solid var(--hairline); color:var(--ink); font-size:16px; text-transform:none; letter-spacing:0; font-weight:500;}
-  .main-nav a:last-child{border-bottom:none;}
+  .main-nav a,body.home .site-header .main-nav a{padding:16px 0; border-bottom:none; color:var(--ink); font-size:16px; text-transform:none; letter-spacing:0; font-weight:500;}
   /* W nagłówku na telefonie: „Zaloguj się" zamiast „Zarejestruj konto" */
   .header-actions .btn-register{display:none;}
   body.home .site-header.menu-open .btn-outline{color:var(--ink); border-color:var(--hairline);}
