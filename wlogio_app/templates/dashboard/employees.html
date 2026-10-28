@@ -3,12 +3,10 @@
 
 {% block content %}
 <style>
-    /* Obramowanie kart pracowników (2px): czerwone = minione dni bez godziny
-       zakończenia pracy, zielone = aktualnie w pracy. Bez obramowania karta ma
-       przezroczysty obrys o tej samej grubości, żeby nic się nie przesuwało. */
-    .emp-card { border: 2px solid transparent; }
-    .emp-card-missing-end { border-color: oklch(var(--er)); }
-    .emp-card-in-work     { border-color: #22c55e; }
+    /* Kolor imienia i nazwiska pracownika: czerwony = minione dni bez godziny
+       zakończenia pracy, zielony = aktualnie w pracy. */
+    .emp-card-missing-end .emp-name { color: oklch(var(--er)); }
+    .emp-card-in-work .emp-name     { color: #22c55e; }
 
     /* Obramowanie zdjęcia wg statusu — kolory jak w Terminalu, bez pulsowania */
     .emp-ring-working { box-shadow: 0 0 0 3px #22c55e; }
@@ -85,7 +83,7 @@
                 </div>
                 {% endif %}
                 <div class="min-w-0 flex-1">
-                    <div class="font-semibold truncate">{{ employee.name or employee.login }}</div>
+                    <div class="font-semibold truncate emp-name">{{ employee.name or employee.login }}</div>
                     <div class="text-xs text-base-content/40 truncate">login: {{ employee.login }}</div>
                 </div>
                 {% set b = fl.badge if fl else None %}

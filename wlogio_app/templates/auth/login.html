@@ -24,6 +24,24 @@
         .checkbox-primary:checked { background-color: #1A1A19; border-color: #1A1A19; }
         .radio-primary:checked { background-color: #1A1A19; border-color: #1A1A19; }
 
+        /* Pola formularzy — takie samo obramowanie jak na stronie rejestracji
+           (cienka linia #E5E3DC, zaokrąglenie 12px, ciemna ramka po kliknięciu) */
+        .input, .select, .textarea, .file-input {
+            border: 1px solid #E5E3DC;
+            border-radius: 12px;
+            background-color: #fff;
+            color: #1A1A19;
+        }
+        .input:focus, .input:focus-within, .select:focus, .textarea:focus, .file-input:focus {
+            outline: none;
+            border-color: #1A1A19;
+        }
+        .input-error, .select-error { border-color: #E5E3DC; }
+        .input-error:focus, .select-error:focus { border-color: #1A1A19; }
+
+        /* Przyciski — jedno zaokrąglenie we wszystkich widokach */
+        .btn { border-radius: 0.5rem; }
+
         /* Komunikaty (alert) — zawsze szare, bez wariantów czerwony/niebieski/zielony/żółty */
         .alert-error, .alert-success, .alert-info, .alert-warning {
             background-color: oklch(var(--b3));

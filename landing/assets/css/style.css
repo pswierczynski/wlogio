@@ -12,6 +12,7 @@
   --hairline:#E5E3DC;
   --accent:#8C8574;
   --radius:12px;
+  --radius-btn:.5rem; /* zaokrąglenie przycisków — takie samo jak w aplikacji */
   --max:1100px;
   --font:'Neue Montreal', 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
 }
@@ -51,7 +52,7 @@ button{font-family:inherit;}
 /* ---------- Buttons ---------- */
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:10px;
-  padding:15px 30px; border-radius:var(--radius); font-weight:400; font-size:13px;
+  padding:15px 30px; border-radius:var(--radius-btn); font-weight:400; font-size:13px;
   letter-spacing:.06em; text-transform:uppercase;
   cursor:pointer; border:1px solid var(--ink); white-space:nowrap; transition:background .25s ease, color .25s ease, border-color .25s ease;
 }
@@ -233,7 +234,7 @@ body.home .site-header.is-scrolled .btn-register{background:var(--ink); color:#f
 .pricing .billing-toggle button{color:#9C998F;}
 .pricing .billing-toggle button.active{background:#fff; color:var(--ink);}
 
-.billing-toggle{display:flex; align-items:center; justify-content:center; gap:0; margin:36px auto 50px; border:1px solid var(--hairline); border-radius:var(--radius); padding:0; width:max-content;}
+.billing-toggle{display:flex; align-items:center; justify-content:center; gap:0; margin:36px auto 50px; border:1px solid var(--hairline); border-radius:var(--radius-btn); padding:0; width:max-content; overflow:hidden;}
 .billing-toggle button{
   border:none; background:transparent; color:var(--ink-faint); font-weight:400; font-size:12px;
   padding:12px 22px; cursor:pointer; display:flex; align-items:center; gap:8px; letter-spacing:.03em; text-transform:uppercase;
