@@ -408,6 +408,6 @@ input:-moz-autofill{background-color:#fff !important; color:var(--ink) !importan
   .hero-copy{display:contents;}
   .hero h1{font-size:clamp(25px,7.6vw,34px); line-height:1.1;}
   .hero p.lead{font-size:clamp(13.5px,3.9vw,16px); margin-top:12px; max-width:32ch;}
-  .hero-cta{margin-top:20px; margin-bottom:0; align-self:center; justify-content:center; width:100%;}
-  .hero-cta .btn{width:100%; max-width:340px;}
+  .hero-cta{margin-top:20px; margin-bottom:0; align-self:flex-start; justify-content:flex-start; width:auto;}
+  .hero-cta .btn{width:auto; padding:15px 24px;}
 }
