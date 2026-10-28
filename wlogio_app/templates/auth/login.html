@@ -39,8 +39,11 @@
         .input-error, .select-error { border-color: #E5E3DC; }
         .input-error:focus, .select-error:focus { border-color: #1A1A19; }
 
-        /* Checkbox — obramowanie w kolorze jak pola formularzy (zaznaczony zostaje ciemny) */
-        .checkbox:not(:checked) { border-color: #E5E3DC; }
+        /* Znaczniki (checkbox / radio): zaznaczone = czarne wypełnienie i biały symbol,
+           niezaznaczone = obramowanie jak pola formularzy */
+        .checkbox, .checkbox-primary, .radio, .radio-primary { --chkbg: #1A1A19; --chkfg: #ffffff; }
+        .checkbox:checked, .radio:checked { background-color: #1A1A19; border-color: #1A1A19; }
+        .checkbox:not(:checked), .radio:not(:checked) { border-color: #E5E3DC; }
 
         /* Przyciski — jedno zaokrąglenie we wszystkich widokach */
         .btn { border-radius: 0.5rem; }

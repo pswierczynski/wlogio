@@ -37,6 +37,12 @@
         .checkbox-primary:checked { background-color: #1A1A19; border-color: #1A1A19; }
         .radio-primary:checked { background-color: #1A1A19; border-color: #1A1A19; }
 
+        /* Znaczniki (checkbox / radio): zaznaczone = czarne wypełnienie i biały symbol,
+           niezaznaczone = obramowanie jak pola formularzy */
+        .checkbox, .checkbox-primary, .radio, .radio-primary { --chkbg: #1A1A19; --chkfg: #ffffff; }
+        .checkbox:checked, .radio:checked { background-color: #1A1A19; border-color: #1A1A19; }
+        .checkbox:not(:checked), .radio:not(:checked) { border-color: #E5E3DC; }
+
         /* Pola formularzy — takie samo obramowanie jak na stronie rejestracji
            (cienka linia #E5E3DC, zaokrąglenie 12px, ciemna ramka po kliknięciu) */
         .input, .select, .textarea, .file-input {
