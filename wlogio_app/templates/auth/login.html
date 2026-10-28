@@ -39,6 +39,9 @@
         .input-error, .select-error { border-color: #E5E3DC; }
         .input-error:focus, .select-error:focus { border-color: #1A1A19; }
 
+        /* Checkbox — obramowanie w kolorze jak pola formularzy (zaznaczony zostaje ciemny) */
+        .checkbox:not(:checked) { border-color: #E5E3DC; }
+
         /* Przyciski — jedno zaokrąglenie we wszystkich widokach */
         .btn { border-radius: 0.5rem; }
 
@@ -114,7 +117,7 @@
 
                 {% if kiosk %}
                 <div class="flex gap-1.5 bg-base-200 rounded-lg p-1 mb-2 sm:mb-3">
-                    <div class="flex-1 py-2 rounded-md text-sm text-center bg-base-100 border border-base-content font-medium">
+                    <div class="flex-1 py-2 rounded-md text-sm text-center bg-base-100 border border-transparent font-medium">
                         Terminal pracy
                     </div>
                 </div>
@@ -123,13 +126,13 @@
                     <button type="button"
                             @click="activeTab = 'panel'"
                             class="flex-1 py-2 rounded-md text-sm transition-colors"
-                            :class="activeTab === 'panel' ? 'bg-base-100 border border-base-content font-medium' : 'border border-transparent text-base-content/50 font-normal'">
+                            :class="activeTab === 'panel' ? 'bg-base-100 border border-transparent font-medium' : 'border border-transparent text-base-content/50 font-normal'">
                         Panel pracy
                     </button>
                     <button type="button"
                             @click="activeTab = 'terminal'"
                             class="flex-1 py-2 rounded-md text-sm transition-colors"
-                            :class="activeTab === 'terminal' ? 'bg-base-100 border border-base-content font-medium' : 'border border-transparent text-base-content/50 font-normal'">
+                            :class="activeTab === 'terminal' ? 'bg-base-100 border border-transparent font-medium' : 'border border-transparent text-base-content/50 font-normal'">
                         Terminal pracy
                     </button>
                 </div>
