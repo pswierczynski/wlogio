@@ -397,17 +397,17 @@ input:-webkit-autofill,input:-webkit-autofill:hover,input:-webkit-autofill:focus
 input:autofill{background-color:#fff !important; color:var(--ink) !important; filter:none;}
 input:-moz-autofill{background-color:#fff !important; color:var(--ink) !important; filter:none;}
 
-/* Telefony i ekrany pionowe: osobne zdjęcie (pionowe, 2:3). Zdjęcie jest powiększone do 118% szerokości
+/* Telefony i ekrany pionowe: osobne zdjęcie (pionowe, 2:3). Zdjęcie jest powiększone do 119% szerokości
    i przesunięte tak, by laptop + terminal były na środku z równymi marginesami.
-   Tekst jest nad urządzeniami, przycisk pod nimi. Wysokość sekcji = wysokość zdjęcia (177vw). */
+   Tekst jest nad urządzeniami, przycisk pod nimi. Wysokość sekcji = 152vw — dół zdjęcia przycięty, urządzenia przy dole sekcji. */
 @media (max-width:700px), (orientation:portrait) and (max-width:980px){
-  .hero{display:block; height:177vw; min-height:0; padding:84px 0 5vw; background-image:url("../img/hero-bg-mobile.jpg");
-        background-size:118vw auto; background-position:-17.8vw 0; background-repeat:no-repeat; background-color:#cfc8bd;}
-  .hero::before{background:linear-gradient(180deg,rgba(0,0,0,.6) 0,rgba(0,0,0,.42) 22%,rgba(0,0,0,.08) 40%,rgba(0,0,0,0) 62%,rgba(0,0,0,.22) 100%);}
+  .hero{display:block; height:152vw; min-height:0; padding:84px 0 5vw; background-image:url("../img/hero-bg-mobile.jpg");
+        background-size:119vw auto; background-position:-19vw 0; background-repeat:no-repeat; background-color:#cfc8bd;}
+  .hero::before{background:linear-gradient(180deg,rgba(0,0,0,.6) 0,rgba(0,0,0,.45) 26%,rgba(0,0,0,.12) 44%,rgba(0,0,0,0) 62%,rgba(0,0,0,.12) 100%);}
   .hero .wrap{height:100%; display:flex; flex-direction:column; align-items:flex-start; text-align:left;}
   .hero-copy{display:contents;}
   .hero h1{font-size:clamp(25px,7.6vw,34px); line-height:1.1;}
   .hero p.lead{font-size:clamp(13.5px,3.9vw,16px); margin-top:12px; max-width:32ch;}
-  .hero-cta{margin-top:auto; margin-bottom:10vw; align-self:center; justify-content:center; width:100%;}
+  .hero-cta{margin-top:20px; margin-bottom:0; align-self:center; justify-content:center; width:100%;}
   .hero-cta .btn{width:100%; max-width:340px;}
 }
