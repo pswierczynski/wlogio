@@ -115,9 +115,9 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-1">
-                <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}" class="flex-1 min-w-[4rem]">
-                    <button type="submit" class="btn btn-outline btn-neutral btn-sm w-full">Panel pracy</button>
+            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}">
+                    <button type="submit" class="btn btn-outline btn-neutral btn-sm px-4">Panel pracy</button>
                 </form>
                 <a href="{{ url_for('dashboard.employee_profile', employee_id=employee.id) }}" class="btn btn-ghost btn-sm px-2">
                     Konto
