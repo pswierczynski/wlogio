@@ -153,6 +153,44 @@
         </div>
         {% endif %}
 
+        {% if not is_self and current_user.is_company %}
+        <!-- Usunięcie konta pracownika (wymaga PIN-u pracownika) -->
+        <div class="card bg-base-100 shadow-sm" x-data="{ showDelete: false, pin: '' }">
+            <div class="card-body gap-3">
+                <h2 class="font-semibold">Usuń konto</h2>
+                <p class="text-sm text-base-content/50">
+                    Tej operacji nie można cofnąć — zniknie konto pracownika i cała historia jego wpisów.
+                </p>
+                <button type="button" class="btn btn-outline btn-error w-full" @click="showDelete = true">
+                    Usuń konto pracownika
+                </button>
+            </div>
+
+            <div x-show="showDelete" x-cloak
+                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div class="card bg-base-100 shadow-xl w-full max-w-sm" @click.outside="showDelete = false">
+                    <form method="POST" action="{{ url_for('dashboard.employee_delete', employee_id=profile_user.id) }}"
+                          class="card-body gap-4">
+                        <h3 class="font-semibold">
+                            Usunąć pracownika {{ profile_user.name or profile_user.login }}?
+                        </h3>
+                        <p class="text-sm text-base-content/50">
+                            Tej operacji nie można cofnąć. Wpisz PIN pracownika, aby potwierdzić.
+                        </p>
+                        <input type="text" inputmode="numeric" name="pin" x-model="pin" maxlength="4"
+                               placeholder="PIN" class="input input-bordered w-full text-center tracking-widest"/>
+                        <div class="flex gap-2">
+                            <button type="button" class="btn btn-ghost flex-1" @click="showDelete = false">Anuluj</button>
+                            <button type="submit" class="btn btn-error flex-1" :disabled="pin.length !== 4">
+                                Usuń pracownika
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
     </div>
 </div>
 {% endblock %}

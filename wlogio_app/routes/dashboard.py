@@ -535,7 +535,7 @@ def employee_delete(employee_id):
     pin = request.form.get('pin', '')
     if not employee.pin or pin != employee.pin:
         flash('Nieprawidłowy PIN — pracownik nie został usunięty.', 'error')
-        return redirect(url_for('dashboard.index'))
+        return redirect(url_for('dashboard.employee_profile', employee_id=employee.id))
 
     name = employee.name
     db.session.delete(employee)
@@ -543,7 +543,7 @@ def employee_delete(employee_id):
     clear_viewing_employee()
 
     flash(f'Usunięto pracownika: {name}.', 'success')
-    return redirect(url_for('dashboard.index'))
+    return redirect(url_for('dashboard.index', list=1))
 
 
 @dashboard_bp.route('/employees/<int:employee_id>/settings')
