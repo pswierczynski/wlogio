@@ -15,6 +15,11 @@
 
         [x-cloak] { display: none !important; }
 
+        /* Pasek przewijania ukryty (przewijanie nadal działa) — inaczej podczas animacji
+           wjazdu z dołu pojawia się i znika, a ekran skacze na boki. */
+        html { scrollbar-width: none; }
+        html::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
+
         .avatar-btn {
             transition: transform 0.2s ease, filter 0.2s ease;
             background: none;
@@ -80,43 +85,6 @@
         .avatar-idle    { opacity: 0.5; }
         .avatar-working { opacity: 1; }
         .avatar-break   { opacity: 1; }
-
-        /* Notatka z bieżącego dnia — chmurka nad zdjęciem pracownika */
-        .note-bubble {
-            position: absolute;
-            bottom: calc(100% + 10px);
-            left: 50%;
-            transform: translateX(-50%);
-            width: max-content;
-            max-width: 11rem;
-            padding: 6px 12px;
-            border-radius: 14px;
-            background: #fff;
-            border: 1px solid oklch(var(--b3));
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            font-size: 12px;
-            line-height: 1.3;
-            font-weight: 500;
-            color: oklch(var(--bc));
-            text-align: center;
-            overflow-wrap: anywhere;
-            z-index: 20;
-            pointer-events: none;
-        }
-        .note-bubble::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            width: 10px;
-            height: 10px;
-            background: #fff;
-            border-right: 1px solid oklch(var(--b3));
-            border-bottom: 1px solid oklch(var(--b3));
-            transform: translate(-50%, -5px) rotate(45deg);
-        }
-        /* Gdy ktoś ma notatkę — wszystkie kafelki dostają miejsce na chmurkę (równe wiersze) */
-        .users-grid.has-notes .avatar-btn { padding-top: 3.4rem; }
 
         /* Badge P/U/Z — kółko nachodzące na obramowanie avatara */
         .avatar-wrapper {
@@ -293,7 +261,6 @@
 <script>
 const INIT_STATUSES = {{ user_statuses | tojson }};
 const INIT_BADGES   = {{ user_badges | tojson }};
-const INIT_NOTES    = {{ user_notes | tojson }};
 </script>
 
 <div x-data="welcomeApp()" x-init="init()" class="min-h-screen flex flex-col">
@@ -317,8 +284,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
 
         {% set n = users|length %}
         <div class="users-grid w-full max-w-4xl mx-auto
-            {% if n == 1 %}u1{% elif n == 2 %}u2{% elif n == 3 %}u3{% endif %}"
-             :class="anyNote ? 'has-notes' : ''">
+            {% if n == 1 %}u1{% elif n == 2 %}u2{% elif n == 3 %}u3{% endif %}">
 
             {% for user in users %}
             {% set uid = user.id %}
@@ -333,8 +299,6 @@ const INIT_NOTES    = {{ user_notes | tojson }};
 
                 <!-- Wrapper z relatywną pozycją dla badge'a -->
                 <div class="avatar-wrapper w-32 h-32 shrink-0">
-                    <div class="note-bubble" x-show="notes[String({{ uid }})]" x-cloak
-                         x-text="notes[String({{ uid }})]"></div>
                     <div id="av-{{ uid }}"
                          class="rounded-full overflow-hidden w-32 h-32"
                          :class="'ring-status-' + (statuses[String({{ uid }})] || 'idle') + ' avatar-' + (statuses[String({{ uid }})] || 'idle')"
@@ -433,10 +397,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
 
             <!-- Avatar z badge'm — nad PIN-em na komórce, po prawej na ekranach poziomych -->
             <div class="flex flex-col items-center gap-3 mb-5" style="flex-shrink:0;">
-                <div class="avatar-wrapper w-32 h-32"
-                     :style="notes[String(selectedUserId)] ? 'margin-top:3.4rem' : ''">
-                    <div class="note-bubble" x-show="notes[String(selectedUserId)]" x-cloak
-                         x-text="notes[String(selectedUserId)]"></div>
+                <div class="avatar-wrapper w-32 h-32">
                     <div class="rounded-full overflow-hidden w-32 h-32"
                          :class="'ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
                          style="border-radius: 50%;">
@@ -533,10 +494,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
 
             <!-- Avatar z badge'm — nad przyciskami na pionowym ekranie, po prawej na poziomym -->
             <div class="flex flex-col items-center gap-3 mb-5" style="flex-shrink:0;">
-                <div class="avatar-wrapper w-32 h-32"
-                     :style="notes[String(selectedUserId)] ? 'margin-top:3.4rem' : ''">
-                    <div class="note-bubble" x-show="notes[String(selectedUserId)]" x-cloak
-                         x-text="notes[String(selectedUserId)]"></div>
+                <div class="avatar-wrapper w-32 h-32">
                     <div class="rounded-full overflow-hidden w-32 h-32"
                          :class="'ring-status-' + clockStatus + ' avatar-' + clockStatus"
                          style="border-radius: 50%;">
@@ -696,8 +654,6 @@ function welcomeApp() {
         screen: 'avatars',
         statuses: {...INIT_STATUSES},
         badges:   {...INIT_BADGES},
-        notes:    {...INIT_NOTES},
-        get anyNote() { return Object.values(this.notes).some(Boolean); },
         selectedUserId: null,
         selectedName: '',
         selectedAvatar: '',
@@ -759,7 +715,6 @@ function welcomeApp() {
                         const badge  = info.badge  || null;
                         this.statuses[uid] = status;
                         this.badges[uid]   = badge;
-                        this.notes[uid]    = info.note || '';
 
                         /* Obramowanie avatara aktualizuje się samo przez :class (reaktywnie z this.statuses) */
                         /* Aktualizuj badge */
