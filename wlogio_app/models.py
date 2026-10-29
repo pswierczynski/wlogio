@@ -6,6 +6,10 @@ from wlogio_app import db
 
 
 ACCOUNT_TYPES = ('individual', 'company', 'employee')
+
+# Maks. długość notatki dnia — notatka z bieżącego dnia widoczna jest w Terminalu
+# pracy jako chmurka przy zdjęciu, więc musi być krótka.
+NOTE_MAX_LENGTH = 40
 ACCOUNT_TYPE_LABELS = {
     'individual': 'Indywidualne',
     'company':    'Firmowe',

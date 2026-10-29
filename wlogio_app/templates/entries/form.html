@@ -518,14 +518,15 @@
                 </div>
 
                 <!-- NOTATKI -->
-                <div class="form-control">
+                <div class="form-control" x-data="{ noteLen: {{ (entry.notes|length) if entry and entry.notes else 0 }} }">
                     <label class="label">
                         <span class="label-text font-medium">Notatki</span>
-                        <span class="label-text-alt text-base-content/40">opcjonalne</span>
+                        <span class="label-text-alt text-base-content/40">opcjonalne · <span x-text="noteLen"></span>/{{ note_max }}</span>
                     </label>
-                    <textarea name="notes" rows="2"
+                    <textarea name="notes" rows="2" maxlength="{{ note_max }}"
+                              @input="noteLen = $event.target.value.length"
                               class="textarea textarea-bordered w-full resize-none"
-                              :placeholder="isRangeType() ? 'Przy zakresie dni — dodane do każdego dnia' : 'Dodatkowe informacje...'">{{ entry.notes if entry and entry.notes else '' }}</textarea>
+                              :placeholder="isRangeType() ? 'Przy zakresie dni — dodane do każdego dnia' : 'Widoczna w Terminalu pracy w tym dniu, np. wyszedłem na obiad'">{{ entry.notes if entry and entry.notes else '' }}</textarea>
                 </div>
 
                 <!-- PRZYCISKI -->

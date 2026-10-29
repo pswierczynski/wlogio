@@ -4,7 +4,7 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal
 
 from wlogio_app import db
-from wlogio_app.models import WorkEntry, MonthConfig
+from wlogio_app.models import WorkEntry, MonthConfig, NOTE_MAX_LENGTH
 from wlogio_app.scope import (
     require_entry_user, local_today, employee_set_error, employee_can_delete,
 )
@@ -21,6 +21,14 @@ from wlogio_app.calculator import (
 )
 
 entries_bp = Blueprint('entries', __name__)
+
+
+def notes_too_long():
+    """Komunikat błędu, jeśli notatka z formularza przekracza limit; None gdy OK."""
+    n = len(request.form.get('notes', '').strip())
+    if n > NOTE_MAX_LENGTH:
+        return f'Notatka może mieć maksymalnie {NOTE_MAX_LENGTH} znaków (obecnie {n}).'
+    return None
 
 ENTRY_TYPES = {
     'work': 'Praca',
@@ -117,6 +125,11 @@ def add():
         entry_date_str = request.form.get('date', '')
         entry_type = request.form.get('entry_type', 'work')
 
+        err = notes_too_long()
+        if err:
+            flash(err, 'error')
+            return redirect(url_for('entries.add'))
+
         try:
             entry_date = datetime.strptime(entry_date_str, '%Y-%m-%d').date()
         except ValueError:
@@ -194,6 +207,7 @@ def add():
                            remaining_vacation=max(0, remaining_vacation),
                            existing_breaks=[],
                            employee_mode=is_employee,
+                           note_max=NOTE_MAX_LENGTH,
                            employee_today=local_today().strftime('%Y-%m-%d') if is_employee else '')
 
 
@@ -327,6 +341,11 @@ def add_range():
     range_type    = request.form.get('range_type', 'vacation')
     notes         = request.form.get('notes', '').strip() or None
 
+    err = notes_too_long()
+    if err:
+        flash(err, 'error')
+        return redirect(url_for('entries.add'))
+
     try:
         date_from = datetime.strptime(date_from_str, '%Y-%m-%d').date()
         date_to   = datetime.strptime(date_to_str,   '%Y-%m-%d').date()
@@ -447,6 +466,11 @@ def edit(entry_id):
         entry_year = entry.date.year
         entry_type = request.form.get('entry_type', 'work')
 
+        err = notes_too_long()
+        if err:
+            flash(err, 'error')
+            return redirect(url_for('entries.edit', entry_id=entry_id))
+
         if is_employee:
             err = employee_set_error(entry.date, entry_type, old_type)
             if err:
@@ -514,6 +538,7 @@ def edit(entry_id):
                            remaining_vacation=0,
                            existing_breaks=existing_breaks,
                            employee_mode=is_employee,
+                           note_max=NOTE_MAX_LENGTH,
                            employee_today=local_today().strftime('%Y-%m-%d') if is_employee else '')
 
 

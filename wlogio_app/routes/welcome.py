@@ -307,6 +307,11 @@ def kiosk_index():
     return render_terminal(kiosk=True)
 
 
+def today_note(entry):
+    """Notatka z wpisu BIEŻĄCEGO dnia (chmurka w terminalu) albo ''."""
+    return (entry.notes or '').strip() if entry else ''
+
+
 def render_terminal(kiosk):
     owner = get_terminal_owner()
     if not owner:
@@ -318,17 +323,20 @@ def render_terminal(kiosk):
 
     user_statuses = {}
     user_badges = {}
+    user_notes = {}
     for user in users:
         entry = WorkEntry.query.filter_by(user_id=user.id, date=today).first()
         status = compute_status(entry)
         user_statuses[user.id] = status
         user_badges[user.id]   = compute_badge(entry, status)
+        user_notes[user.id]    = today_note(entry)
 
     return render_template(
         'welcome/index.html',
         users=users,
         user_statuses=user_statuses,
         user_badges=user_badges,
+        user_notes=user_notes,
         kiosk=kiosk,
     )
 
@@ -436,6 +444,7 @@ def statuses():
         result[str(user.id)] = {
             'status': status,
             'badge':  compute_badge(entry, status),
+            'note':   today_note(entry),
         }
     return jsonify(result)
 
