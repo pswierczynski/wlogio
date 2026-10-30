@@ -64,6 +64,20 @@
             transition: background-color 9999s ease-in-out 0s;
         }
         input:autofill, input:-moz-autofill { background-color: oklch(var(--b1)) !important; color: oklch(var(--bc)) !important; filter: none; }
+
+        /* Stały rozmiar tekstu w polach — taki sam przy wpisywaniu, autouzupełnianiu
+           i po kliknięciu "Zaloguj" (przeglądarki potrafią zmieniać rozmiar tekstu
+           pola w stanie :autofill). */
+        .input, .input:focus,
+        input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active,
+        input:autofill, input:-moz-autofill {
+            font-size: 1rem !important;
+            line-height: 1.5rem !important;
+            font-family: inherit !important;
+            font-weight: 400 !important;
+            letter-spacing: normal !important;
+        }
+        html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     </style>
 </head>
 <body class="bg-base-200 h-dvh sm:min-h-screen flex flex-col items-center justify-center px-4 py-2 sm:py-8">
