@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from wlogio_app import db
 from wlogio_app.models import WorkEntry, MonthConfig, NOTE_MAX_LENGTH
+from wlogio_app.routes.welcome import parse_open_breaks, format_breaks_with_open
 from wlogio_app.scope import (
     require_entry_user, local_today, employee_set_error, employee_can_delete,
 )
@@ -523,10 +524,11 @@ def edit(entry_id):
 
     existing_breaks = []
     if entry.breaks:
-        for bs, be in parse_breaks(entry.breaks):
+        # Z przerwą w toku (rozpoczętą w terminalu, jeszcze niezakończoną): "HH:MM-"
+        for bs, be in parse_open_breaks(entry.breaks):
             existing_breaks.append({
                 'start': bs.strftime('%H:%M'),
-                'end': be.strftime('%H:%M'),
+                'end': be.strftime('%H:%M') if be else '',
             })
 
     return render_template('entries/form.html',
@@ -627,6 +629,7 @@ def _fill_work_entry(entry, form):
         te = None
 
     raw_breaks = []
+    open_break = None
     i = 0
     while True:
         bs_key = f'break_start_{i}'
@@ -638,6 +641,16 @@ def _fill_work_entry(entry, form):
         bs_t = parse_time(bs_val)
         be_t = parse_time(be_val)
         if bs_t is None and be_t is None:
+            i += 1
+            continue
+        if bs_t is not None and be_t is None:
+            # Przerwa w toku (rozpoczęta w terminalu) — dozwolona tylko jedna
+            # i tylko dopóki wpis nie ma godziny wyjścia.
+            if open_break is not None:
+                return False, 'Tylko jedna przerwa może być w toku (bez godziny zakończenia).'
+            if time_end is not None:
+                return False, f'Przerwa #{i + 1} trwa — uzupełnij godzinę jej zakończenia lub usuń godzinę wyjścia.'
+            open_break = bs_t
             i += 1
             continue
         if bs_t is None or be_t is None:
@@ -675,9 +688,20 @@ def _fill_work_entry(entry, form):
 
     sorted_breaks = [(bs_t, be_t) for (_, _, bs_t, be_t) in normalized]
 
+    if open_break is not None:
+        ob = to_min(open_break)
+        if ob < ts:
+            ob += 24 * 60
+        if ob < ts or (normalized and ob < normalized[-1][1]):
+            return False, 'Przerwa w toku musi zaczynać się po godzinie przyjścia i po zakończeniu wcześniejszych przerw.'
+
     entry.time_start = time_start
     entry.time_end = time_end
-    entry.breaks = format_breaks(sorted_breaks)
+    if open_break is not None:
+        # Przerwa w toku zapisywana jako "HH:MM-" (bez końca) — tak jak w terminalu.
+        entry.breaks = format_breaks_with_open(sorted_breaks + [(open_break, None)])
+    else:
+        entry.breaks = format_breaks(sorted_breaks)
 
     if time_start and time_end:
         # Pobierz parametry z config miesiąca jeśli istnieje

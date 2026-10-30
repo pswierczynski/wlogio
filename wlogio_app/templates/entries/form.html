@@ -148,6 +148,15 @@
                         for (let i = 0; i < this.breakRows.length; i++) {
                             const row = this.breakRows[i];
                             if (!row.start && !row.end) continue; // pusty wiersz — pomiń
+                            if (row.start && !row.end) {
+                                /* Przerwa w toku (rozpoczęta w terminalu) — OK, dopóki brak godziny wyjścia */
+                                if (te !== null) {
+                                    this.validationError = 'Przerwa #' + (i + 1) + ' trwa — uzupełnij godzinę jej zakończenia lub usuń godzinę wyjścia.';
+                                    this.calcResult = null;
+                                    return false;
+                                }
+                                continue;
+                            }
                             if (!row.start || !row.end) {
                                 this.validationError = 'Przerwa #' + (i + 1) + ' ma niekompletne godziny.';
                                 this.calcResult = null;
@@ -449,6 +458,7 @@
                                         <span class="label-text text-xs">do</span>
                                     </label>
                                     <input type="time" x-model="row.end"
+                                           :title="row.start && !row.end ? 'Przerwa trwa — brak godziny zakończenia' : ''"
                                            :name="'break_end_' + index"
                                            @change="calcHours()"
                                            class="input input-bordered input-sm w-full"/>
