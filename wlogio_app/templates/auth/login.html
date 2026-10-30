@@ -55,11 +55,13 @@
             color: oklch(var(--bc));
         }
 
-        /* Autouzupełnianie przeglądarki: bez niebieskiego/żółtego tła pól. Tło zmienia się
-           dopiero po bardzo długim czasie (transition), więc zostaje białe — to jedyna
-           ingerencja w stan :autofill; nie ruszamy koloru ani rozmiaru tekstu, bo Chrome
-           wtedy inaczej go skaluje (powiększony tekst i gwiazdki hasła). */
+        /* Autouzupełnianie przeglądarki: tło pól zawsze białe (bez niebieskiego/fioletowego).
+           Biały cień wewnętrzny przykrywa kolor Chrome także w polach, które były ukryte
+           (zakładka "Terminal pracy") w chwili wypełniania — samo opóźnienie transition
+           działa tylko dla pól widocznych. Nie ruszamy koloru ani rozmiaru tekstu. */
         input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px oklch(var(--b1)) inset !important;
+            box-shadow: 0 0 0 1000px oklch(var(--b1)) inset !important;
             transition: background-color 600000s ease-in-out 0s, color 600000s ease-in-out 0s;
         }
         input:-moz-autofill { background-color: oklch(var(--b1)) !important; filter: none; }
