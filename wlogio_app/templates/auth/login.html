@@ -64,15 +64,23 @@
         }
         input:-moz-autofill { background-color: oklch(var(--b1)) !important; filter: none; }
 
-        /* Stały rozmiar tekstu w polach — taki sam przy wpisywaniu, autouzupełnianiu
-           i po kliknięciu "Zaloguj" (przeglądarki potrafią zmieniać rozmiar tekstu
-           pola w stanie :autofill). */
-        .input, .input:focus {
-            font-size: 1rem !important;
-            line-height: 1.5rem !important;
-            font-family: inherit !important;
-            font-weight: 400 !important;
-            letter-spacing: normal !important;
+        /* Stały rozmiar tekstu w polach.
+           Chrome/Edge dla pól wypełnionych autouzupełnianiem ignoruje czcionkę ze strony
+           i używa domyślnej czcionki kontrolek (-webkit-small-control, ok. 13,3 px) —
+           CSS tego nie nadpisze. Dlatego pola logowania używają tej samej czcionki
+           w każdym stanie, a powiększenie (zoom 1,2 => ok. 16 px) działa na cały element,
+           więc jest identyczne przy wpisywaniu i po autouzupełnieniu. Wymiary pola
+           są przeliczone (/1,2), żeby wyglądało tak samo jak wcześniej. */
+        @supports not (-moz-appearance: none) {
+            .input.input {
+                font: -webkit-small-control !important;
+                zoom: 1.2;
+                height: calc(3rem / 1.2);
+                padding-left: calc(1rem / 1.2);
+                padding-right: calc(1rem / 1.2);
+                line-height: normal !important;
+                border-radius: calc(12px / 1.2);
+            }
         }
         html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     </style>
