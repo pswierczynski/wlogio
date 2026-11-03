@@ -53,11 +53,11 @@
         <div class="opt-grid two">
           <label class="opt">
             <input type="radio" name="account_type" value="individual" {% if form.account_type == 'individual' %}checked{% endif %}>
-            <span class="opt-body"><span class="t">Konto indywidualne</span><span class="s">Terminal pracy + panel pracy, 1 użytkownik</span><span class="p">19 <small>zł / mies.</small></span></span>
+            <span class="opt-body"><span class="t">Konto indywidualne</span><span class="s">Konto terminalu pracy (z możliwością łączenia w zespoły) + panel pracy, 1 użytkownik</span><span class="p">19 <small>zł / mies.</small></span></span>
           </label>
           <label class="opt">
             <input type="radio" name="account_type" value="company" {% if form.account_type == 'company' %}checked{% endif %}>
-            <span class="opt-body"><span class="t">Konto firmowe</span><span class="s">Terminal pracy + panel firmy + panele pracowników</span><span class="p">od 299 <small>zł / mies.</small></span></span>
+            <span class="opt-body"><span class="t">Konto firmowe</span><span class="s">Konto terminalu pracy z pracownikami + panel firmy + konta pracowników</span><span class="p">od 299 <small>zł / mies.</small></span></span>
           </label>
         </div>
 
@@ -65,15 +65,15 @@
           <div class="opt-grid three">
             <label class="opt">
               <input type="radio" name="company_size" value="small" {% if form.company_size == 'small' %}checked{% endif %}>
-              <span class="opt-body"><span class="t">Mała</span><span class="s">1 – 10 pracowników</span><span class="p">299 <small>zł / mies.</small></span></span>
+              <span class="opt-body"><span class="t">Mała</span><span class="s">do 10 pracowników</span><span class="p">299 <small>zł / mies.</small></span></span>
             </label>
             <label class="opt">
               <input type="radio" name="company_size" value="medium" {% if form.company_size == 'medium' %}checked{% endif %}>
-              <span class="opt-body"><span class="t">Średnia</span><span class="s">11 – 50 pracowników</span><span class="p">649 <small>zł / mies.</small></span></span>
+              <span class="opt-body"><span class="t">Średnia</span><span class="s">do 50 pracowników</span><span class="p">649 <small>zł / mies.</small></span></span>
             </label>
-            <label class="opt">
-              <input type="radio" name="company_size" value="large" {% if form.company_size == 'large' %}checked{% endif %}>
-              <span class="opt-body"><span class="t">Duża</span><span class="s">51 – 100 pracowników</span><span class="p">1499 <small>zł / mies.</small></span></span>
+            <label class="opt opt-soon">
+              <input type="radio" name="company_size" value="large" disabled>
+              <span class="opt-body"><span class="t">Duża <em class="soon-tag">wkrótce</em></span><span class="s">do 100 pracowników</span><span class="p">1499 <small>zł / mies.</small></span></span>
             </label>
           </div>
         </div>

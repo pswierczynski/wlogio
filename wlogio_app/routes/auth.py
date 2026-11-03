@@ -39,7 +39,9 @@ def login():
 
 # Mapowanie parametrów z linków na stronie (cennik) na wartości formularza.
 _TYP_MAP = {'indywidualna': 'individual', 'firmowa': 'company'}
-_PLAN_MAP = {'mala': 'small', 'srednia': 'medium', 'duza': 'large'}
+_PLAN_MAP = {'mala': 'small', 'srednia': 'medium'}  # 'duza' — na razie nieaktywna
+# Warianty firmy niedostępne w rejestracji (na razie nieaktywne).
+INACTIVE_COMPANY_SIZES = ('large',)
 
 
 def _register_error(message, form):
@@ -79,6 +81,8 @@ def register():
             return _register_error('Nazwa firmy jest wymagana.', f)
         if account_type == 'company' and company_size not in COMPANY_SIZES:
             return _register_error('Wybierz wielkość firmy.', f)
+        if account_type == 'company' and company_size in INACTIVE_COMPANY_SIZES:
+            return _register_error('Pakiet „Firma — Duża” jest na razie nieaktywny. Wybierz pakiet Mała lub Średnia.', f)
         if password != password2:
             return _register_error('Hasła nie są identyczne.', f)
         if len(password) < 6:
