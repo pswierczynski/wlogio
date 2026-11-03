@@ -77,11 +77,39 @@
             0%, 100% { box-shadow: 0 0 0 4px #f59e0b; }
             50%      { box-shadow: 0 0 0 7px #f59e0b; }
         }
+        /* Zmiana statusu: obramowanie najpierw rozszerza się od zera (z lekkim przeskokiem),
+           a dopiero potem zaczyna pulsować (na ekranie głównym). Klasa .ring-changed
+           ustawiana jest tylko przy faktycznej zmianie statusu. */
+        @keyframes ringInWorking {
+            0%   { box-shadow: 0 0 0 0 #22c55e; }
+            60%  { box-shadow: 0 0 0 7px #22c55e; }
+            100% { box-shadow: 0 0 0 4px #22c55e; }
+        }
+        @keyframes ringInBreak {
+            0%   { box-shadow: 0 0 0 0 #f59e0b; }
+            60%  { box-shadow: 0 0 0 7px #f59e0b; }
+            100% { box-shadow: 0 0 0 4px #f59e0b; }
+        }
+        @keyframes ringInIdle {
+            0%   { box-shadow: 0 0 0 7px rgba(0,0,0,0); }
+            100% { box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }
+        }
+        .ring-changed.ring-status-working { animation: ringInWorking 0.55s ease-out; }
+        .ring-changed.ring-status-break   { animation: ringInBreak 0.55s ease-out; }
+        .ring-changed.ring-status-idle    { animation: ringInIdle 0.4s ease-out; }
+        .avatars-screen .ring-changed.ring-status-working {
+            animation: ringInWorking 0.55s ease-out, pulseWorking 1.7s ease-in-out 0.55s infinite;
+        }
+        .avatars-screen .ring-changed.ring-status-break {
+            animation: ringInBreak 0.55s ease-out, pulseBreak 1.7s ease-in-out 0.55s infinite;
+        }
         @media (prefers-reduced-motion: reduce) {
             .avatars-screen .ring-status-working,
-            .avatars-screen .ring-status-break { animation: none; }
+            .avatars-screen .ring-status-break,
+            .ring-changed { animation: none !important; }
         }
 
+        .avatar-idle, .avatar-working, .avatar-break { transition: opacity 0.4s ease; }
         .avatar-idle    { opacity: 0.5; }
         .avatar-working { opacity: 1; }
         .avatar-break   { opacity: 1; }
@@ -120,8 +148,16 @@
             border-bottom: 1px solid oklch(var(--b3));
             transform: translate(-50%, -5px) rotate(45deg);
         }
-        /* Gdy ktoś ma notatkę — wszystkie kafelki dostają miejsce na chmurkę (równe wiersze) */
-        .users-grid.has-notes .avatar-btn { padding-top: 3.4rem; }
+        /* Miejsce na chmurkę zarezerwowane zawsze — pojawienie się notatki nie przesuwa kafelków */
+        .users-grid .avatar-btn { padding-top: 3.4rem; }
+        .note-bubble { transform-origin: 50% 100%; }
+        /* Wejście jak wiadomość w iMessage: rośnie od dołu (od ogonka) ze sprężystym "odbiciem" */
+        .bubble-enter       { transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease-out; }
+        .bubble-enter-start { opacity: 0; transform: translateX(-50%) scale(0.2); }
+        .bubble-enter-end   { opacity: 1; transform: translateX(-50%) scale(1); }
+        .bubble-leave       { transition: transform 0.2s ease-in, opacity 0.2s ease-in; }
+        .bubble-leave-start { opacity: 1; transform: translateX(-50%) scale(1); }
+        .bubble-leave-end   { opacity: 0; transform: translateX(-50%) scale(0.6); }
 
         /* Badge P/U/Z — kółko nachodzące na obramowanie avatara */
         .avatar-wrapper {
@@ -147,6 +183,15 @@
             height: 15px;
         }
         /* Kolor zalezy od TYPU badge'a — zawsze pelny, nieprzezroczysty */
+        /* Pojawienie się / zmiana badge'a: "wyskakuje" z obrotem i sprężystym odbiciem */
+        @keyframes badgePop {
+            0%   { transform: scale(0) rotate(-140deg); opacity: 0; }
+            60%  { transform: scale(1.3) rotate(12deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .badge-pop { animation: badgePop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @media (prefers-reduced-motion: reduce) { .badge-pop { animation: none; } }
+
         .badge-type-P { background-color: #22c55e; }  /* zielony — praca zdalna */
         .badge-type-U { background-color: #3abff8; }  /* niebieski — urlop */
         .badge-type-Z { background-color: #ff5861; }  /* czerwony — zwolnienie */
@@ -269,8 +314,8 @@
         /* Warianty kolorystyczne przycisków: kontur (do kliknięcia) / wypełniony (w toku) / szary (zakończone) */
         .clock-outline-green { background: transparent; border-color: #22c55e; color: #22c55e; }
         .clock-fill-green    { background: #22c55e;     border-color: #22c55e; color: #fff; }
-        .clock-outline-dark  { background: transparent; border-color: #18181b; color: #18181b; }
-        .clock-fill-dark     { background: #18181b;     border-color: #18181b; color: #fff; }
+        .clock-outline-orange { background: transparent; border-color: #f59e0b; color: #f59e0b; }
+        .clock-fill-orange    { background: #f59e0b;     border-color: #f59e0b; color: #fff; }
         .clock-btn.clock-ended { background: transparent; border-color: #d1d5db; color: #9ca3af; opacity: 1; }
         .clock-btn:not(:disabled):hover  { transform: scale(1.05); }
         .clock-btn:not(:disabled):active { transform: scale(0.95); }
@@ -328,8 +373,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
 
         {% set n = users|length %}
         <div class="users-grid w-full max-w-4xl mx-auto
-            {% if n == 1 %}u1{% elif n == 2 %}u2{% elif n == 3 %}u3{% endif %}"
-             :class="anyNote ? 'has-notes' : ''">
+            {% if n == 1 %}u1{% elif n == 2 %}u2{% elif n == 3 %}u3{% endif %}">
 
             {% for user in users %}
             {% set uid = user.id %}
@@ -345,10 +389,12 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                 <!-- Wrapper z relatywną pozycją dla badge'a -->
                 <div class="avatar-wrapper w-32 h-32 shrink-0">
                     <div class="note-bubble" x-show="notes[String({{ uid }})]" x-cloak
+                         x-transition:enter="bubble-enter" x-transition:enter-start="bubble-enter-start" x-transition:enter-end="bubble-enter-end"
+                         x-transition:leave="bubble-leave" x-transition:leave-start="bubble-leave-start" x-transition:leave-end="bubble-leave-end"
                          x-text="notes[String({{ uid }})]"></div>
                     <div id="av-{{ uid }}"
                          class="rounded-full overflow-hidden w-32 h-32"
-                         :class="'ring-status-' + (statuses[String({{ uid }})] || 'idle') + ' avatar-' + (statuses[String({{ uid }})] || 'idle')"
+                         :class="'ring-status-' + (statuses[String({{ uid }})] || 'idle') + ' avatar-' + (statuses[String({{ uid }})] || 'idle') + (ringChanged[String({{ uid }})] ? ' ring-changed' : '')"
                          style="border-radius: 50%;">
                         {% if user.avatar %}
                         <img src="{{ user.avatar }}" alt="{{ user.name or '' }}"
@@ -364,7 +410,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                     </div>
                     <!-- Badge P/U/Z — ikona SVG, kolor zalezy od typu -->
                     {% set badge_labels = {'P': 'Praca zdalna', 'U': 'Urlop', 'Z': 'Zwolnienie lekarskie', 'O': 'Urlop opiekuńczy', 'S': 'Siła wyższa', 'D': 'Opieka nad dzieckiem', 'N': 'Urlop na żądanie', 'B': 'Urlop bezpłatny', 'H': 'Święto', 'W': 'Praca'} %}
-                    <div id="badge-{{ uid }}"
+                    <div id="badge-{{ uid }}" data-b="{{ badge or '' }}"
                          class="status-badge{% if badge %} badge-type-{{ badge }} tooltip tooltip-top{% endif %}"
                          {% if badge %}data-tip="{{ badge_labels.get(badge, '') }}"{% else %}style="display:none;"{% endif %}>
                         {% if badge == 'P' %}
@@ -444,12 +490,9 @@ const INIT_NOTES    = {{ user_notes | tojson }};
 
             <!-- Avatar z badge'm — nad PIN-em na komórce, po prawej na ekranach poziomych -->
             <div class="flex flex-col items-center gap-3 mb-5" style="flex-shrink:0;">
-                <div class="avatar-wrapper w-32 h-32"
-                     :style="notes[String(selectedUserId)] ? 'margin-top:3.4rem' : ''">
-                    <div class="note-bubble" x-show="notes[String(selectedUserId)]" x-cloak
-                         x-text="notes[String(selectedUserId)]"></div>
+                <div class="avatar-wrapper w-32 h-32">
                     <div class="rounded-full overflow-hidden w-32 h-32"
-                         :class="'ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
+                         :class="'ring-changed ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
                          style="border-radius: 50%;">
                         <template x-if="selectedAvatar">
                             <img :src="selectedAvatar" class="w-full h-full object-cover"/>
@@ -461,6 +504,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                         </template>
                     </div>
                     <div x-show="selectedBadge"
+                         x-effect="selectedBadge; $nextTick(() => { $el.classList.remove('badge-pop'); void $el.offsetWidth; if (selectedBadge) $el.classList.add('badge-pop'); })"
                          class="status-badge tooltip tooltip-top"
                          :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
                          :data-tip="selectedBadge ? (BADGE_LABELS[selectedBadge] || '') : ''"
@@ -544,12 +588,9 @@ const INIT_NOTES    = {{ user_notes | tojson }};
 
             <!-- Avatar z badge'm — nad przyciskami na pionowym ekranie, po prawej na poziomym -->
             <div class="flex flex-col items-center gap-3 mb-5" style="flex-shrink:0;">
-                <div class="avatar-wrapper w-32 h-32"
-                     :style="notes[String(selectedUserId)] ? 'margin-top:3.4rem' : ''">
-                    <div class="note-bubble" x-show="notes[String(selectedUserId)]" x-cloak
-                         x-text="notes[String(selectedUserId)]"></div>
+                <div class="avatar-wrapper w-32 h-32">
                     <div class="rounded-full overflow-hidden w-32 h-32"
-                         :class="'ring-status-' + clockStatus + ' avatar-' + clockStatus"
+                         :class="'ring-changed ring-status-' + clockStatus + ' avatar-' + clockStatus"
                          style="border-radius: 50%;">
                         <template x-if="selectedAvatar">
                             <img :src="selectedAvatar" class="w-full h-full object-cover"/>
@@ -561,6 +602,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                         </template>
                     </div>
                     <div x-show="selectedBadge"
+                         x-effect="selectedBadge; $nextTick(() => { $el.classList.remove('badge-pop'); void $el.offsetWidth; if (selectedBadge) $el.classList.add('badge-pop'); })"
                          class="status-badge tooltip tooltip-top"
                          :class="selectedBadge ? 'badge-type-' + selectedBadge : ''"
                          :data-tip="selectedBadge ? (BADGE_LABELS[selectedBadge] || '') : ''"
@@ -603,11 +645,11 @@ const INIT_NOTES    = {{ user_notes | tojson }};
 
                 <!-- Przerwa -->
                 <div class="flex flex-col items-center gap-3">
-                    <!-- Jeden przycisk: Przerwa (ciemny kontur) -> w przerwie (ciemne wypełnienie, klik = Koniec przerwy) -->
+                    <!-- Jeden przycisk: Przerwa (pomarańczowy kontur) -> w przerwie (pomarańczowe wypełnienie, klik = Koniec przerwy) -->
                     <button @click="clockAction(clockStatus === 'break' ? 'break_end' : 'break_start')"
                             :disabled="(clockStatus !== 'working' && clockStatus !== 'break') || isDayOff"
                             class="clock-btn"
-                            :class="clockStatus === 'break' ? 'clock-fill-dark' : 'clock-outline-dark'">
+                            :class="clockStatus === 'break' ? 'clock-fill-orange' : 'clock-outline-orange'">
                         <svg x-show="clockStatus !== 'break'" xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none"
                              viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -698,7 +740,7 @@ function welcomeApp() {
         statuses: {...INIT_STATUSES},
         badges:   {...INIT_BADGES},
         notes:    {...INIT_NOTES},
-        get anyNote() { return Object.values(this.notes).some(Boolean); },
+        ringChanged: {},
         selectedUserId: null,
         selectedName: '',
         selectedAvatar: '',
@@ -737,11 +779,19 @@ function welcomeApp() {
         updateAvatarBadge(uid, status, badge) {
             const badgeEl = document.getElementById('badge-' + uid);
             if (!badgeEl) return;
-            if (badge && BADGE_ICONS[badge]) {
+            const prev = badgeEl.dataset.b || '';
+            const next = (badge && BADGE_ICONS[badge]) ? badge : '';
+            badgeEl.dataset.b = next;
+            if (next) {
                 badgeEl.innerHTML = BADGE_ICONS[badge];
                 badgeEl.style.display = '';
                 badgeEl.className = 'status-badge badge-type-' + badge + ' tooltip tooltip-top';
                 badgeEl.setAttribute('data-tip', BADGE_LABELS[badge] || '');
+                if (prev !== next) {
+                    /* nowy / zmieniony badge — animacja wejścia */
+                    void badgeEl.offsetWidth;
+                    badgeEl.classList.add('badge-pop');
+                }
             } else {
                 badgeEl.style.display = 'none';
                 badgeEl.className = 'status-badge';
@@ -758,6 +808,9 @@ function welcomeApp() {
                     Object.entries(data).forEach(([uid, info]) => {
                         const status = info.status || 'idle';
                         const badge  = info.badge  || null;
+                        if (this.statuses[uid] !== undefined && this.statuses[uid] !== status) {
+                            this.ringChanged[uid] = true;   /* obramowanie wjeżdża animacją */
+                        }
                         this.statuses[uid] = status;
                         this.badges[uid]   = badge;
                         this.notes[uid]    = info.note || '';
@@ -798,6 +851,7 @@ function welcomeApp() {
             this.selectedBadge  = badge;
             this.pin            = '';
             this.pinError       = false;
+            this.ringChanged    = {};   /* animacje obramowania tylko dla zmian od tej chwili */
             this.screen         = 'pin';
         },
 
@@ -828,6 +882,9 @@ function welcomeApp() {
                 this.clockDate   = data.date;
                 this.clockStatus = data.status || 'idle';
                 this.selectedBadge = data.badge || null;
+                if (this.statuses[String(this.selectedUserId)] !== this.clockStatus) {
+                    this.ringChanged[String(this.selectedUserId)] = true;
+                }
                 this.statuses[String(this.selectedUserId)] = this.clockStatus;
                 this.badges[String(this.selectedUserId)]   = this.selectedBadge;
                 this.screen      = 'clock';
@@ -857,6 +914,9 @@ function welcomeApp() {
                 this.breaksCount = data.breaks_count || 0;
                 this.clockStatus = data.status || 'idle';
                 this.selectedBadge = data.badge || null;
+                if (this.statuses[String(this.selectedUserId)] !== this.clockStatus) {
+                    this.ringChanged[String(this.selectedUserId)] = true;
+                }
                 this.statuses[String(this.selectedUserId)] = this.clockStatus;
                 this.badges[String(this.selectedUserId)]   = this.selectedBadge;
                 this.fetchStatuses();
