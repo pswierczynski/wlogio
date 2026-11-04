@@ -398,9 +398,9 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                          style="border-radius: 50%;">
                         {% if user.avatar %}
                         <img src="{{ user.avatar }}" alt="{{ user.name or '' }}"
-                             class="w-full h-full object-cover"/>
+                             class="w-full h-full rounded-full object-cover"/>
                         {% else %}
-                        <div class="w-full h-full bg-neutral flex items-center justify-center">
+                        <div class="w-full h-full rounded-full bg-neutral flex items-center justify-center">
                             <span class="text-4xl font-bold text-white select-none">
                                 {% set parts = (user.name or user.email.split('@')[0]).split(' ') %}
                                 {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
@@ -495,10 +495,10 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                          :class="'ring-changed ring-status-' + (statuses[String(selectedUserId)] || 'idle') + ' avatar-' + (statuses[String(selectedUserId)] || 'idle')"
                          style="border-radius: 50%;">
                         <template x-if="selectedAvatar">
-                            <img :src="selectedAvatar" class="w-full h-full object-cover"/>
+                            <img :src="selectedAvatar" class="w-full h-full rounded-full object-cover"/>
                         </template>
                         <template x-if="!selectedAvatar">
-                            <div class="w-full h-full bg-neutral flex items-center justify-center">
+                            <div class="w-full h-full rounded-full bg-neutral flex items-center justify-center">
                                 <span class="text-4xl font-bold text-white" x-text="getInitials(selectedName)"></span>
                             </div>
                         </template>
@@ -593,10 +593,10 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                          :class="'ring-changed ring-status-' + clockStatus + ' avatar-' + clockStatus"
                          style="border-radius: 50%;">
                         <template x-if="selectedAvatar">
-                            <img :src="selectedAvatar" class="w-full h-full object-cover"/>
+                            <img :src="selectedAvatar" class="w-full h-full rounded-full object-cover"/>
                         </template>
                         <template x-if="!selectedAvatar">
-                            <div class="w-full h-full bg-neutral flex items-center justify-center">
+                            <div class="w-full h-full rounded-full bg-neutral flex items-center justify-center">
                                 <span class="text-4xl font-bold text-white" x-text="getInitials(selectedName)"></span>
                             </div>
                         </template>
