@@ -7,6 +7,7 @@
        zakończenia pracy, zielony = aktualnie w pracy. */
     .emp-card-missing-end .emp-name { color: oklch(var(--er)); }
     .emp-card-in-work .emp-name     { color: #22c55e; }
+    .emp-card-on-break .emp-name    { color: #f59e0b; }  /* przerwa ma pierwszeństwo przed zielonym */
 
     /* Obramowanie zdjęcia wg statusu — kolory jak w Terminalu, bez pulsowania */
     .emp-ring-working { box-shadow: 0 0 0 3px #22c55e; }
@@ -65,7 +66,7 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
     {% for employee in employees %}
     {% set fl = flags.get(employee.id) %}
-    <div class="card bg-base-100 shadow-sm emp-card{% if fl and fl.in_work %} emp-card-in-work{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
+    <div class="card bg-base-100 shadow-sm emp-card{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
          data-employee-id="{{ employee.id }}">
         <div class="card-body gap-3 p-4">
             <div class="flex items-center gap-3">
@@ -156,6 +157,7 @@
                czerwonym (minione dni bez godziny zakończenia). */
             card.classList.toggle('emp-card-in-work', inWork);
             card.classList.toggle('emp-card-missing-end', missing && !inWork);
+            card.classList.toggle('emp-card-on-break', f.status === 'break');
 
             var avatar = card.querySelector('[data-emp-avatar]');
             if (avatar) {
