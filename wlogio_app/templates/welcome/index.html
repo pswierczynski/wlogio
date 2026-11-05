@@ -58,6 +58,10 @@
         }
         .label-appear { animation: labelAppear 0.35s ease forwards; }
 
+        /* Jeden pomarańczowy w całej aplikacji (#f59e0b = obramowanie zdjęcia w przerwie) — nadpisuje kolor warning z daisyUI */
+        :root, [data-theme] { --wa: 76.9% 0.188 70.08; }
+        .text-warning { color: #f59e0b; }
+
         .ring-status-working { box-shadow: 0 0 0 4px #22c55e; }
         .ring-status-break   { box-shadow: 0 0 0 4px #f59e0b; }
         .ring-status-idle    { box-shadow: 0 0 0 3px rgba(0,0,0,0.08); }

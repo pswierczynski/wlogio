@@ -27,6 +27,10 @@
 
         [x-cloak] { display: none !important; }
 
+        /* Jeden pomarańczowy w całej aplikacji (#f59e0b = obramowanie zdjęcia w przerwie) — nadpisuje kolor warning z daisyUI */
+        :root, [data-theme] { --wa: 76.9% 0.188 70.08; }
+        .text-warning { color: #f59e0b; }
+
         /* Zmiana koloru primary z niebieskiego (#4a00ff) na #1A1A19 */
         .btn-primary { background-color: #1A1A19; border-color: #1A1A19; color: #ffffff; }
         .btn-primary:hover { background-color: #000000; border-color: #000000; }
