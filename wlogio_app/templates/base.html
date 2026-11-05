@@ -67,7 +67,14 @@
             border-color: oklch(var(--b3));
             color: oklch(var(--bc));
         }
-        .entry-row:hover { background-color: oklch(var(--b2)); }
+        /* Panel pracy: dni jako białe paski rozdzielone małymi odstępami (bez obramowań) */
+        .dash-table { border-collapse: separate; border-spacing: 0 4px; }
+        .dash-table thead tr, .dash-table tbody tr { border-bottom-width: 0; }
+        .dash-table thead th { background: transparent; padding-top: .25rem; padding-bottom: .25rem; }
+        .entry-row > td { background-color: oklch(var(--b1)); transition: background-color .15s; }
+        .entry-row > td:first-child { border-top-left-radius: .5rem; border-bottom-left-radius: .5rem; }
+        .entry-row > td:last-child { border-top-right-radius: .5rem; border-bottom-right-radius: .5rem; }
+        .entry-row:hover > td { background-color: color-mix(in oklab, oklch(var(--b1)) 55%, oklch(var(--b3))); }
         /* Stałe szerokości kolumn tabeli */
         .col-date { width: 100px; min-width: 100px; }
         .col-type { width: 110px; min-width: 110px; }

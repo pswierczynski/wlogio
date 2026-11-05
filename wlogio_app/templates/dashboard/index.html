@@ -92,9 +92,9 @@
     {% for group in ns.year_groups %}
     {% set year = group.year %}
 
-    <div class="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+    <div class="card bg-transparent shadow-none overflow-hidden">
 
-        <div class="flex items-center justify-between px-4 sm:px-5 py-3 cursor-pointer hover:bg-base-50 transition-colors select-none"
+        <div class="flex items-center justify-between px-4 sm:px-5 py-3 cursor-pointer bg-base-300/50 hover:bg-base-300/70 text-base-content/60 rounded-box transition-colors select-none"
              @click="openYear = openYear === {{ year }} ? null : {{ year }}">
             <div class="flex items-center gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -129,15 +129,15 @@
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100">
 
-            <div class="border-t border-base-200 flex flex-col gap-2 p-2 sm:p-3">
+            <div class="flex flex-col gap-2 pt-2">
 
                 {% for month in group.months %}
                 {% set key = month.year ~ '-' ~ month.month %}
 
-                <div class="card bg-base-100 shadow-none overflow-hidden"
-                     :class="openMonth === '{{ key }}' ? 'border border-base-content/25' : 'border border-base-200'">
+                <div class="card bg-transparent shadow-none overflow-hidden">
 
-                    <div class="flex items-center justify-between px-3 sm:px-4 py-3 cursor-pointer hover:bg-base-50 transition-colors select-none"
+                    <div class="flex items-center justify-between px-3 sm:px-4 py-3 cursor-pointer rounded-box transition-colors select-none"
+                         :class="openMonth === '{{ key }}' ? 'bg-base-100' : 'bg-base-300/50 hover:bg-base-300/70 text-base-content/60'"
                          @click="openMonth = openMonth === '{{ key }}' ? null : '{{ key }}'">
                         <div class="flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg"
@@ -190,12 +190,12 @@
                          x-transition:enter-start="opacity-0"
                          x-transition:enter-end="opacity-100">
 
-                        <div class="border-t border-base-200">
+                        <div class="mt-1">
                             {% if month.entries %}
                             <div class="overflow-x-auto">
-                                <table class="table table-sm w-full">
+                                <table class="table table-sm dash-table w-full">
                                     <thead>
-                                        <tr class="bg-base-200/60 text-xs text-base-content/60 uppercase tracking-wide">
+                                        <tr class="text-xs text-base-content/50 uppercase tracking-wide">
                                             <th class="col-date font-semibold">Data</th>
                                             <th class="col-type font-semibold">Typ</th>
                                             <th class="col-time font-semibold">Przyjście</th>
@@ -389,7 +389,7 @@
                             <!-- Podsumowanie miesiąca -->
                             {% set ot_rate_pct = (month.config.overtime_rate if month.config and month.config.overtime_rate is not none else 100) / 100 %}
                             {% set overtime_amount = month.summary.overtime_hours * month.hourly_rate * ot_rate_pct %}
-                            <div class="border-t border-base-300 bg-base-200/60 px-3 sm:px-5 py-5 sm:py-6">
+                            <div class="bg-base-100 rounded-box mt-1 px-3 sm:px-5 py-5 sm:py-6">
                                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 text-sm">
                                     <div>
                                         <div class="text-xs text-base-content/50 mb-0.5">Przepracowane</div>
@@ -429,7 +429,7 @@
                                     </div>
                                 </div>
 
-                                <div class="flex flex-wrap items-center justify-between gap-2 mt-5 pt-5 border-t border-base-300">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mt-5 pt-5">
                                     <div class="flex flex-wrap gap-2 sm:gap-4 text-xs text-base-content/50">
                                         <span>Stawka: <strong>{{ month.hourly_rate }} PLN/h</strong></span>
                                         <span>Dni: <strong>{{ month.summary.work_days }} / {{ month.working_days }}</strong></span>
@@ -443,7 +443,7 @@
                                     <div class="flex items-center gap-2 shrink-0">
                                         {% if month.summary.expected_hours > 0 %}
                                         {% set progress_pct = [(month.summary.total_hours / month.summary.expected_hours * 100), 100] | min | round | int %}
-                                        <div class="relative h-2.5 rounded-full border border-base-content/20 bg-transparent overflow-hidden"
+                                        <div class="relative h-2.5 rounded-full bg-base-300 overflow-hidden"
                                              style="width: 90px;">
                                             <div class="absolute left-0 top-0 h-full rounded-full bg-base-content/30"
                                                  style="width: {{ progress_pct }}%;"></div>
@@ -457,7 +457,7 @@
                             </div>
 
                             {% else %}
-                            <div class="py-8 text-center text-base-content/40 text-sm">
+                            <div class="py-8 text-center text-base-content/40 text-sm bg-base-100 rounded-box mt-1">
                                 Brak wpisów.
                                 <a href="{{ url_for('entries.add') }}" class="link link-primary">Dodaj pierwszy dzień</a>
                             </div>
