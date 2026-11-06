@@ -568,7 +568,9 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                     </button>
                 </div>
 
-                <div x-show="pinError" x-cloak class="text-error text-sm mb-2 animate-fade-in">
+                {# Stała wysokość: komunikat tylko zmienia przezroczystość, więc okno nie rośnie przy błędnym PIN-ie #}
+                <div class="text-error text-sm mb-2 h-5 leading-5 transition-opacity duration-200"
+                     :class="pinError ? 'opacity-100' : 'opacity-0'" aria-live="polite">
                     Nieprawidłowy PIN. Spróbuj ponownie.
                 </div>
 
