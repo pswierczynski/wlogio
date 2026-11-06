@@ -94,7 +94,8 @@
 
     <div class="card bg-transparent shadow-none overflow-hidden">
 
-        <div class="flex items-center justify-between px-4 sm:px-5 py-3 cursor-pointer bg-base-300/50 hover:bg-base-300/70 text-base-content/60 rounded-box transition-colors select-none"
+        <div class="flex items-center justify-between px-4 sm:px-5 py-3 cursor-pointer rounded-box transition-colors select-none"
+             :class="openYear === {{ year }} ? 'bg-base-100' : 'bg-base-300/50 hover:bg-base-300/70 text-base-content/60'"
              @click="openYear = openYear === {{ year }} ? null : {{ year }}">
             <div class="flex items-center gap-3">
                 <svg xmlns="http://www.w3.org/2000/svg"
