@@ -46,8 +46,11 @@ button{font-family:inherit;}
 }
 .eyebrow::before{content:''; width:20px; height:1px; background:var(--ink-faint);}
 
-.reveal{opacity:0; transform:translateY(10px); transition:opacity .9s ease, transform .9s ease;}
-.reveal.in{opacity:1; transform:none;}
+/* Animacje pojawiania się — aktywne tylko gdy działa JS (html.js); klasy nakłada main.js */
+.js .reveal{opacity:0; transform:translateY(26px); transition:opacity .8s ease, transform .8s cubic-bezier(.2,.7,.2,1);}
+.js .reveal.reveal-zoom{transform:scale(.94) translateY(18px);}
+.js .reveal.reveal-left{transform:translateX(-28px);}
+.js .reveal.in{opacity:1; transform:none;}
 
 /* ---------- Buttons ---------- */
 .btn{
@@ -105,7 +108,7 @@ button{font-family:inherit;}
 /* Hero: pełne zdjęcie na całą szerokość (assets/img/hero-bg.jpg), białe teksty */
 .hero{
   position:relative; min-height:clamp(600px,56.25vw,900px); display:flex; align-items:flex-start;
-  padding:clamp(125px,11.5vw,180px) 0 72px; background:#2a2622 url("../img/hero-bg.jpg") 72% bottom/cover no-repeat; overflow:hidden; color:#fff;
+  padding:clamp(125px,11.5vw,180px) 0 72px; background:#2a2622 url("../img/hero-bg.jpg") 88% top/auto 124% no-repeat; overflow:hidden; color:#fff;
 }
 .hero::before{ /* delikatne przyciemnienie dla czytelności białego tekstu (bez białego gradientu) */
   content:""; position:absolute; inset:0; pointer-events:none;
@@ -414,8 +417,8 @@ input:-moz-autofill{background-color:#fff !important; color:var(--ink) !importan
 }
 
 /* Wkrótce / niedostępne */
-.pricing .plan-card.soon{opacity:.62;}
-.pricing .plan-card .badge-soon{position:absolute; top:-11px; left:26px; background:transparent; color:#fff; border:1px solid rgba(255,255,255,.5); font-size:10px; font-weight:500; padding:4px 11px; letter-spacing:.04em; text-transform:uppercase; border-radius:var(--radius);}
+.pricing .plan-card.soon > *:not(.badge-soon){opacity:.6;}
+.pricing .plan-card .badge-soon{position:absolute; top:-11px; left:26px; background:var(--ink); color:#fff; border:1px solid rgba(255,255,255,.5); z-index:2; font-size:10px; font-weight:500; padding:4px 11px; letter-spacing:.04em; text-transform:uppercase; border-radius:var(--radius);}
 .btn.is-disabled{cursor:not-allowed; pointer-events:none; opacity:.7;}
 .term-variants{display:flex; flex-direction:column; gap:10px; margin:18px 0 22px; max-width:420px;}
 .term-var{display:flex; justify-content:space-between; align-items:center; gap:16px; border:1px solid var(--ink); border-radius:var(--radius); padding:14px 18px;}
@@ -431,3 +434,12 @@ input:-moz-autofill{background-color:#fff !important; color:var(--ink) !importan
 .opt.opt-soon{cursor:not-allowed;}
 .opt.opt-soon .opt-body{opacity:.55;}
 .soon-tag{font-style:normal; font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:.05em; border:1px solid var(--hairline); border-radius:var(--radius); padding:2px 7px; margin-left:6px; vertical-align:middle;}
+
+/* Hero — animacja wejścia tekstów i tła */
+@keyframes heroUp{from{opacity:0; transform:translateY(22px);} to{opacity:1; transform:none;}}
+@keyframes heroBg{from{opacity:0; transform:scale(1.05);} to{opacity:1; transform:none;}}
+.js .hero::after{content:none;}
+.js .hero h1{animation:heroUp .9s .15s cubic-bezier(.2,.7,.2,1) both;}
+.js .hero p.lead{animation:heroUp .9s .35s cubic-bezier(.2,.7,.2,1) both;}
+.js .hero .hero-cta{animation:heroUp .9s .55s cubic-bezier(.2,.7,.2,1) both;}
+.js .hero{animation:heroBg 1.4s ease both;}

@@ -20,6 +20,47 @@ window.WLOGIO_APP_URL = (typeof window.WLOGIO_APP_URL === "string") ? window.WLO
     el.setAttribute("href", APP_URL + path);
   });
 
+
+  /* ---- Animacje pojawiania się elementów przy przewijaniu ---- */
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || !("IntersectionObserver" in window)) {
+      document.documentElement.classList.remove("js");
+      return;
+    }
+    var groups = [
+      ".head", ".step", ".feature-item", ".chip", ".acc-card", ".plan-card",
+      ".billing-toggle", ".terminal-copy > *", ".terminal-art", ".faq-item",
+      ".cta-band", ".stat", ".reg-card", ".reg-actions", ".reg-hero .wrap > *"
+    ];
+    var seen = new Set();
+    groups.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) {
+        if (seen.has(el) || el.closest(".hero")) return;
+        seen.add(el);
+        el.classList.add("reveal");
+        if (el.classList.contains("terminal-art")) el.classList.add("reveal-zoom");
+        // opóźnienie kaskadowe wśród rodzeństwa (maks. ~0,5 s)
+        var idx = Array.prototype.indexOf.call(el.parentNode.children, el);
+        el.style.transitionDelay = Math.min(idx, 6) * 0.08 + "s";
+      });
+    });
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var el = en.target;
+        el.classList.add("in");
+        io.unobserve(el);
+        // po zakończeniu animacji zdejmujemy klasy, żeby nie kolidowały z :hover itp.
+        setTimeout(function () {
+          el.classList.remove("reveal", "reveal-zoom", "reveal-left", "in");
+          el.style.transitionDelay = "";
+        }, 1400);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+    seen.forEach(function (el) { io.observe(el); });
+  })();
+
   /* ---- Mobile nav toggle ---- */
   var navToggle = document.querySelector(".nav-toggle");
   var mainNav = document.querySelector(".main-nav");
