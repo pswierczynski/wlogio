@@ -17,10 +17,27 @@
     </div>
     {% endif %}
 
-    {% if company_placeholder %}
+    {% if company_settings %}
     <div class="card bg-base-100 shadow-sm">
-        <div class="card-body items-center text-center py-10">
-            <p class="text-base-content/50">Strona w przygotowaniu.</p>
+        <div class="card-body p-4 sm:p-6">
+            <h2 class="card-title text-base mb-2">Kwoty w panelach pracowników</h2>
+            <form method="POST" action="{{ url_for('settings.company_settings') }}">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" name="hide_amounts_from_employees"
+                           class="checkbox checkbox-sm mt-0.5"
+                           {% if current_user.hide_amounts_from_employees %}checked{% endif %}>
+                    <span>
+                        <span class="font-medium text-sm">Ukryj kwoty pieniężne przed pracownikami</span>
+                        <span class="block text-xs text-base-content/50 mt-0.5">
+                            W panelu pracy kont pracowników znikają wynagrodzenia przy dniach i miesiącach,
+                            prognoza, stawka godzinowa oraz kwoty przy nadgodzinach. Ty nadal widzisz wszystko.
+                        </span>
+                    </span>
+                </label>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary btn-sm">Zapisz</button>
+                </div>
+            </form>
         </div>
     </div>
     {% else %}

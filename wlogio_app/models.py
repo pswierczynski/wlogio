@@ -53,6 +53,9 @@ class User(UserMixin, db.Model):
     # Wyłącznie dla kont 'company' — 'small' / 'medium' / 'large'
     # (limit pracowników: patrz COMPANY_SIZE_LIMITS). NULL traktowany jak 'small'.
     company_size = db.Column(db.String(10), nullable=True)
+    # Ustawienie konta firmowego: ukrywa kwoty pieniężne w panelu pracy kont pracowników.
+    hide_amounts_from_employees = db.Column(db.Boolean, nullable=False, default=False,
+                                            server_default=db.false())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Konto firmowe -> jego konta pracownicze (self-referencyjna relacja).
@@ -99,6 +102,14 @@ class User(UserMixin, db.Model):
     @property
     def is_employee_account(self):
         return self.account_type == 'employee'
+
+    @property
+    def amounts_hidden(self):
+        """True, gdy konto pracownicze nie ma widzieć kwot (decyduje ustawienie firmy)."""
+        if not self.is_employee_account or not self.company_id:
+            return False
+        company = User.query.get(self.company_id)
+        return bool(company and company.hide_amounts_from_employees)
 
     @property
     def effective_company_size(self):

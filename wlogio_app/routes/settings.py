@@ -100,7 +100,8 @@ def index():
     # ta zakładka zostaje na razie pusta (opis docelowego zachowania ma
     # przyjść później); dotyczy wyłącznie kont indywidualnych/pracowniczych.
     if current_user.is_company:
-        return render_template('settings/index.html', company_placeholder=True)
+        return render_template('settings/index.html', company_settings=True,
+                               company_placeholder=False)
 
     configs = (
         MonthConfig.query
@@ -111,6 +112,18 @@ def index():
     balance = get_or_create_vacation_balance(current_user.id, db.session)
     return render_template('settings/index.html', configs=configs, balance=balance,
                            MONTH_NAMES=MONTH_NAMES, company_placeholder=False)
+
+
+@settings_bp.route('/company', methods=['POST'])
+@login_required
+def company_settings():
+    """Ustawienia konta firmowego (na razie: ukrywanie kwot przed pracownikami)."""
+    if not current_user.is_company:
+        return redirect(url_for('settings.index'))
+    current_user.hide_amounts_from_employees = request.form.get('hide_amounts_from_employees') == 'on'
+    db.session.commit()
+    flash('Ustawienia zostały zapisane.', 'success')
+    return redirect(url_for('settings.index'))
 
 
 def _settings_home():

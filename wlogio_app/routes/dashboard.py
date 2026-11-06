@@ -370,6 +370,7 @@ def index():
         MONTH_NAMES=MONTH_NAMES,
         viewing_employee=(target if current_user.is_company else None),
         employee_today=local_today(),
+        hide_amounts=current_user.amounts_hidden,
     )
 
 
