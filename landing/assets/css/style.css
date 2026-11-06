@@ -108,7 +108,7 @@ button{font-family:inherit;}
 /* Hero: pełne zdjęcie na całą szerokość (assets/img/hero-bg.jpg), białe teksty */
 .hero{
   position:relative; min-height:clamp(600px,56.25vw,900px); display:flex; align-items:flex-start;
-  padding:clamp(125px,11.5vw,180px) 0 72px; background:#2a2622 url("../img/hero-bg.jpg") 88% top/auto 124% no-repeat; overflow:hidden; color:#fff;
+  padding:clamp(125px,11.5vw,180px) 0 72px; background:#2a2622 url("../img/hero-bg.jpg") 66% bottom/cover no-repeat; overflow:hidden; color:#fff;
 }
 .hero::before{ /* delikatne przyciemnienie dla czytelności białego tekstu (bez białego gradientu) */
   content:""; position:absolute; inset:0; pointer-events:none;
