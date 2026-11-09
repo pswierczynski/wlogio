@@ -168,6 +168,10 @@ def build_months_data(user_id, date_from=None, date_to=None, include_empty_curre
 
         expected_hours = working_days * hours_per_day
 
+        # Wynagrodzenie stałe: stawka = wynagrodzenie / wymagane godziny miesiąca
+        if config and config.fixed_salary is not None and expected_hours > 0:
+            hourly_rate = float(config.fixed_salary) / expected_hours
+
         # Przelicz hours_billed i extra_break_minutes na żywo dla każdego wpisu
         entry_views = []
         for entry in entries:
@@ -199,6 +203,8 @@ def build_months_data(user_id, date_from=None, date_to=None, include_empty_curre
             'config':        config,
             'summary':       summary,
             'hourly_rate':   hourly_rate,
+            'hourly_rate_display': round(hourly_rate, 2),
+            'fixed_salary':  float(config.fixed_salary) if config and config.fixed_salary is not None else None,
             'working_days':  working_days,
             'forecast':      forecast,
             'hours_per_day': hours_per_day,

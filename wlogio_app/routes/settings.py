@@ -284,7 +284,10 @@ def month_config(year, month):
     if request.method == 'POST':
         try:
             # Podstawowe pola
-            config.hourly_rate = Decimal(request.form.get('hourly_rate', '0').replace(',', '.'))
+            salary_type = request.form.get('salary_type', 'hourly')
+            if salary_type != 'fixed':
+                config.hourly_rate = Decimal(request.form.get('hourly_rate', '0').replace(',', '.'))
+                config.fixed_salary = None
             bonus_str = request.form.get('bonus', '0').replace(',', '.').strip()
             config.bonus = Decimal(bonus_str) if bonus_str else Decimal('0')
             config.notes = request.form.get('notes', '').strip() or None
@@ -305,6 +308,17 @@ def month_config(year, month):
             # Przelicz expected_hours wg nowych ustawień
             working_days = get_working_days_in_billing_period_from_config(year, month, config)
             config.expected_hours = Decimal(str(float(config.hours_per_day) * working_days))
+
+            # Wynagrodzenie stałe: stawka godzinowa wyliczana z wynagrodzenia i wymaganych godzin
+            if salary_type == 'fixed':
+                fixed = Decimal(request.form.get('fixed_salary', '0').replace(',', '.') or '0')
+                if fixed < 0:
+                    raise ValueError('Wynagrodzenie nie może być ujemne.')
+                config.fixed_salary = fixed
+                config.hourly_rate = (
+                    (fixed / config.expected_hours).quantize(Decimal('0.01'))
+                    if config.expected_hours and config.expected_hours > 0 else Decimal('0')
+                )
 
             db.session.commit()
             flash('Konfiguracja miesiąca zapisana.', 'success')

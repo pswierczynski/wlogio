@@ -84,7 +84,12 @@ def get_or_create_month_config(user_id, billing_year, billing_month):
             user_id=user_id,
             billing_year=billing_year,
             billing_month=billing_month,
-            hourly_rate=prev_config.hourly_rate if prev_config else Decimal('0'),
+            hourly_rate=(
+                (Decimal(str(prev_config.fixed_salary)) / Decimal(str(expected_hours))).quantize(Decimal('0.01'))
+                if prev_config and prev_config.fixed_salary is not None and expected_hours > 0
+                else (prev_config.hourly_rate if prev_config else Decimal('0'))
+            ),
+            fixed_salary=prev_config.fixed_salary if prev_config else None,
             expected_hours=Decimal(str(expected_hours)),
             bonus=Decimal('0'),
             billing_start_day=billing_start_day,

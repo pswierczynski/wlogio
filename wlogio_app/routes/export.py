@@ -194,7 +194,7 @@ def generate_csv(months_data, hide_amounts=False):
             if s.get('bonus'):
                 writer.writerow(['Premia', format_currency(s['bonus'])])
             writer.writerow(['Razem', format_currency(s['total_with_bonus'])])
-            writer.writerow(['Stawka', f"{month['hourly_rate']} PLN/h"])
+            writer.writerow(['Stawka', f"{month['hourly_rate_display']} PLN/h"])
         writer.writerow([])
         writer.writerow([])
 
@@ -278,7 +278,7 @@ def generate_xlsx(months_data, hide_amounts=False):
             razem_cell.number_format = '#,##0.00 "zł"'
             row += 1
             ws.cell(row=row, column=1, value='Stawka')
-            rate_cell = ws.cell(row=row, column=2, value=f"{month['hourly_rate']} PLN/h")
+            rate_cell = ws.cell(row=row, column=2, value=f"{month['hourly_rate_display']} PLN/h")
             rate_cell.alignment = Alignment(horizontal='right')
         row += 3
 
@@ -378,7 +378,7 @@ def generate_pdf(months_data, user, hide_amounts=False):
             if s.get('bonus'):
                 summary_rows.append(['Premia', format_currency(s['bonus'])])
             summary_rows.append(['Razem', format_currency(s['total_with_bonus'])])
-            summary_rows.append(['Stawka', f"{month['hourly_rate']} PLN/h"])
+            summary_rows.append(['Stawka', f"{month['hourly_rate_display']} PLN/h"])
         # wiersz „Razem" (pogrubiony, z linią) tylko gdy kwoty są widoczne
         razem_row_index = next((i for i, r_ in enumerate(summary_rows) if r_[0] == 'Razem'), None)
 

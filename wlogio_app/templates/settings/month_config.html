@@ -21,6 +21,12 @@
                       roundMin: {{ config.round_minutes or 15 }},
                       workingDaysCount: {{ working_days }},
                       expectedHours: {{ expected_hours }},
+                      salaryType: '{{ 'fixed' if config.fixed_salary is not none else 'hourly' }}',
+                      fixedSalary: '{{ config.fixed_salary if config.fixed_salary is not none else '' }}',
+                      derivedRate() {
+                          const f = parseFloat(String(this.fixedSalary).replace(',', '.'));
+                          return (f >= 0 && this.expectedHours > 0) ? (f / this.expectedHours).toFixed(2) : '—';
+                      },
                       calcExpected() {
                           fetch('/settings/working-days-preview', {
                               method: 'POST',
@@ -46,12 +52,46 @@
                     <h2 class="font-semibold text-base border-b border-base-200 pb-2">Wynagrodzenie</h2>
 
                     <div class="form-control">
+                        <label class="label"><span class="label-text font-medium">Rodzaj wynagrodzenia</span></label>
+                        <div class="flex flex-wrap gap-x-6 gap-y-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="salary_type" value="hourly" class="radio radio-sm"
+                                       x-model="salaryType">
+                                <span class="text-sm">Stawka godzinowa</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="salary_type" value="fixed" class="radio radio-sm"
+                                       x-model="salaryType">
+                                <span class="text-sm">Wynagrodzenie stałe</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-control" x-show="salaryType === 'hourly'">
                         <label class="label">
                             <span class="label-text font-medium">Stawka godzinowa (PLN/h)</span>
                         </label>
-                        <input type="number" name="hourly_rate" step="0.01" min="0" required
+                        <input type="number" name="hourly_rate" step="0.01" min="0"
+                               :required="salaryType === 'hourly'" :disabled="salaryType !== 'hourly'"
                                value="{{ config.hourly_rate }}"
                                class="input input-bordered w-full"/>
+                    </div>
+
+                    <div class="form-control" x-show="salaryType === 'fixed'" x-cloak>
+                        <label class="label">
+                            <span class="label-text font-medium">Wynagrodzenie stałe (PLN / miesiąc)</span>
+                        </label>
+                        <input type="number" name="fixed_salary" step="0.01" min="0"
+                               x-model="fixedSalary"
+                               :required="salaryType === 'fixed'" :disabled="salaryType !== 'fixed'"
+                               class="input input-bordered w-full"/>
+                        <label class="label">
+                            <span class="label-text-alt text-base-content/50">
+                                Stawka godzinowa wyliczana automatycznie:
+                                <strong x-text="derivedRate()"></strong> PLN/h
+                                (wynagrodzenie ÷ <span x-text="expectedHours"></span> wymaganych godzin)
+                            </span>
+                        </label>
                     </div>
 
                     <div class="form-control">

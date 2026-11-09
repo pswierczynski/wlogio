@@ -212,6 +212,9 @@ class MonthConfig(db.Model):
     billing_year = db.Column(db.Integer, nullable=False)
     billing_month = db.Column(db.Integer, nullable=False)
     hourly_rate = db.Column(db.Numeric(8, 2), nullable=False, default=0)
+    # Wynagrodzenie stałe (miesięczne). Gdy ustawione, stawka godzinowa jest wyliczana
+    # automatycznie: wynagrodzenie / wymagane godziny miesiąca. NULL = stawka godzinowa.
+    fixed_salary = db.Column(db.Numeric(10, 2), nullable=True)
     expected_hours = db.Column(db.Numeric(6, 2), nullable=True)
     bonus = db.Column(db.Numeric(10, 2), nullable=True, default=0)
     notes = db.Column(db.String(500), nullable=True)
