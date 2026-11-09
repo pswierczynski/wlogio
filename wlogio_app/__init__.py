@@ -71,7 +71,10 @@ def create_app(config_name='default'):
 
         nav_display_name = _current_user.name or _current_user.email or _current_user.login or '?'
 
+        from wlogio_app.scope import employee_can_add_any, employee_can_modify
         return {
+            'emp_can_add': employee_can_add_any(),
+            'emp_can_modify': employee_can_modify,
             'nav_effective_user': nav_effective_user,
             'nav_display_name': nav_display_name,
             'nav_account_label': _current_user.account_type_label,

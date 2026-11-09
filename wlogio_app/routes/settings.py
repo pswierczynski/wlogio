@@ -118,10 +118,16 @@ def index():
 @settings_bp.route('/company', methods=['POST'])
 @login_required
 def company_settings():
-    """Ustawienia konta firmowego (na razie: ukrywanie kwot przed pracownikami)."""
+    """Ustawienia konta firmowego: ukrywanie kwot oraz zakres edycji dni przez pracowników."""
     if not current_user.is_company:
         return redirect(url_for('settings.index'))
     current_user.hide_amounts_from_employees = request.form.get('hide_amounts_from_employees') == 'on'
+    mode = request.form.get('employee_entry_mode', 'full')
+    current_user.employee_entry_mode = mode if mode in ('full', 'today', 'terminal') else 'full'
+    current_user.employee_future_leave = (
+        current_user.employee_entry_mode != 'full'
+        and request.form.get('employee_future_leave') == 'on'
+    )
     db.session.commit()
     flash('Ustawienia zostały zapisane.', 'success')
     return redirect(url_for('settings.index'))

@@ -69,15 +69,7 @@ def clear_viewing_employee():
     session.pop('viewing_employee_id', None)
 
 
-# --- Konto pracownicze: ograniczony zapis w panelu pracy -------------------
-# Pracownik może dodawać/edytować wyłącznie bieżący dzień (dowolnego typu).
-# Inne dni (przeszłe i przyszłe) może ustawiać tylko jako urlopy (wszystkie
-# rodzaje), święta i zwolnienia — i tylko wtedy, gdy ten dzień nie jest już
-# ustawiony jako dzień pracy.
-EMPLOYEE_OTHER_DAY_TYPES = (
-    'vacation', 'on_demand', 'unpaid', 'holiday',
-    'sick_leave', 'care_leave', 'force_majeure', 'child_care',
-)
+# --- Konto pracownicze: zakres zapisu w panelu pracy zależy od ustawień konta firmowego ---
 
 
 def local_today():
@@ -85,23 +77,56 @@ def local_today():
     return datetime.now(ZoneInfo('Europe/Warsaw')).date()
 
 
+def _employee_day_allowed(user, day, new_type, existing_type=None):
+    """
+    Czy konto pracownicze może ustawić na dzień `day` wpis typu `new_type`
+    (istniejący wpis ma typ `existing_type`, brak = None) — wg ustawień firmy:
+      full     - zawsze,
+      today    - tylko bieżący dzień; dodatkowo (opcja) dni inne niż praca od dziś w przyszłość,
+      terminal - nic w panelu; (opcja) dni inne niż praca od dziś w przyszłość.
+    """
+    mode, future_leave = user.entry_policy
+    if mode == 'full':
+        return True
+    today = local_today()
+    if mode == 'today' and day == today:
+        return True
+    if future_leave and day >= today and new_type != 'work' and existing_type != 'work':
+        return True
+    return False
+
+
 def employee_set_error(entry_date, new_type, existing_type=None):
-    """
-    Zwraca komunikat błędu, jeśli pracownik NIE może ustawić na dzień
-    `entry_date` wpisu typu `new_type` (istniejący wpis ma typ `existing_type`
-    albo brak wpisu = None); None, gdy wolno.
-    """
-    if entry_date == local_today():
+    """Komunikat błędu, jeśli zalogowany pracownik NIE może ustawić takiego wpisu; None gdy wolno."""
+    if _employee_day_allowed(current_user, entry_date, new_type, existing_type):
         return None
-    if existing_type == 'work':
-        return 'Ten dzień jest ustawiony jako dzień pracy — pracownik może zmieniać tylko bieżący dzień.'
-    if new_type not in EMPLOYEE_OTHER_DAY_TYPES:
-        return 'Poza bieżącym dniem możesz ustawić tylko urlop, święto lub zwolnienie.'
-    return None
+    mode, future_leave = current_user.entry_policy
+    if mode == 'today':
+        if future_leave:
+            return 'Możesz zmieniać tylko bieżący dzień oraz dodawać urlopy i zwolnienia od dziś w przyszłość.'
+        return 'Pracownik może zmieniać tylko bieżący dzień.'
+    if future_leave:
+        return 'Możesz dodawać tylko urlopy i zwolnienia od dziś w przyszłość. Pracę rejestrujesz w terminalu.'
+    return 'Firma zezwala na rejestrowanie czasu pracy wyłącznie w terminalu.'
 
 
 def employee_can_delete(entry):
-    return entry.date == local_today() or entry.entry_type != 'work'
+    return _employee_day_allowed(current_user, entry.date, entry.entry_type, entry.entry_type)
+
+
+def employee_can_modify(entry):
+    """Czy bieżący pracownik może edytować/usunąć ten wpis (używane w szablonach)."""
+    if current_user.account_type != 'employee':
+        return True
+    return _employee_day_allowed(current_user, entry.date, entry.entry_type, entry.entry_type)
+
+
+def employee_can_add_any():
+    """Czy w panelu ma być widoczny przycisk dodawania dnia."""
+    if current_user.account_type != 'employee':
+        return True
+    mode, future_leave = current_user.entry_policy
+    return mode in ('full', 'today') or future_leave
 
 
 def require_entry_user():

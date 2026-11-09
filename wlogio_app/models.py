@@ -54,6 +54,16 @@ class User(UserMixin, db.Model):
     # (limit pracowników: patrz COMPANY_SIZE_LIMITS). NULL traktowany jak 'small'.
     company_size = db.Column(db.String(10), nullable=True)
     # Ustawienie konta firmowego: ukrywa kwoty pieniężne w panelu pracy kont pracowników.
+    # Ustawienia konta firmowego: zakres edycji dni przez pracowników.
+    #   'full'     - pełna funkcjonalność (dodawanie/edycja/usuwanie dni)
+    #   'today'    - tylko bieżący dzień
+    #   'terminal' - brak edycji w panelu pracy (tylko przyciski w terminalu)
+    # employee_future_leave: dla 'today'/'terminal' pozwala dodawać dni inne niż praca
+    # (urlopy, zwolnienia...) od bieżącego dnia w przyszłość.
+    employee_entry_mode = db.Column(db.String(10), nullable=False, default='full',
+                                    server_default='full')
+    employee_future_leave = db.Column(db.Boolean, nullable=False, default=False,
+                                      server_default=db.false())
     hide_amounts_from_employees = db.Column(db.Boolean, nullable=False, default=False,
                                             server_default=db.false())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -102,6 +112,17 @@ class User(UserMixin, db.Model):
     @property
     def is_employee_account(self):
         return self.account_type == 'employee'
+
+    @property
+    def entry_policy(self):
+        """(tryb, zgoda_na_przyszle_urlopy) dla konta pracowniczego; inne konta: pełne prawa."""
+        if not self.is_employee_account or not self.company_id:
+            return ('full', False)
+        company = User.query.get(self.company_id)
+        if not company:
+            return ('full', False)
+        mode = company.employee_entry_mode if company.employee_entry_mode in ('full', 'today', 'terminal') else 'full'
+        return (mode, bool(company.employee_future_leave))
 
     @property
     def amounts_hidden(self):

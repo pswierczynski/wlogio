@@ -18,10 +18,13 @@
     {% endif %}
 
     {% if company_settings %}
-    <div class="card bg-base-100 shadow-sm">
-        <div class="card-body p-4 sm:p-6">
-            <h2 class="card-title text-base mb-2">Kwoty w panelach pracowników</h2>
-            <form method="POST" action="{{ url_for('settings.company_settings') }}">
+    <form method="POST" action="{{ url_for('settings.company_settings') }}"
+          class="flex flex-col gap-6"
+          x-data="{ mode: '{{ current_user.employee_entry_mode or 'full' }}' }">
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4 sm:p-6">
+                <h2 class="card-title text-base mb-2">Kwoty w panelach pracowników</h2>
                 <label class="flex items-start gap-3 cursor-pointer">
                     <input type="checkbox" name="hide_amounts_from_employees"
                            class="checkbox checkbox-sm mt-0.5"
@@ -34,12 +37,66 @@
                         </span>
                     </span>
                 </label>
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-primary btn-sm">Zapisz</button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4 sm:p-6">
+                <h2 class="card-title text-base mb-2">Funkcjonalność kont pracowniczych</h2>
+                <div class="flex flex-col gap-4">
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="radio" name="employee_entry_mode" value="full"
+                               class="radio radio-sm mt-0.5" x-model="mode">
+                        <span>
+                            <span class="font-medium text-sm">Pełna funkcjonalność</span>
+                            <span class="block text-xs text-base-content/50 mt-0.5">
+                                Pracownik dodaje, edytuje i usuwa dni w swoim panelu pracy.
+                            </span>
+                        </span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="radio" name="employee_entry_mode" value="today"
+                               class="radio radio-sm mt-0.5" x-model="mode">
+                        <span>
+                            <span class="font-medium text-sm">Tylko bieżący dzień</span>
+                            <span class="block text-xs text-base-content/50 mt-0.5">
+                                Pracownik dodaje, edytuje i usuwa tylko aktualny dzień w swoim panelu pracy.
+                            </span>
+                        </span>
+                    </label>
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="radio" name="employee_entry_mode" value="terminal"
+                               class="radio radio-sm mt-0.5" x-model="mode">
+                        <span>
+                            <span class="font-medium text-sm">Tylko terminal pracy</span>
+                            <span class="block text-xs text-base-content/50 mt-0.5">
+                                Pracownik nie dodaje, nie edytuje i nie usuwa dni w panelu pracy &mdash;
+                                czas pracy rejestruje wyłącznie przyciskami w terminalu.
+                            </span>
+                        </span>
+                    </label>
+
+                    <label class="flex items-start gap-3 ml-7 pt-3" x-show="mode !== 'full'" x-cloak
+                           :class="mode === 'full' ? 'opacity-40' : 'cursor-pointer'">
+                        <input type="checkbox" name="employee_future_leave"
+                               class="checkbox checkbox-sm mt-0.5"
+                               {% if current_user.employee_future_leave %}checked{% endif %}>
+                        <span>
+                            <span class="font-medium text-sm">Zezwól na dodawanie urlopów i zwolnień</span>
+                            <span class="block text-xs text-base-content/50 mt-0.5">
+                                Pracownik może dodawać dni inne niż praca (urlopy, zwolnienia lekarskie itd.)
+                                od bieżącego dnia w przyszłość, bez ograniczeń, oraz je edytować i usuwać.
+                            </span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <button type="submit" class="btn btn-primary btn-sm">Zapisz</button>
+        </div>
+    </form>
     {% else %}
     <div class="flex flex-col gap-6">
 

@@ -8,6 +8,7 @@ from wlogio_app.models import WorkEntry, MonthConfig, NOTE_MAX_LENGTH
 from wlogio_app.routes.welcome import parse_open_breaks, format_breaks_with_open
 from wlogio_app.scope import (
     require_entry_user, local_today, employee_set_error, employee_can_delete,
+    employee_can_add_any,
 )
 from flask_login import current_user
 from wlogio_app.calculator import (
@@ -122,6 +123,10 @@ def add():
     is_employee = current_user.account_type == 'employee'
     today = local_today() if is_employee else date.today()
 
+    if is_employee and not employee_can_add_any():
+        flash('Firma zezwala na rejestrowanie czasu pracy wyłącznie w terminalu.', 'error')
+        return redirect(url_for('dashboard.index'))
+
     if request.method == 'POST':
         entry_date_str = request.form.get('date', '')
         entry_type = request.form.get('entry_type', 'work')
@@ -207,7 +212,8 @@ def add():
                            next_remote=next_remote,
                            remaining_vacation=max(0, remaining_vacation),
                            existing_breaks=[],
-                           employee_mode=is_employee,
+                           employee_mode=is_employee and current_user.entry_policy[0] != 'full',
+                           employee_policy=current_user.entry_policy if is_employee else ('full', False),
                            note_max=NOTE_MAX_LENGTH,
                            employee_today=local_today().strftime('%Y-%m-%d') if is_employee else '')
 
@@ -376,6 +382,13 @@ def add_range():
         flash(f'W wybranym zakresie istnieją już wpisy: {collision_dates}.', 'error')
         return redirect(url_for('entries.add'))
 
+    if current_user.account_type == 'employee':
+        for d in working_days:
+            err = employee_set_error(d, 'vacation', None)
+            if err:
+                flash(err, 'error')
+                return redirect(url_for('entries.add'))
+
     today = date.today()
 
     remaining = 0
@@ -458,9 +471,11 @@ def edit(entry_id):
     ).first_or_404()
 
     is_employee = current_user.account_type == 'employee'
-    if is_employee and entry.date != local_today() and entry.entry_type == 'work':
-        flash('Pracownik może edytować tylko bieżący dzień — ten dzień jest ustawiony jako dzień pracy.', 'error')
-        return redirect(url_for('dashboard.index'))
+    if is_employee:
+        err = employee_set_error(entry.date, entry.entry_type, entry.entry_type)
+        if err:
+            flash(err, 'error')
+            return redirect(url_for('dashboard.index'))
 
     if request.method == 'POST':
         old_type   = entry.entry_type
@@ -539,7 +554,8 @@ def edit(entry_id):
                            next_remote=entry.remote_trip_number,
                            remaining_vacation=0,
                            existing_breaks=existing_breaks,
-                           employee_mode=is_employee,
+                           employee_mode=is_employee and current_user.entry_policy[0] != 'full',
+                           employee_policy=current_user.entry_policy if is_employee else ('full', False),
                            note_max=NOTE_MAX_LENGTH,
                            employee_today=local_today().strftime('%Y-%m-%d') if is_employee else '')
 

@@ -15,10 +15,12 @@
         <div class="card-body gap-5 p-4 sm:p-8">
             <form method="POST"
                   action="{% if entry %}{{ url_for('entries.edit', entry_id=entry.id) }}{% else %}{{ url_for('entries.add') }}{% endif %}"
-                  x-init="$watch('dateFrom', v => { if (employeeMode && entryType === 'work' && v !== employeeToday) { entryType = 'vacation'; onEntryTypeChange(); } })"
+                  x-init="$watch('dateFrom', v => { if (entryType === 'work' && !workAllowed(v)) { entryType = 'vacation'; onEntryTypeChange(); } }); if (entryType === 'work' && !workAllowed(dateFrom)) { entryType = 'vacation'; onEntryTypeChange(); }"
                   x-data="{
                     employeeMode: {{ 'true' if employee_mode else 'false' }},
                     employeeToday: '{{ employee_today or '' }}',
+                    empMode: '{{ employee_policy[0] }}',
+                    workAllowed(d) { return !this.employeeMode || (this.empMode === 'today' && d === this.employeeToday); },
                     entryType: '{% if entry %}{{ entry.entry_type }}{% else %}work{% endif %}',
 
                     /* --- Godziny pracy --- */
@@ -246,6 +248,7 @@
                         <span class="label-text font-medium" x-text="isRangeType() && rangeMode === 'range' ? 'Od (data początkowa)' : 'Data'"></span>
                     </label>
                     <input type="date" name="date" id="date_from_field" required x-model="dateFrom"
+                           :min="employeeMode ? employeeToday : null"
                            @change="if (isRangeType() && rangeMode === 'range') fetchPreview()"
                            class="input input-bordered w-full"/>
                 </div>
@@ -268,7 +271,7 @@
                         } %}
                         {% for type_key, type_label in type_labels.items() %}
                         <label class="cursor-pointer"
-                               {% if type_key == 'work' %}x-show="!employeeMode || dateFrom === employeeToday"{% endif %}>
+                               {% if type_key == 'work' %}x-show="workAllowed(dateFrom)"{% endif %}>
                             <input type="radio" name="entry_type" value="{{ type_key }}"
                                    class="sr-only" x-model="entryType"
                                    @change="onEntryTypeChange()"
@@ -307,6 +310,7 @@
                         <div class="form-control">
                             <label class="label"><span class="label-text font-medium">Do (data końcowa)</span></label>
                             <input type="date" x-model="dateTo"
+                                   :min="employeeMode ? employeeToday : null"
                                    @change="fetchPreview()"
                                    class="input input-bordered w-full"/>
                         </div>
