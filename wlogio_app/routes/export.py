@@ -162,14 +162,14 @@ def hours_str(value):
 
 # ---------------------------------------------------------------- CSV ----
 
-def generate_csv(months_data):
+def generate_csv(months_data, hide_amounts=False):
     output = io.StringIO()
     output.write('\ufeff')  # BOM — poprawne polskie znaki przy otwieraniu w Excelu
     writer = csv.writer(output, delimiter=';')
 
     for month in months_data:
         writer.writerow([f"{month['month_name']} {month['year']}"])
-        writer.writerow(['Data', 'Typ', 'Przyjście', 'Wyjście', 'Przerwa (min)', 'Godziny', 'Wynagrodzenie'])
+        writer.writerow(['Data', 'Typ', 'Przyjście', 'Wyjście', 'Przerwa (min)', 'Godziny'] + ([] if hide_amounts else ['Wynagrodzenie']))
 
         for entry in month['entries']:
             salary = entry_salary(entry, month)
@@ -181,8 +181,7 @@ def generate_csv(months_data):
                 entry.time_end.strftime('%H:%M') if entry.time_end else '',
                 bmin if bmin else '',
                 hours_str(entry.hours_billed) if entry.entry_type != 'unpaid' else '0',
-                format_currency(salary) if salary is not None else '',
-            ])
+            ] + ([] if hide_amounts else [format_currency(salary) if salary is not None else '']))
 
         s = month['summary']
         writer.writerow([])
@@ -190,11 +189,12 @@ def generate_csv(months_data):
         writer.writerow(['Przepracowane (h)', hours_str(s['total_hours'])])
         writer.writerow(['Wymagane (h)', f"{s['expected_hours']:.0f}"])
         writer.writerow(['Nadgodziny (h)', hours_str(s['overtime_hours'])])
-        writer.writerow(['Wynagrodzenie', format_currency(s['actual_salary'])])
-        if s.get('bonus'):
-            writer.writerow(['Premia', format_currency(s['bonus'])])
-        writer.writerow(['Razem', format_currency(s['total_with_bonus'])])
-        writer.writerow(['Stawka', f"{month['hourly_rate']} PLN/h"])
+        if not hide_amounts:
+            writer.writerow(['Wynagrodzenie', format_currency(s['actual_salary'])])
+            if s.get('bonus'):
+                writer.writerow(['Premia', format_currency(s['bonus'])])
+            writer.writerow(['Razem', format_currency(s['total_with_bonus'])])
+            writer.writerow(['Stawka', f"{month['hourly_rate']} PLN/h"])
         writer.writerow([])
         writer.writerow([])
 
@@ -203,7 +203,7 @@ def generate_csv(months_data):
 
 # --------------------------------------------------------------- XLSX ----
 
-def generate_xlsx(months_data):
+def generate_xlsx(months_data, hide_amounts=False):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
     from openpyxl.utils import get_column_letter
@@ -215,7 +215,9 @@ def generate_xlsx(months_data):
     bold = Font(bold=True)
     month_font = Font(bold=True, size=13)
     header_fill = PatternFill(start_color='EEEEEE', end_color='EEEEEE', fill_type='solid')
-    headers = ['Data', 'Typ', 'Przyjście', 'Wyjście', 'Przerwa (min)', 'Godziny', 'Wynagrodzenie']
+    headers = ['Data', 'Typ', 'Przyjście', 'Wyjście', 'Przerwa (min)', 'Godziny']
+    if not hide_amounts:
+        headers.append('Wynagrodzenie')
 
     row = 1
     for month in months_data:
@@ -242,10 +244,11 @@ def generate_xlsx(months_data):
                 value=round(float(entry.hours_billed), 2) if entry.entry_type != 'unpaid' else 0
             )
             hb_cell.alignment = Alignment(horizontal='left')
-            sal_cell = ws.cell(row=row, column=7, value=round(salary, 2) if salary is not None else None)
-            sal_cell.alignment = Alignment(horizontal='left')
-            if salary is not None:
-                sal_cell.number_format = '#,##0.00 "zł"'
+            if not hide_amounts:
+                sal_cell = ws.cell(row=row, column=7, value=round(salary, 2) if salary is not None else None)
+                sal_cell.alignment = Alignment(horizontal='left')
+                if salary is not None:
+                    sal_cell.number_format = '#,##0.00 "zł"'
             row += 1
 
         s = month['summary']
@@ -261,24 +264,25 @@ def generate_xlsx(months_data):
         ws.cell(row=row, column=1, value='Nadgodziny (h)')
         ws.cell(row=row, column=2, value=round(s['overtime_hours'], 2))
         row += 1
-        ws.cell(row=row, column=1, value='Wynagrodzenie')
-        ws.cell(row=row, column=2, value=round(s['actual_salary'], 2)).number_format = '#,##0.00 "zł"'
-        row += 1
-        if s.get('bonus'):
-            ws.cell(row=row, column=1, value='Premia')
-            ws.cell(row=row, column=2, value=round(s['bonus'], 2)).number_format = '#,##0.00 "zł"'
+        if not hide_amounts:
+            ws.cell(row=row, column=1, value='Wynagrodzenie')
+            ws.cell(row=row, column=2, value=round(s['actual_salary'], 2)).number_format = '#,##0.00 "zł"'
             row += 1
-        ws.cell(row=row, column=1, value='Razem').font = bold
-        razem_cell = ws.cell(row=row, column=2, value=round(s['total_with_bonus'], 2))
-        razem_cell.font = bold
-        razem_cell.number_format = '#,##0.00 "zł"'
-        row += 1
-        ws.cell(row=row, column=1, value='Stawka')
-        rate_cell = ws.cell(row=row, column=2, value=f"{month['hourly_rate']} PLN/h")
-        rate_cell.alignment = Alignment(horizontal='right')
+            if s.get('bonus'):
+                ws.cell(row=row, column=1, value='Premia')
+                ws.cell(row=row, column=2, value=round(s['bonus'], 2)).number_format = '#,##0.00 "zł"'
+                row += 1
+            ws.cell(row=row, column=1, value='Razem').font = bold
+            razem_cell = ws.cell(row=row, column=2, value=round(s['total_with_bonus'], 2))
+            razem_cell.font = bold
+            razem_cell.number_format = '#,##0.00 "zł"'
+            row += 1
+            ws.cell(row=row, column=1, value='Stawka')
+            rate_cell = ws.cell(row=row, column=2, value=f"{month['hourly_rate']} PLN/h")
+            rate_cell.alignment = Alignment(horizontal='right')
         row += 3
 
-    widths = [22, 22, 11, 11, 13, 11, 16]
+    widths = [22, 22, 11, 11, 13, 11] + ([] if hide_amounts else [16])
     for i, w in enumerate(widths, start=1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
@@ -289,7 +293,7 @@ def generate_xlsx(months_data):
 
 # ---------------------------------------------------------------- PDF ----
 
-def generate_pdf(months_data, user):
+def generate_pdf(months_data, user, hide_amounts=False):
     from reportlab.lib.pagesizes import A4
     from reportlab.lib import colors
     from reportlab.lib.units import mm
@@ -321,9 +325,13 @@ def generate_pdf(months_data, user):
     from reportlab.lib.units import mm as _mm
     # A4 (210mm) minus lewy/prawy margines dokumentu (14mm każdy) = 182mm
     # dostępnej szerokości — tabela wykorzystuje ją całą, zamiast być węższa.
-    DAY_TABLE_COL_WIDTHS = [22 * _mm, 54 * _mm, 18 * _mm, 18 * _mm, 18 * _mm, 20 * _mm, 32 * _mm]
+    if hide_amounts:
+        # bez kolumny wynagrodzenia — pozostałe rozciągnięte na te same 182mm
+        DAY_TABLE_COL_WIDTHS = [24 * _mm, 66 * _mm, 22 * _mm, 22 * _mm, 22 * _mm, 26 * _mm]
+    else:
+        DAY_TABLE_COL_WIDTHS = [22 * _mm, 54 * _mm, 18 * _mm, 18 * _mm, 18 * _mm, 20 * _mm, 32 * _mm]
 
-    headers = ['Data', 'Typ', 'Przyjście', 'Wyjście', 'Przerwa', 'Godziny', 'Wynagrodzenie']
+    headers = ['Data', 'Typ', 'Przyjście', 'Wyjście', 'Przerwa', 'Godziny'] + ([] if hide_amounts else ['Wynagrodzenie'])
 
     for month in months_data:
         elements.append(Paragraph(f"{month['month_name']} {month['year']}", heading_style))
@@ -340,8 +348,7 @@ def generate_pdf(months_data, user):
                 entry.time_end.strftime('%H:%M') if entry.time_end else '—',
                 f'{bmin}min' if bmin else '—',
                 (hours_str(entry.hours_billed) + 'h') if entry.entry_type != 'unpaid' else '0h',
-                format_currency(salary) if salary is not None else '—',
-            ])
+            ] + ([] if hide_amounts else [format_currency(salary) if salary is not None else '—']))
 
         table = Table(
             data, repeatRows=1,
@@ -353,7 +360,7 @@ def generate_pdf(months_data, user):
             ('FONTSIZE', (0, 0), (-1, -1), 8),
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#eeeeee')),
             ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#cccccc')),
-            ('ALIGN', (5, 0), (6, -1), 'RIGHT'),
+            ('ALIGN', (5, 0), (-1, -1), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('TOPPADDING', (0, 0), (-1, -1), 4),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
@@ -365,13 +372,15 @@ def generate_pdf(months_data, user):
             ['Przepracowane', f"{hours_str(s['total_hours'])}h"],
             ['Wymagane', f"{s['expected_hours']:.0f}h"],
             ['Nadgodziny', f"{hours_str(s['overtime_hours'])}h"],
-            ['Wynagrodzenie', format_currency(s['actual_salary'])],
         ]
-        if s.get('bonus'):
-            summary_rows.append(['Premia', format_currency(s['bonus'])])
-        razem_row_index = len(summary_rows)
-        summary_rows.append(['Razem', format_currency(s['total_with_bonus'])])
-        summary_rows.append(['Stawka', f"{month['hourly_rate']} PLN/h"])
+        if not hide_amounts:
+            summary_rows.append(['Wynagrodzenie', format_currency(s['actual_salary'])])
+            if s.get('bonus'):
+                summary_rows.append(['Premia', format_currency(s['bonus'])])
+            summary_rows.append(['Razem', format_currency(s['total_with_bonus'])])
+            summary_rows.append(['Stawka', f"{month['hourly_rate']} PLN/h"])
+        # wiersz „Razem" (pogrubiony, z linią) tylko gdy kwoty są widoczne
+        razem_row_index = next((i for i, r_ in enumerate(summary_rows) if r_[0] == 'Razem'), None)
 
         # Ta sama szerokość i lewa krawędź co tabela dni powyżej — dwie kolumny
         # sumujące się do tej samej wartości (suma DAY_TABLE_COL_WIDTHS).
@@ -385,9 +394,12 @@ def generate_pdf(months_data, user):
             ('TOPPADDING', (0, 0), (-1, -1), 3),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
             ('LINEBELOW', (0, 0), (-1, -2), 0.3, colors.HexColor('#eeeeee')),
-            ('LINEABOVE', (0, razem_row_index), (-1, razem_row_index), 0.6, colors.HexColor('#999999')),
-            ('FONTNAME', (0, razem_row_index), (-1, razem_row_index), 'DejaVuSans-Bold'),
         ]
+        if razem_row_index is not None:
+            summary_style += [
+                ('LINEABOVE', (0, razem_row_index), (-1, razem_row_index), 0.6, colors.HexColor('#999999')),
+                ('FONTNAME', (0, razem_row_index), (-1, razem_row_index), 'DejaVuSans-Bold'),
+            ]
         summary_table.setStyle(TableStyle(summary_style))
 
         elements.append(Spacer(1, 6))
@@ -467,20 +479,23 @@ def generate():
 
     filename_base = f"wlogio_eksport_{date.today().isoformat()}"
 
+    # Firma ukryła kwoty przed pracownikami — eksport z konta pracownika bez kwot i stawek.
+    hide_amounts = current_user.amounts_hidden
+
     if fmt == 'csv':
-        content = generate_csv(months_data)
+        content = generate_csv(months_data, hide_amounts)
         return Response(
             content, mimetype='text/csv; charset=utf-8',
             headers={'Content-Disposition': f'attachment; filename={filename_base}.csv'},
         )
     if fmt == 'xlsx':
-        content = generate_xlsx(months_data)
+        content = generate_xlsx(months_data, hide_amounts)
         return Response(
             content,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             headers={'Content-Disposition': f'attachment; filename={filename_base}.xlsx'},
         )
-    content = generate_pdf(months_data, target)
+    content = generate_pdf(months_data, target, hide_amounts)
     return Response(
         content, mimetype='application/pdf',
         headers={'Content-Disposition': f'attachment; filename={filename_base}.pdf'},

@@ -145,9 +145,13 @@
                                     <thead>
                                         <tr class="text-xs text-base-content/50 bg-base-200/50">
                                             <th class="min-w-[140px]">Miesiąc</th>
+                                            {% if not hide_amounts %}
                                             <th class="min-w-[100px] text-right">Stawka</th>
                                             <th class="min-w-[110px] text-right">Wymagane</th>
                                             <th class="min-w-[100px] text-right">Premia</th>
+                                            {% else %}
+                                            <th class="min-w-[110px] text-right">Wymagane</th>
+                                            {% endif %}
                                             {% if current_user.account_type != 'employee' %}<th class="min-w-[80px]"></th>{% endif %}
                                         </tr>
                                     </thead>
@@ -157,17 +161,21 @@
                                             <td class="font-medium whitespace-nowrap">
                                                 {{ MONTH_NAMES.get(config.billing_month) }}
                                             </td>
+                                            {% if not hide_amounts %}
                                             <td class="text-right whitespace-nowrap">
                                                 {{ config.hourly_rate }} zł/h
                                             </td>
+                                            {% endif %}
                                             <td class="text-right whitespace-nowrap">
                                                 {{ config.expected_hours or '—' }}{% if config.expected_hours %}h{% endif %}
                                             </td>
+                                            {% if not hide_amounts %}
                                             <td class="text-right whitespace-nowrap">
                                                 {% if config.bonus and config.bonus > 0 %}
                                                 <span class="font-medium" style="color:#22c55e;">+{{ config.bonus }} zł</span>
                                                 {% else %}—{% endif %}
                                             </td>
+                                            {% endif %}
                                             {% if current_user.account_type != 'employee' %}
                                             <td class="whitespace-nowrap">
                                                 <a href="{{ url_for('settings.month_config', year=config.billing_year, month=config.billing_month) }}"

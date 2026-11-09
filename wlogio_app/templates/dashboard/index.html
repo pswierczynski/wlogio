@@ -397,7 +397,7 @@
                             {% set ot_rate_pct = (month.config.overtime_rate if month.config and month.config.overtime_rate is not none else 100) / 100 %}
                             {% set overtime_amount = month.summary.overtime_hours * month.hourly_rate * ot_rate_pct %}
                             <div class="bg-base-100 rounded-box mt-1 px-3 sm:px-5 py-5 sm:py-6">
-                                <div class="grid grid-cols-2 {{ 'sm:grid-cols-3' if hide_amounts else 'sm:grid-cols-5' }} gap-3 sm:gap-4 text-sm">
+                                <div class="grid {{ 'grid-cols-3' if hide_amounts else 'grid-cols-2 sm:grid-cols-5' }} gap-3 sm:gap-4 text-sm">
                                     <div>
                                         <div class="text-xs text-base-content/50 mb-0.5">Przepracowane</div>
                                         <div class="font-semibold text-sm">{{ "%.2f"|format(month.summary.total_hours)|replace('.', ',') }}h</div>

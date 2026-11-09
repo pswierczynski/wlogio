@@ -111,7 +111,8 @@ def index():
     )
     balance = get_or_create_vacation_balance(current_user.id, db.session)
     return render_template('settings/index.html', configs=configs, balance=balance,
-                           MONTH_NAMES=MONTH_NAMES, company_placeholder=False)
+                           MONTH_NAMES=MONTH_NAMES, company_placeholder=False,
+                           hide_amounts=current_user.amounts_hidden)
 
 
 @settings_bp.route('/company', methods=['POST'])
