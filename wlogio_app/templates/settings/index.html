@@ -20,7 +20,7 @@
     {% if company_settings %}
     <form method="POST" action="{{ url_for('settings.company_settings') }}"
           class="flex flex-col gap-6"
-          x-data="{ mode: '{{ current_user.employee_entry_mode or 'full' }}' }">
+          x-data="{ mode: '{{ current_user.employee_entry_mode or 'terminal' }}' }">
 
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body p-4 sm:p-6">
@@ -80,7 +80,7 @@
                            :class="mode === 'full' ? 'opacity-40' : 'cursor-pointer'">
                         <input type="checkbox" name="employee_future_leave"
                                class="checkbox checkbox-sm mt-0.5"
-                               {% if current_user.employee_future_leave %}checked{% endif %}>
+                               {% if current_user.employee_future_leave is none or current_user.employee_future_leave %}checked{% endif %}>
                         <span>
                             <span class="font-medium text-sm">Zezwól na dodawanie urlopów i zwolnień</span>
                             <span class="block text-xs text-base-content/50 mt-0.5">

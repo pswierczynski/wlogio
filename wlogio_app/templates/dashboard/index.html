@@ -404,14 +404,14 @@
                                         <div class="text-xs text-base-content/50 mb-0.5">Przepracowane</div>
                                         <div class="font-semibold text-sm">{{ "%.2f"|format(month.summary.total_hours)|replace('.', ',') }}h</div>
                                     </div>
-                                    <div>
+                                    <div{% if hide_amounts %} class="text-center"{% endif %}>
                                         <div class="text-xs text-base-content/50 mb-0.5">Wymagane</div>
                                         <div class="font-semibold text-sm">
                                             {{ "%.0f"|format(month.summary.expected_hours) }}h
                                             <span class="text-xs text-base-content/40">({{ month.working_days }}dni)</span>
                                         </div>
                                     </div>
-                                    <div>
+                                    <div{% if hide_amounts %} class="text-right"{% endif %}>
                                         <div class="text-xs text-base-content/50 mb-0.5">Nadgodziny</div>
                                         <div class="font-semibold text-sm {% if month.summary.overtime_hours < 0 %}text-error{% endif %}" {% if month.summary.overtime_hours > 0 %}style="color:#22c55e;"{% endif %}>
                                             {% if month.summary.overtime_hours >= 0 %}+{% endif %}{{ "%.2f"|format(month.summary.overtime_hours)|replace('.', ',') }}h

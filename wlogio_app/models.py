@@ -60,10 +60,11 @@ class User(UserMixin, db.Model):
     #   'terminal' - brak edycji w panelu pracy (tylko przyciski w terminalu)
     # employee_future_leave: dla 'today'/'terminal' pozwala dodawać dni inne niż praca
     # (urlopy, zwolnienia...) od bieżącego dnia w przyszłość.
-    employee_entry_mode = db.Column(db.String(10), nullable=False, default='full',
-                                    server_default='full')
-    employee_future_leave = db.Column(db.Boolean, nullable=False, default=False,
-                                      server_default=db.false())
+    # Domyślnie: tylko terminal + zezwolenie na urlopy/zwolnienia w przyszłość.
+    employee_entry_mode = db.Column(db.String(10), nullable=False, default='terminal',
+                                    server_default='terminal')
+    employee_future_leave = db.Column(db.Boolean, nullable=False, default=True,
+                                      server_default=db.true())
     hide_amounts_from_employees = db.Column(db.Boolean, nullable=False, default=False,
                                             server_default=db.false())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -121,7 +122,7 @@ class User(UserMixin, db.Model):
         company = User.query.get(self.company_id)
         if not company:
             return ('full', False)
-        mode = company.employee_entry_mode if company.employee_entry_mode in ('full', 'today', 'terminal') else 'full'
+        mode = company.employee_entry_mode if company.employee_entry_mode in ('full', 'today', 'terminal') else 'terminal'
         return (mode, bool(company.employee_future_leave))
 
     @property

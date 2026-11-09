@@ -122,8 +122,8 @@ def company_settings():
     if not current_user.is_company:
         return redirect(url_for('settings.index'))
     current_user.hide_amounts_from_employees = request.form.get('hide_amounts_from_employees') == 'on'
-    mode = request.form.get('employee_entry_mode', 'full')
-    current_user.employee_entry_mode = mode if mode in ('full', 'today', 'terminal') else 'full'
+    mode = request.form.get('employee_entry_mode', 'terminal')
+    current_user.employee_entry_mode = mode if mode in ('full', 'today', 'terminal') else 'terminal'
     current_user.employee_future_leave = (
         current_user.employee_entry_mode != 'full'
         and request.form.get('employee_future_leave') == 'on'
