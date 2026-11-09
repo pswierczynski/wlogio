@@ -2,7 +2,7 @@
 {% block title %}Konfiguracja — {{ MONTH_NAMES.get(config.billing_month) }} {{ config.billing_year }}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+<div class="w-full">
     <div class="flex items-center gap-3 mb-6">
         <a href="{{ (settings_home or url_for('settings.index')) }}" class="btn btn-ghost btn-sm">← Wróć</a>
         <h1 class="text-xl font-bold">

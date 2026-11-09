@@ -264,6 +264,9 @@ def profile():
 @settings_bp.route('/month/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
 def month_config(year, month):
+    if current_user.account_type == 'employee':
+        flash('Pracownik nie może zmieniać ustawień konfiguracji.', 'error')
+        return redirect(url_for('settings.index'))
     if request.method == 'POST':
         target, resp = require_effective_user()
         if resp:
@@ -329,6 +332,9 @@ def month_config(year, month):
 @settings_bp.route('/vacation', methods=['GET', 'POST'])
 @login_required
 def vacation_balance():
+    if current_user.account_type == 'employee':
+        flash('Pracownik nie może zmieniać ustawień konfiguracji.', 'error')
+        return redirect(url_for('settings.index'))
     if request.method == 'POST':
         target, resp = require_effective_user()
         if resp:
