@@ -72,6 +72,11 @@ def user_in_terminal(user, owner):
     return user.is_employee_account and user.company_id == owner.id
 
 
+def pin_required(owner):
+    """Terminal konta indywidualnego: właściciel jest już zalogowany hasłem terminala — bez PIN-u."""
+    return owner.account_type != 'individual'
+
+
 def now_minutes():
     t = datetime.now(TIMEZONE)
     return t.hour * 60 + t.minute
@@ -342,6 +347,7 @@ def render_terminal(kiosk):
         user_statuses=user_statuses,
         user_badges=user_badges,
         user_notes=user_notes,
+        pin_required=pin_required(owner),
         kiosk=kiosk,
     )
 
@@ -502,7 +508,7 @@ def verify_pin():
     pin = data.get('pin', '')
 
     user = User.query.get(user_id)
-    if not user or user.pin != pin or not user_in_terminal(user, owner):
+    if not user or not user_in_terminal(user, owner) or (pin_required(owner) and user.pin != pin):
         return jsonify({'ok': False}), 401
 
     today = datetime.now(TIMEZONE).date()
@@ -537,7 +543,7 @@ def clock():
     pin     = data.get('pin', '')
 
     user = User.query.get(user_id)
-    if not user or user.pin != pin or not user_in_terminal(user, owner):
+    if not user or not user_in_terminal(user, owner) or (pin_required(owner) and user.pin != pin):
         return jsonify({'ok': False, 'error': 'Nieautoryzowany'}), 401
 
     now_dt = datetime.now(TIMEZONE)

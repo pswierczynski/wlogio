@@ -351,6 +351,7 @@
 <body class="bg-base-200 min-h-screen">
 
 <script>
+const PIN_REQUIRED = {{ "true" if pin_required else "false" }};
 const INIT_STATUSES = {{ user_statuses | tojson }};
 const INIT_BADGES   = {{ user_badges | tojson }};
 const INIT_NOTES    = {{ user_notes | tojson }};
@@ -858,6 +859,10 @@ function welcomeApp() {
             this.pin            = '';
             this.pinError       = false;
             this.ringChanged    = {};   /* animacje obramowania tylko dla zmian od tej chwili */
+            if (!PIN_REQUIRED) {        /* terminal konta indywidualnego: od razu ekran przycisków */
+                this.verifyPin();
+                return;
+            }
             this.screen         = 'pin';
         },
 
