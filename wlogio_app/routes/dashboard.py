@@ -259,7 +259,32 @@ def get_employee_work_flags(employee_ids):
         return {}
 
     # Import lokalny — welcome.py to osobny moduł terminala.
-    from wlogio_app.routes.welcome import get_today_entry, compute_status, compute_badge
+    from wlogio_app.routes.welcome import (
+        get_today_entry, compute_status, compute_badge, parse_open_breaks, now_minutes, to_min,
+    )
+
+    def _fmt_minutes(total):
+        h, m = divmod(int(total), 60)
+        return f'{h} h {m:02d} min' if h else f'{m} min'
+
+    def _today_times(entry):
+        """(początek, koniec, tekst przerwy) dzisiejszego wpisu pracy — do karty pracownika."""
+        if entry is None or entry.entry_type != 'work':
+            return '', '', '—'
+        start = entry.time_start.strftime('%H:%M') if entry.time_start else ''
+        end = entry.time_end.strftime('%H:%M') if entry.time_end else ''
+        total, running = 0, False
+        for bs, be in parse_open_breaks(entry.breaks):
+            bs_m = to_min(bs)
+            if be is None:
+                running = True
+                total += max(0, now_minutes() - bs_m)
+            else:
+                be_m = to_min(be)
+                total += (be_m - bs_m) % (24 * 60)
+        if not total and not running:
+            return start, end, '—'
+        return start, end, _fmt_minutes(total) + (' (trwa)' if running else '')
 
     today = local_today()
     missing_end_ids = {
@@ -279,7 +304,11 @@ def get_employee_work_flags(employee_ids):
     for uid in employee_ids:
         entry  = get_today_entry(uid)
         status = compute_status(entry)
+        t_start, t_end, t_break = _today_times(entry)
         flags[uid] = {
+            'time_start':  t_start,
+            'time_end':    t_end,
+            'break_text':  t_break,
             'missing_end': uid in missing_end_ids,
             'in_work':     status in ('working', 'break'),
             'status':      status,

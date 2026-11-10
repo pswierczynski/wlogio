@@ -99,6 +99,19 @@
             {% set st = stats.get(employee.id) %}
             <div class="flex flex-col gap-1 text-xs border-t border-base-200 pt-3">
                 <div class="flex items-center justify-between">
+                    <span class="text-base-content/50">Rozpoczęcie pracy</span>
+                    <span class="font-medium" data-emp-start>{{ (fl.time_start if fl else '') or '—' }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-base-content/50">Zakończenie pracy</span>
+                    <span class="font-medium" data-emp-end>{{ (fl.time_end if fl else '') or '—' }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-base-content/50">Przerwa</span>
+                    <span class="font-medium" data-emp-break>{{ (fl.break_text if fl else '') or '—' }}</span>
+                </div>
+                <div class="h-1"></div>
+                <div class="flex items-center justify-between">
                     <span class="text-base-content/50">Stawka godzinowa</span>
                     <span class="font-medium">
                         {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
@@ -164,6 +177,13 @@
                 STATUSES.forEach(function (st) { avatar.classList.remove('emp-ring-' + st); });
                 avatar.classList.add('emp-ring-' + (STATUSES.indexOf(f.status) >= 0 ? f.status : 'idle'));
             }
+
+            var tStart = card.querySelector('[data-emp-start]');
+            if (tStart) { tStart.textContent = f.time_start || '—'; }
+            var tEnd = card.querySelector('[data-emp-end]');
+            if (tEnd) { tEnd.textContent = f.time_end || '—'; }
+            var tBrk = card.querySelector('[data-emp-break]');
+            if (tBrk) { tBrk.textContent = f.break_text || '—'; }
 
             var miss = card.querySelector('[data-emp-missing]');
             if (miss) { miss.classList.toggle('emp-badge-hidden', !missing); }
