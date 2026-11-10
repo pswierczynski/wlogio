@@ -269,7 +269,7 @@
                             'force_majeure': 'Siła wyższa',
                             'child_care': 'Opieka nad dzieckiem'
                         } %}
-                        {% for type_key, type_label in type_labels.items() %}
+                        {% for type_key, type_label in type_labels.items() if type_key not in hidden_types %}
                         <label class="cursor-pointer"
                                {% if type_key == 'work' %}x-show="workAllowed(dateFrom)"{% endif %}>
                             <input type="radio" name="entry_type" value="{{ type_key }}"
@@ -499,7 +499,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3"{% if 'remote' in hidden_types and not (entry and entry.is_remote) %} style="display:none"{% endif %}>
                         <input type="checkbox" name="is_remote" class="checkbox"
                                x-model="isRemote"
                                {% if entry and entry.is_remote %}checked{% endif %}/>

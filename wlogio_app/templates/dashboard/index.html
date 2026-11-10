@@ -19,57 +19,32 @@
 </div>
 {% endif %}
 
-<!-- Bilans urlopowy -->
-<div class="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3 mb-4 sm:mb-6">
-    <div class="bg-base-100 rounded-xl p-3 sm:p-4 flex flex-col gap-1">
-        <div class="text-xs text-base-content/50 truncate">Urlop</div>
+<!-- Bilans urlopowy: jeden ciągły pasek; widoczne tylko rodzaje niewyłączone w ustawieniach -->
+{% set balance_blocks = [
+    ('vacation', 'Urlop', vacation_info.remaining_vacation, vacation_info.total, vacation_info.used_vacation),
+    ('on_demand', 'Na żądanie', vacation_info.remaining_on_demand, vacation_info.on_demand_total, vacation_info.used_on_demand),
+    ('remote', 'Zdalna', vacation_info.remaining_remote, vacation_info.remote_total, vacation_info.used_remote),
+    ('care_leave', 'Opiekuńczy', vacation_info.remaining_care_leave, vacation_info.care_leave_total, vacation_info.used_care_leave),
+    ('force_majeure', 'Siła wyższa', vacation_info.remaining_force_majeure, vacation_info.force_majeure_total, vacation_info.used_force_majeure),
+    ('child_care', 'Opieka nad dz.', vacation_info.remaining_child_care, vacation_info.child_care_total, vacation_info.used_child_care),
+] %}
+{% set visible_blocks = balance_blocks | rejectattr(0, 'in', hidden_types) | list %}
+{% if visible_blocks %}
+{% set sm_cols = {1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3', 4: 'sm:grid-cols-4', 5: 'sm:grid-cols-5', 6: 'sm:grid-cols-6'} %}
+{% set xs_cols = {1: 'grid-cols-1', 2: 'grid-cols-2'} %}
+<div class="bg-base-100 rounded-xl grid {{ xs_cols.get(visible_blocks|length, 'grid-cols-3') }} {{ sm_cols[visible_blocks|length] }} mb-4 sm:mb-6">
+    {% for key, label, remaining, total, used in visible_blocks %}
+    <div class="p-3 sm:p-4 flex flex-col gap-1">
+        <div class="text-xs text-base-content/50 truncate">{{ label }}</div>
         <div class="flex items-baseline gap-1 flex-wrap">
-            <span class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ vacation_info.remaining_vacation }}</span>
-            <span class="text-base sm:text-lg text-base-content/40 leading-none">z {{ vacation_info.total }}</span>
+            <span class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ remaining }}</span>
+            <span class="text-base sm:text-lg text-base-content/40 leading-none">z {{ total }}</span>
         </div>
-        <div class="text-xs text-base-content/40">(wyk. {{ vacation_info.used_vacation }})</div>
+        <div class="text-xs text-base-content/40">(wyk. {{ used }})</div>
     </div>
-    <div class="bg-base-100 rounded-xl p-3 sm:p-4 flex flex-col gap-1">
-        <div class="text-xs text-base-content/50 truncate">Na żądanie</div>
-        <div class="flex items-baseline gap-1 flex-wrap">
-            <span class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ vacation_info.remaining_on_demand }}</span>
-            <span class="text-base sm:text-lg text-base-content/40 leading-none">z {{ vacation_info.on_demand_total }}</span>
-        </div>
-        <div class="text-xs text-base-content/40">(wyk. {{ vacation_info.used_on_demand }})</div>
-    </div>
-    <div class="bg-base-100 rounded-xl p-3 sm:p-4 flex flex-col gap-1">
-        <div class="text-xs text-base-content/50 truncate">Zdalna</div>
-        <div class="flex items-baseline gap-1 flex-wrap">
-            <span class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ vacation_info.remaining_remote }}</span>
-            <span class="text-base sm:text-lg text-base-content/40 leading-none">z {{ vacation_info.remote_total }}</span>
-        </div>
-        <div class="text-xs text-base-content/40">(wyk. {{ vacation_info.used_remote }})</div>
-    </div>
-    <div class="bg-base-100 rounded-xl p-3 sm:p-4 flex flex-col gap-1">
-        <div class="text-xs text-base-content/50 truncate">Opiekuńczy</div>
-        <div class="flex items-baseline gap-1 flex-wrap">
-            <span class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ vacation_info.remaining_care_leave }}</span>
-            <span class="text-base sm:text-lg text-base-content/40 leading-none">z {{ vacation_info.care_leave_total }}</span>
-        </div>
-        <div class="text-xs text-base-content/40">(wyk. {{ vacation_info.used_care_leave }})</div>
-    </div>
-    <div class="bg-base-100 rounded-xl p-3 sm:p-4 flex flex-col gap-1">
-        <div class="text-xs text-base-content/50 truncate">Siła wyższa</div>
-        <div class="flex items-baseline gap-1 flex-wrap">
-            <span class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ vacation_info.remaining_force_majeure }}</span>
-            <span class="text-base sm:text-lg text-base-content/40 leading-none">z {{ vacation_info.force_majeure_total }}</span>
-        </div>
-        <div class="text-xs text-base-content/40">(wyk. {{ vacation_info.used_force_majeure }})</div>
-    </div>
-    <div class="bg-base-100 rounded-xl p-3 sm:p-4 flex flex-col gap-1">
-        <div class="text-xs text-base-content/50 truncate">Opieka nad dz.</div>
-        <div class="flex items-baseline gap-1 flex-wrap">
-            <span class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ vacation_info.remaining_child_care }}</span>
-            <span class="text-base sm:text-lg text-base-content/40 leading-none">z {{ vacation_info.child_care_total }}</span>
-        </div>
-        <div class="text-xs text-base-content/40">(wyk. {{ vacation_info.used_child_care }})</div>
-    </div>
+    {% endfor %}
 </div>
+{% endif %}
 
 {% set current_year = current_key[0] %}
 {% set current_month_key = current_key[0] ~ '-' ~ current_key[1] %}

@@ -93,12 +93,59 @@
             </div>
         </div>
 
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4 sm:p-6">
+                <h2 class="card-title text-base mb-1">Widoczne rodzaje dni i urlopów</h2>
+                <p class="text-xs text-base-content/50 mb-3">
+                    Odznacz rodzaje, z których {{ 'Twoi pracownicy nie korzystają' if company_settings else 'nie korzystasz' }}
+                    &mdash; znikną z bilansu u góry panelu pracy i z formularza dodawania dnia.
+                    Już dodane wpisy pozostają bez zmian.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                    {% for key, label in HIDEABLE_TYPES %}
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="visible_types" value="{{ key }}" class="checkbox checkbox-sm"
+                               {% if key not in current_user.hidden_types %}checked{% endif %}>
+                        <span class="text-sm">{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
         <div>
             <button type="submit" class="btn btn-primary btn-sm">Zapisz</button>
         </div>
     </form>
     {% else %}
     <div class="flex flex-col gap-6">
+        {% if not settings_employee and current_user.account_type != 'employee' %}
+        <form method="POST" action="{{ url_for('settings.visibility') }}" class="flex flex-col gap-4">
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body p-4 sm:p-6">
+                <h2 class="card-title text-base mb-1">Widoczne rodzaje dni i urlopów</h2>
+                <p class="text-xs text-base-content/50 mb-3">
+                    Odznacz rodzaje, z których {{ 'Twoi pracownicy nie korzystają' if company_settings else 'nie korzystasz' }}
+                    &mdash; znikną z bilansu u góry panelu pracy i z formularza dodawania dnia.
+                    Już dodane wpisy pozostają bez zmian.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                    {% for key, label in HIDEABLE_TYPES %}
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" name="visible_types" value="{{ key }}" class="checkbox checkbox-sm"
+                               {% if key not in current_user.hidden_types %}checked{% endif %}>
+                        <span class="text-sm">{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+            <div>
+                <button type="submit" class="btn btn-primary btn-sm">Zapisz</button>
+            </div>
+        </form>
+        {% endif %}
+
 
         <!-- Bilans urlopowy -->
         <div class="card bg-base-100 shadow-sm">

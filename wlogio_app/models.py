@@ -10,6 +10,19 @@ ACCOUNT_TYPES = ('individual', 'company', 'employee')
 # Maks. długość notatki dnia — notatka z bieżącego dnia widoczna jest w Terminalu
 # pracy jako chmurka przy zdjęciu, więc musi być krótka.
 NOTE_MAX_LENGTH = 40
+# Rodzaje dni/urlopów, które można ukryć w panelu pracy (praca zwykła nie jest ukrywalna).
+HIDEABLE_TYPES = [
+    ('vacation', 'Urlop'),
+    ('on_demand', 'Urlop na żądanie'),
+    ('remote', 'Praca zdalna'),
+    ('care_leave', 'Urlop opiekuńczy'),
+    ('force_majeure', 'Siła wyższa'),
+    ('child_care', 'Opieka nad dzieckiem'),
+    ('unpaid', 'Urlop bezpłatny'),
+    ('holiday', 'Święto'),
+    ('sick_leave', 'Zwolnienie lekarskie'),
+]
+
 ACCOUNT_TYPE_LABELS = {
     'individual': 'Indywidualne',
     'company':    'Firmowe',
@@ -61,6 +74,9 @@ class User(UserMixin, db.Model):
     # employee_future_leave: dla 'today'/'terminal' pozwala dodawać dni inne niż praca
     # (urlopy, zwolnienia...) od bieżącego dnia w przyszłość.
     # Domyślnie: tylko terminal + zezwolenie na urlopy/zwolnienia w przyszłość.
+    # Ukryte rodzaje dni/urlopów (CSV kluczy z HIDEABLE_TYPES) — ustawienie konta
+    # indywidualnego lub firmowego (pracownicy dziedziczą po firmie).
+    hidden_entry_types = db.Column(db.String(200), nullable=True)
     employee_entry_mode = db.Column(db.String(10), nullable=False, default='terminal',
                                     server_default='terminal')
     employee_future_leave = db.Column(db.Boolean, nullable=False, default=True,
@@ -113,6 +129,16 @@ class User(UserMixin, db.Model):
     @property
     def is_employee_account(self):
         return self.account_type == 'employee'
+
+    @property
+    def hidden_types(self):
+        """Zbiór ukrytych rodzajów dni dla tego konta (pracownik: wg ustawień firmy)."""
+        source = self
+        if self.is_employee_account and self.company_id:
+            source = User.query.get(self.company_id) or self
+        raw = source.hidden_entry_types or ''
+        valid = {k for k, _ in HIDEABLE_TYPES}
+        return {k for k in raw.split(',') if k in valid}
 
     @property
     def entry_policy(self):

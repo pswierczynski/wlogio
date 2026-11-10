@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from decimal import Decimal
 
 from wlogio_app import db
-from wlogio_app.models import MonthConfig, VacationBalance, User
+from wlogio_app.models import MonthConfig, VacationBalance, User, HIDEABLE_TYPES
 from wlogio_app.scope import get_effective_user, require_effective_user
 from wlogio_app.calculator import (
     get_working_days_in_billing_period_from_config,
@@ -101,7 +101,7 @@ def index():
     # przyjść później); dotyczy wyłącznie kont indywidualnych/pracowniczych.
     if current_user.is_company:
         return render_template('settings/index.html', company_settings=True,
-                               company_placeholder=False)
+                               company_placeholder=False, HIDEABLE_TYPES=HIDEABLE_TYPES)
 
     configs = (
         MonthConfig.query
@@ -112,7 +112,29 @@ def index():
     balance = get_or_create_vacation_balance(current_user.id, db.session)
     return render_template('settings/index.html', configs=configs, balance=balance,
                            MONTH_NAMES=MONTH_NAMES, company_placeholder=False,
-                           hide_amounts=current_user.amounts_hidden)
+                           hide_amounts=current_user.amounts_hidden,
+                           HIDEABLE_TYPES=HIDEABLE_TYPES)
+
+
+def _save_visible_types():
+    """Zapisuje widoczność rodzajów dni (zaznaczone = widoczne) dla zalogowanego konta."""
+    from wlogio_app.models import HIDEABLE_TYPES
+    visible = set(request.form.getlist('visible_types'))
+    hidden = [k for k, _ in HIDEABLE_TYPES if k not in visible]
+    current_user.hidden_entry_types = ','.join(hidden) or None
+
+
+@settings_bp.route('/visibility', methods=['POST'])
+@login_required
+def visibility():
+    """Konto indywidualne: wybór widocznych rodzajów dni/urlopów."""
+    if current_user.account_type == 'employee':
+        flash('Pracownik nie może zmieniać ustawień konfiguracji.', 'error')
+        return redirect(url_for('settings.index'))
+    _save_visible_types()
+    db.session.commit()
+    flash('Ustawienia zostały zapisane.', 'success')
+    return redirect(url_for('settings.index'))
 
 
 @settings_bp.route('/company', methods=['POST'])
@@ -122,6 +144,7 @@ def company_settings():
     if not current_user.is_company:
         return redirect(url_for('settings.index'))
     current_user.hide_amounts_from_employees = request.form.get('hide_amounts_from_employees') == 'on'
+    _save_visible_types()
     mode = request.form.get('employee_entry_mode', 'terminal')
     current_user.employee_entry_mode = mode if mode in ('full', 'today', 'terminal') else 'terminal'
     current_user.employee_future_leave = (

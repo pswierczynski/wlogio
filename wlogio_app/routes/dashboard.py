@@ -370,6 +370,7 @@ def index():
         months_data=months_data,
         current_key=current_key,
         vacation_info=vacation_info,
+        hidden_types=target.hidden_types,
         balance=balance,
         format_hours=format_hours,
         format_currency=format_currency,

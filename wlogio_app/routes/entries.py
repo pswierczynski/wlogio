@@ -136,6 +136,10 @@ def add():
         entry_date_str = request.form.get('date', '')
         entry_type = request.form.get('entry_type', 'work')
 
+        if entry_type in target.hidden_types:
+            flash('Ten rodzaj dnia jest wyłączony w ustawieniach.', 'error')
+            return redirect(url_for('entries.add'))
+
         err = notes_too_long()
         if err:
             flash(err, 'error')
@@ -211,6 +215,7 @@ def add():
 
     return render_template('entries/form.html',
                            entry=None,
+                           hidden_types=target.hidden_types,
                            entry_types=ENTRY_TYPES,
                            today=today.strftime('%Y-%m-%d'),
                            next_vacation=next_vacation,
@@ -356,6 +361,10 @@ def add_range():
     err = notes_too_long()
     if err:
         flash(err, 'error')
+        return redirect(url_for('entries.add'))
+
+    if range_type in target.hidden_types:
+        flash('Ten rodzaj dnia jest wyłączony w ustawieniach.', 'error')
         return redirect(url_for('entries.add'))
 
     try:
@@ -553,6 +562,7 @@ def edit(entry_id):
 
     return render_template('entries/form.html',
                            entry=entry,
+                           hidden_types=target.hidden_types - {entry.entry_type},
                            entry_types=ENTRY_TYPES,
                            today=entry.date.strftime('%Y-%m-%d'),
                            next_vacation=entry.vacation_day_number,
