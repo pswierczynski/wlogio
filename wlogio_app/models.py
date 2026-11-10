@@ -305,3 +305,46 @@ class VacationBalance(db.Model):
     __table_args__ = (
         db.UniqueConstraint('user_id', 'year', name='uq_user_year_balance'),
     )
+
+
+# ---------------------------------------------------------------------------
+# Zespoły kont indywidualnych (widoczne w terminalu pracy)
+# ---------------------------------------------------------------------------
+TEAM_MAX_MEMBERS = 5
+
+
+class Team(db.Model):
+    __tablename__ = 'teams'
+
+    id = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    owner = db.relationship('User', foreign_keys=[owner_id])
+    members = db.relationship('TeamMember', backref='team', cascade='all, delete-orphan',
+                              order_by='TeamMember.id')
+    invites = db.relationship('TeamInvite', backref='team', cascade='all, delete-orphan')
+
+
+class TeamMember(db.Model):
+    __tablename__ = 'team_members'
+
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False)
+    # unique: jedno konto może być równocześnie tylko w jednym zespole
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', foreign_keys=[user_id])
+
+
+class TeamInvite(db.Model):
+    __tablename__ = 'team_invites'
+    __table_args__ = (db.UniqueConstraint('team_id', 'invitee_id', name='uq_team_invite'),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False)
+    invitee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    invitee = db.relationship('User', foreign_keys=[invitee_id])

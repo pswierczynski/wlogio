@@ -26,7 +26,7 @@ TIMEZONE = ZoneInfo('Europe/Warsaw')
 from sqlalchemy import func
 
 from wlogio_app import db
-from wlogio_app.models import User, WorkEntry, MonthConfig
+from wlogio_app.models import User, WorkEntry, MonthConfig, Team, TeamMember, TeamInvite, TEAM_MAX_MEMBERS
 from wlogio_app.calculator import (
     get_billing_period, parse_breaks, format_breaks,
     get_working_days_in_billing_period_from_config,
@@ -59,8 +59,43 @@ def get_terminal_owner():
 def get_terminal_users(owner):
     """Konta widoczne w terminalu danego właściciela (do wyboru PIN-em)."""
     if owner.account_type == 'individual':
-        return [owner]
+        # własny profil + (jeśli w zespole) pozostali członkowie — tylko do podglądu statusów
+        members = [owner]
+        team = get_user_team(owner)
+        if team:
+            members += [m.user for m in team.members if m.user_id != owner.id and m.user.is_active]
+        return members
     return [u for u in owner.employees if u.is_active]
+
+
+def get_user_team(user):
+    """Zespół, do którego należy konto (albo None)."""
+    m = TeamMember.query.filter_by(user_id=user.id).first()
+    return m.team if m else None
+
+
+def _team_state(owner):
+    """Stan zespołu dla terminala konta indywidualnego (JSON-owalny)."""
+    team = get_user_team(owner)
+    invites = (
+        TeamInvite.query.filter_by(invitee_id=owner.id)
+        .order_by(TeamInvite.id).all()
+    )
+    state = {
+        'in_team': bool(team),
+        'is_owner': bool(team and team.owner_id == owner.id),
+        'members': [],
+        'max': TEAM_MAX_MEMBERS,
+        'invites': [
+            {'id': i.id, 'from': (i.team.owner.name or i.team.owner.email) if i.team.owner else ''}
+            for i in invites
+        ],
+    }
+    if team:
+        state['members'] = [m.user_id for m in team.members]
+        state['count'] = len(team.members)
+        state['pending'] = len(team.invites)
+    return state
 
 
 def user_in_terminal(user, owner):
@@ -348,6 +383,8 @@ def render_terminal(kiosk):
         user_badges=user_badges,
         user_notes=user_notes,
         pin_required=pin_required(owner),
+        own_id=owner.id,
+        team=_team_state(owner) if owner.account_type == 'individual' else None,
         kiosk=kiosk,
     )
 
@@ -458,6 +495,130 @@ def statuses():
             'note':   today_note(entry),
         }
     return jsonify(result)
+
+
+def _individual_owner_or_401():
+    owner = get_terminal_owner()
+    if not owner or owner.account_type != 'individual':
+        return None
+    return owner
+
+
+@welcome_bp.route('/team/state')
+def team_state():
+    owner = _individual_owner_or_401()
+    if not owner:
+        return jsonify({}), 401
+    resp = jsonify(_team_state(owner))
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
+@welcome_bp.route('/team/invite', methods=['POST'])
+def team_invite():
+    owner = _individual_owner_or_401()
+    if not owner:
+        return jsonify({'ok': False, 'error': 'Nieautoryzowany'}), 401
+    email = ((request.get_json() or {}).get('email') or '').strip().lower()
+    generic = jsonify({'ok': False, 'error': 'Nie można dodać tego konta.'})
+
+    team = get_user_team(owner)
+    if team and team.owner_id != owner.id:
+        return jsonify({'ok': False, 'error': 'Tylko twórca zespołu może dodawać osoby.'}), 403
+    if team and len(team.members) + len(team.invites) >= TEAM_MAX_MEMBERS:
+        return jsonify({'ok': False, 'error': f'Zespół może mieć maksymalnie {TEAM_MAX_MEMBERS} osób (łącznie z oczekującymi zaproszeniami).'}), 400
+
+    target = User.query.filter(func.lower(User.email) == email,
+                               User.account_type == 'individual').first() if email else None
+    if (not target or not target.is_active or target.id == owner.id
+            or TeamMember.query.filter_by(user_id=target.id).first()):
+        return generic, 400
+    if team and TeamInvite.query.filter_by(team_id=team.id, invitee_id=target.id).first():
+        return generic, 400
+
+    if not team:
+        team = Team(owner_id=owner.id)
+        db.session.add(team)
+        db.session.flush()
+        db.session.add(TeamMember(team_id=team.id, user_id=owner.id))
+    db.session.add(TeamInvite(team_id=team.id, invitee_id=target.id))
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@welcome_bp.route('/team/respond', methods=['POST'])
+def team_respond():
+    owner = _individual_owner_or_401()
+    if not owner:
+        return jsonify({'ok': False}), 401
+    data = request.get_json() or {}
+    invite = TeamInvite.query.filter_by(id=data.get('invite_id'), invitee_id=owner.id).first()
+    if not invite:
+        return jsonify({'ok': False, 'error': 'Zaproszenie już nie istnieje.'}), 404
+    if not data.get('accept'):
+        db.session.delete(invite)
+        db.session.commit()
+        return jsonify({'ok': True})
+    if get_user_team(owner):
+        db.session.delete(invite)
+        db.session.commit()
+        return jsonify({'ok': False, 'error': 'Należysz już do zespołu.'}), 400
+    team = invite.team
+    if len(team.members) >= TEAM_MAX_MEMBERS:
+        db.session.delete(invite)
+        db.session.commit()
+        return jsonify({'ok': False, 'error': 'Zespół jest już pełny.'}), 400
+    db.session.add(TeamMember(team_id=team.id, user_id=owner.id))
+    # po dołączeniu pozostałe zaproszenia do innych zespołów tracą sens
+    TeamInvite.query.filter_by(invitee_id=owner.id).delete()
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@welcome_bp.route('/team/leave', methods=['POST'])
+def team_leave():
+    """Członek opuszcza zespół; gdy opuszcza go twórca — zespół zostaje rozwiązany."""
+    owner = _individual_owner_or_401()
+    if not owner:
+        return jsonify({'ok': False}), 401
+    team = get_user_team(owner)
+    if not team:
+        return jsonify({'ok': True})
+    if team.owner_id == owner.id:
+        db.session.delete(team)
+    else:
+        TeamMember.query.filter_by(team_id=team.id, user_id=owner.id).delete()
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@welcome_bp.route('/team/dissolve', methods=['POST'])
+def team_dissolve():
+    owner = _individual_owner_or_401()
+    if not owner:
+        return jsonify({'ok': False}), 401
+    team = get_user_team(owner)
+    if not team or team.owner_id != owner.id:
+        return jsonify({'ok': False, 'error': 'Tylko twórca może rozwiązać zespół.'}), 403
+    db.session.delete(team)
+    db.session.commit()
+    return jsonify({'ok': True})
+
+
+@welcome_bp.route('/team/remove', methods=['POST'])
+def team_remove():
+    owner = _individual_owner_or_401()
+    if not owner:
+        return jsonify({'ok': False}), 401
+    team = get_user_team(owner)
+    if not team or team.owner_id != owner.id:
+        return jsonify({'ok': False, 'error': 'Tylko twórca może usuwać osoby.'}), 403
+    uid = (request.get_json() or {}).get('user_id')
+    if uid == owner.id:
+        return jsonify({'ok': False, 'error': 'Aby opuścić zespół, rozwiąż go.'}), 400
+    TeamMember.query.filter_by(team_id=team.id, user_id=uid).delete()
+    db.session.commit()
+    return jsonify({'ok': True})
 
 
 @welcome_bp.route('/verify-password', methods=['POST'])
