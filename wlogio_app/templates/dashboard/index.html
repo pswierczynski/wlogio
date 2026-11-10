@@ -32,9 +32,11 @@
 {% if visible_blocks %}
 {% set sm_cols = {1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3', 4: 'sm:grid-cols-4', 5: 'sm:grid-cols-5', 6: 'sm:grid-cols-6'} %}
 {% set xs_cols = {1: 'grid-cols-1', 2: 'grid-cols-2'} %}
-<div class="bg-base-100 rounded-xl grid {{ xs_cols.get(visible_blocks|length, 'grid-cols-3') }} {{ sm_cols[visible_blocks|length] }} mb-4 sm:mb-6">
+<div class="bg-base-100 rounded-xl px-3 sm:px-4 py-4 sm:py-5 mb-4 sm:mb-6">
+  <div class="text-sm font-semibold text-base-content mb-3">Bilans urlopowy</div>
+  <div class="grid {{ xs_cols.get(visible_blocks|length, 'grid-cols-3') }} {{ sm_cols[visible_blocks|length] }} gap-2 sm:gap-3">
     {% for key, label, remaining, total, used in visible_blocks %}
-    <div class="p-3 sm:p-4 flex flex-col gap-1">
+    <div class="bg-base-200 rounded-xl p-3 sm:p-4 flex flex-col gap-1">
         <div class="text-xs text-base-content/50 truncate">{{ label }}</div>
         <div class="flex items-baseline gap-1 flex-wrap">
             <span class="text-xl sm:text-2xl font-bold text-base-content leading-none">{{ remaining }}</span>
@@ -43,6 +45,7 @@
         <div class="text-xs text-base-content/40">(wyk. {{ used }})</div>
     </div>
     {% endfor %}
+  </div>
 </div>
 {% endif %}
 

@@ -393,7 +393,7 @@ def vacation_balance():
             balance.force_majeure_total = int(request.form.get('force_majeure_total', 2))
             balance.child_care_total = int(request.form.get('child_care_total', 2))
             db.session.commit()
-            flash('Bilans urlopowy zapisany.', 'success')
+            flash('Limity urlopów zapisane.', 'success')
             return redirect(url_for('dashboard.index'))
         except Exception as e:
             flash(f'Błąd: {e}', 'error')

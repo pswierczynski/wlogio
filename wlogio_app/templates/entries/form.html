@@ -360,7 +360,7 @@
                                             </span>
                                             <span x-show="preview.unpaid_days > 0 && preview.vacation_days > 0"> + </span>
                                             <span x-show="preview.unpaid_days > 0" class="text-warning font-medium">
-                                                <strong x-text="preview.unpaid_days"></strong> dni bezpłatnych (przekroczono pulę)
+                                                <strong x-text="preview.unpaid_days"></strong> dni bezpłatnych (przekroczono limit)
                                             </span>
                                         </div>
                                     </template>
@@ -526,7 +526,7 @@
                 <div x-show="entryType === 'unpaid' && rangeMode === 'single'" x-cloak>
                     <div class="alert alert-warning py-3 mt-4 mb-3 text-left flex flex-row items-center gap-2">
                         <div class="text-sm">
-                            Urlop bezpłatny — 0 przepracowanych godzin, nie odlicza się od puli urlopów.
+                            Urlop bezpłatny — 0 przepracowanych godzin, nie odlicza się od limitu urlopów.
                         </div>
                     </div>
                 </div>

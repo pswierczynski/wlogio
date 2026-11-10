@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Bilans urlopowy{% endblock %}
+{% block title %}Limity urlopów{% endblock %}
 
 {% block content %}
 <div class="w-full">
     <div class="flex items-center gap-3 mb-6">
         <a href="{{ (settings_home or url_for('settings.index')) }}" class="btn btn-ghost btn-sm">← Wróć</a>
-        <h1 class="text-xl font-bold">Bilans urlopowy</h1>
+        <h1 class="text-xl font-bold">Limity urlopów</h1>
     </div>
 
     <div class="card bg-base-100 shadow-sm" {% if current_user.account_type == 'employee' %}inert{% endif %}>
@@ -14,14 +14,14 @@
             <div class="alert alert-info text-sm">
                 Pule są roczne i resetują się z dniem 1 stycznia.
                 Niewykorzystane urlopy przenoszą się na następny rok.
-                Urlop na żądanie pomniejsza też pulę urlopów zwykłych.
+                Urlop na żądanie pomniejsza też limit urlopów zwykłych.
             </div>
 
             <form method="POST" class="flex flex-col gap-5">
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Pula urlopu wypoczynkowego (dni)</span>
+                        <span class="label-text font-medium">Limit urlopu wypoczynkowego (dni)</span>
                     </label>
                     <input type="number" name="vacation_total" min="0" max="365" required
                            value="{{ balance.vacation_total }}"
@@ -30,7 +30,7 @@
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Pula urlopu na żądanie (dni)</span>
+                        <span class="label-text font-medium">Limit urlopu na żądanie (dni)</span>
                     </label>
                     <input type="number" name="on_demand_total" min="0" max="365" required
                            value="{{ balance.on_demand_total }}"
@@ -45,7 +45,7 @@
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Pula dni pracy zdalnej</span>
+                        <span class="label-text font-medium">Limit dni pracy zdalnej</span>
                     </label>
                     <input type="number" name="remote_total" min="0" max="365" required
                            value="{{ balance.remote_total }}"
@@ -54,7 +54,7 @@
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Pula urlopu opiekuńczego (dni)</span>
+                        <span class="label-text font-medium">Limit urlopu opiekuńczego (dni)</span>
                     </label>
                     <input type="number" name="care_leave_total" min="0" max="365" required
                            value="{{ balance.care_leave_total }}"
@@ -63,7 +63,7 @@
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Pula dni siły wyższej</span>
+                        <span class="label-text font-medium">Limit dni siły wyższej</span>
                     </label>
                     <input type="number" name="force_majeure_total" min="0" max="365" required
                            value="{{ balance.force_majeure_total }}"
@@ -72,7 +72,7 @@
 
                 <div class="form-control">
                     <label class="label">
-                        <span class="label-text font-medium">Pula dni opieki nad dzieckiem</span>
+                        <span class="label-text font-medium">Limit dni opieki nad dzieckiem</span>
                     </label>
                     <input type="number" name="child_care_total" min="0" max="365" required
                            value="{{ balance.child_care_total }}"
