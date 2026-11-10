@@ -63,7 +63,7 @@
     </div>
 </div>
 {% else %}
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+<div class="flex flex-col gap-3">
     {% for employee in employees %}
     {% set fl = flags.get(employee.id) %}
     <div class="card bg-base-100 shadow-sm emp-card{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
@@ -97,35 +97,34 @@
             </div>
 
             {% set st = stats.get(employee.id) %}
-            <div class="flex flex-col gap-1 text-xs border-t border-base-200 pt-3">
-                <div class="flex items-center justify-between">
-                    <span class="text-base-content/50">Rozpoczęcie pracy</span>
-                    <span class="font-medium" data-emp-start>{{ (fl.time_start if fl else '') or '—' }}</span>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-3 text-xs border-t border-base-200 pt-3">
+                <div>
+                    <div class="text-base-content/50 mb-0.5">Rozpoczęcie</div>
+                    <div class="font-medium text-sm" data-emp-start>{{ (fl.time_start if fl else '') or '—' }}</div>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-base-content/50">Zakończenie pracy</span>
-                    <span class="font-medium" data-emp-end>{{ (fl.time_end if fl else '') or '—' }}</span>
+                <div>
+                    <div class="text-base-content/50 mb-0.5">Zakończenie</div>
+                    <div class="font-medium text-sm" data-emp-end>{{ (fl.time_end if fl else '') or '—' }}</div>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-base-content/50">Przerwa</span>
-                    <span class="font-medium" data-emp-break>{{ (fl.break_text if fl else '') or '—' }}</span>
+                <div>
+                    <div class="text-base-content/50 mb-0.5">Przerwa</div>
+                    <div class="font-medium text-sm" data-emp-break>{{ (fl.break_text if fl else '') or '—' }}</div>
                 </div>
-                <div class="h-1"></div>
-                <div class="flex items-center justify-between">
-                    <span class="text-base-content/50">Stawka godzinowa</span>
-                    <span class="font-medium">
+                <div>
+                    <div class="text-base-content/50 mb-0.5">Stawka</div>
+                    <div class="font-medium text-sm">
                         {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
-                    </span>
+                    </div>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-base-content/50">Prognoza w tym miesiącu</span>
-                    <span class="font-medium">
+                <div>
+                    <div class="text-base-content/50 mb-0.5">Prognoza</div>
+                    <div class="font-medium text-sm">
                         {% if st and st.hourly_rate %}{{ format_currency(st.forecast) }}{% else %}—{% endif %}
-                    </span>
+                    </div>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-base-content/50">Przepracowane dni</span>
-                    <span class="font-medium">{% if st %}{{ st.worked_days }} / {{ st.working_days }}{% else %}—{% endif %}</span>
+                <div>
+                    <div class="text-base-content/50 mb-0.5">Przepracowane</div>
+                    <div class="font-medium text-sm">{% if st %}{{ st.worked_days }} / {{ st.working_days }}{% else %}—{% endif %}</div>
                 </div>
             </div>
 
