@@ -347,6 +347,8 @@
                                                             {% set ot_h = [entry.hours_billed|float - hpd, 0] | max %}
                                                             {{ format_currency(normal_h * month.hourly_rate + ot_h * month.hourly_rate * ot_rate) }}
                                                         {% endif %}
+                                                    {% elif entry.entry_type == 'sick_leave' %}
+                                                        {{ format_currency(entry.hours_billed|float * month.hourly_rate * month.sick_pay_percent / 100) }}
                                                     {% else %}
                                                         {{ format_currency(entry.hours_billed|float * month.hourly_rate) }}
                                                     {% endif %}

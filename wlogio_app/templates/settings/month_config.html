@@ -127,6 +127,17 @@
                                 <span class="label-text-alt text-base-content/40">np. 150% za sobotę</span>
                             </label>
                         </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-medium">Stawka chorobowego (%)</span>
+                            </label>
+                            <input type="number" name="sick_pay_percent" min="0" max="100" step="0.01"
+                                   value="{{ ('%g'|format(config.sick_pay_percent|float)) if config.sick_pay_percent is not none else 100 }}"
+                                   class="input input-bordered w-full"/>
+                            <label class="label">
+                                <span class="label-text-alt text-base-content/40">100% = jak dzień pracy; 80% = wynagrodzenie chorobowe wg KP. Kopiowane do kolejnego miesiąca</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 

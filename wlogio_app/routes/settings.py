@@ -321,6 +321,14 @@ def month_config(year, month):
             config.round_minutes      = int(request.form.get('round_minutes', 15))
             config.overtime_rate      = int(request.form.get('overtime_rate', 100))
             config.offday_rate        = int(request.form.get('offday_rate', 100))
+            sick_str = request.form.get('sick_pay_percent', '').replace(',', '.').strip()
+            if sick_str:
+                sick_val = Decimal(sick_str)
+                if sick_val < 0 or sick_val > 100:
+                    raise ValueError('Stawka chorobowego musi mieścić się w zakresie 0–100%.')
+                config.sick_pay_percent = sick_val
+            else:
+                config.sick_pay_percent = None
             config.hours_per_day      = Decimal(request.form.get('hours_per_day', '8').replace(',', '.'))
             config.paid_break_minutes = int(request.form.get('paid_break_minutes', 15))
 

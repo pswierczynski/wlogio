@@ -90,6 +90,7 @@ def get_or_create_month_config(user_id, billing_year, billing_month):
                 else (prev_config.hourly_rate if prev_config else Decimal('0'))
             ),
             fixed_salary=prev_config.fixed_salary if prev_config else None,
+            sick_pay_percent=prev_config.sick_pay_percent if prev_config else None,
             expected_hours=Decimal(str(expected_hours)),
             bonus=Decimal('0'),
             billing_start_day=billing_start_day,

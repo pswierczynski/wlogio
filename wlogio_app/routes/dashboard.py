@@ -24,6 +24,7 @@ from wlogio_app.calculator import (
     DEFAULT_HOURS_PER_DAY,
     DEFAULT_OVERTIME_RATE,
     DEFAULT_OFFDAY_RATE,
+    DEFAULT_SICK_PAY_RATE,
     DEFAULT_BILLING_START_DAY,
     DEFAULT_BILLING_END_DAY,
 )
@@ -38,7 +39,7 @@ MONTH_NAMES = {
 
 
 def calculate_forecast(expected_hours, overtime_hours, hourly_rate, bonus,
-                       overtime_rate=None):
+                       overtime_rate=None, sick_adjustment=0):
     if overtime_rate is None:
         overtime_rate = DEFAULT_OVERTIME_RATE
     rate    = Decimal(str(hourly_rate))
@@ -47,7 +48,7 @@ def calculate_forecast(expected_hours, overtime_hours, hourly_rate, bonus,
     bon     = Decimal(str(bonus or 0))
     ot_mult = Decimal(str(overtime_rate)) / Decimal('100')
     ot_value = ot * rate * ot_mult if ot >= 0 else ot * rate
-    return float(exp * rate + ot_value + bon)
+    return float(exp * rate + ot_value + bon + Decimal(str(sick_adjustment or 0)))
 
 
 def recalc_entry_hours(entry, round_minutes, paid_break_minutes):
@@ -150,6 +151,7 @@ def build_months_data(user_id, date_from=None, date_to=None, include_empty_curre
         hours_per_day      = float(_get_config_value(config, 'hours_per_day',    DEFAULT_HOURS_PER_DAY))
         overtime_rate      = int(_get_config_value(config, 'overtime_rate',      DEFAULT_OVERTIME_RATE))
         offday_rate        = int(_get_config_value(config, 'offday_rate',        DEFAULT_OFFDAY_RATE))
+        sick_pay_percent   = float(_get_config_value(config, 'sick_pay_percent', DEFAULT_SICK_PAY_RATE))
         work_days          = _get_config_value(config, 'work_days', None)
         start_day          = int(_get_config_value(config, 'billing_start_day',  DEFAULT_BILLING_START_DAY))
         end_day            = int(_get_config_value(config, 'billing_end_day',    DEFAULT_BILLING_END_DAY))
@@ -184,6 +186,7 @@ def build_months_data(user_id, date_from=None, date_to=None, include_empty_curre
             overtime_rate=overtime_rate,
             work_days=work_days,
             offday_rate=offday_rate,
+            sick_pay_rate=sick_pay_percent,
         )
 
         forecast = calculate_forecast(
@@ -192,6 +195,7 @@ def build_months_data(user_id, date_from=None, date_to=None, include_empty_curre
             hourly_rate,
             bonus,
             overtime_rate=overtime_rate,
+            sick_adjustment=summary['sick_adjustment'],
         )
 
         months_data.append({
@@ -208,6 +212,7 @@ def build_months_data(user_id, date_from=None, date_to=None, include_empty_curre
             'working_days':  working_days,
             'forecast':      forecast,
             'hours_per_day': hours_per_day,
+            'sick_pay_percent': sick_pay_percent,
         })
 
     return months_data, current_key

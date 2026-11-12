@@ -263,6 +263,10 @@ class MonthConfig(db.Model):
     # Stawka za pracę w dni poza roboczymi (% stawki godzinowej), domyślnie 100%
     offday_rate = db.Column(db.Integer, nullable=False, default=100)
 
+    # Stawka za dzień chorobowy (% stawki godzinowej). NULL = 100% (jak dzień pracy).
+    # Kopiowana z poprzedniego miesiąca przy tworzeniu nowego.
+    sick_pay_percent = db.Column(db.Numeric(5, 2), nullable=True)
+
     # Liczba godzin roboczych w dniu, domyślnie 8
     hours_per_day = db.Column(db.Numeric(4, 2), nullable=False, default=8.00)
 

@@ -22,6 +22,7 @@ from wlogio_app.calculator import (
     get_billing_period_dates,
     DEFAULT_OVERTIME_RATE,
     DEFAULT_OFFDAY_RATE,
+    DEFAULT_SICK_PAY_RATE,
     DEFAULT_HOURS_PER_DAY,
     DEFAULT_BILLING_START_DAY,
     DEFAULT_BILLING_END_DAY,
@@ -108,6 +109,10 @@ def entry_salary(entry, month):
         normal_h = min(billed, hpd)
         ot_h = max(0.0, billed - hpd)
         return normal_h * hourly_rate + ot_h * hourly_rate * ot_rate
+
+    if entry.entry_type == 'sick_leave':
+        sick_rate = float(_get_config_value(config, 'sick_pay_percent', DEFAULT_SICK_PAY_RATE)) / 100
+        return float(entry.hours_billed) * hourly_rate * sick_rate
 
     return float(entry.hours_billed) * hourly_rate
 

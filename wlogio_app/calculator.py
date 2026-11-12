@@ -24,6 +24,7 @@ DEFAULT_PAID_BREAK_MINUTES = 15
 DEFAULT_OVERTIME_RATE      = 100
 DEFAULT_WORK_DAYS          = [0, 1, 2, 3, 4]
 DEFAULT_OFFDAY_RATE        = 100
+DEFAULT_SICK_PAY_RATE      = 100
 DEFAULT_HOURS_PER_DAY      = 8.0
 
 
@@ -180,7 +181,9 @@ def calculate_hours(time_start, time_end, breaks=None,
 
 def calculate_month_summary(entries, hourly_rate, expected_hours, bonus=0,
                              hours_per_day=None, overtime_rate=None,
-                             work_days=None, offday_rate=None):
+                             work_days=None, offday_rate=None, sick_pay_rate=None):
+    if sick_pay_rate is None:
+        sick_pay_rate = DEFAULT_SICK_PAY_RATE
     if hours_per_day is None:
         hours_per_day = DEFAULT_HOURS_PER_DAY
     if overtime_rate is None:
@@ -196,6 +199,8 @@ def calculate_month_summary(entries, hourly_rate, expected_hours, bonus=0,
     hpd      = Decimal(str(hours_per_day))
     ot_rate  = Decimal(str(overtime_rate)) / Decimal('100')
     od_rate  = Decimal(str(offday_rate))   / Decimal('100')
+    sick_rate = Decimal(str(sick_pay_rate)) / Decimal('100')
+    sick_adjustment = Decimal('0')   # różnica względem 100% stawki (<= 0 gdy stawka < 100%)
 
     total_billed    = Decimal('0')
     overtime        = Decimal('0')
@@ -250,7 +255,8 @@ def calculate_month_summary(entries, hourly_rate, expected_hours, bonus=0,
         elif entry.entry_type == 'sick_leave':
             sick_days       += 1
             work_days_count += 1
-            actual_salary   += billed * rate
+            actual_salary   += billed * rate * sick_rate
+            sick_adjustment += billed * rate * (sick_rate - Decimal('1'))
         elif entry.entry_type == 'care_leave':
             care_leave_days += 1
             work_days_count += 1
@@ -271,6 +277,7 @@ def calculate_month_summary(entries, hourly_rate, expected_hours, bonus=0,
         'expected_hours':   float(expected),
         'overtime_hours':   float(overtime),
         'actual_salary':    float(actual_salary),
+        'sick_adjustment':  float(sick_adjustment),
         'bonus':            float(bonus or 0),
         'total_with_bonus': float(total_with_bonus),
         'work_days':        work_days_count,
