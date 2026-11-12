@@ -391,7 +391,8 @@ const INIT_NOTES    = {{ user_notes | tojson }};
             {% set status = user_statuses.get(uid, 'idle') %}
             {% set badge  = user_badges.get(uid) %}
 
-            {% set readonly = (own_id is defined and uid != own_id) %}
+            {# tylko konta indywidualne (zespół): zdjęcia innych członków są podglądem, nie wejściem #}
+            {% set readonly = (team is not none and own_id is defined and uid != own_id) %}
             <button class="avatar-btn flex flex-col items-center gap-3{% if readonly %} avatar-readonly{% endif %}"
                     {% if readonly %}tabindex="-1" aria-disabled="true" data-readonly="1"{% endif %}
                     data-uid="{{ uid }}"
