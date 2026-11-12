@@ -110,10 +110,10 @@
                                 <span class="label-text font-medium">Stawka nadgodzin (%)</span>
                             </label>
                             <input type="number" name="overtime_rate" min="0" max="500" step="1"
-                                   value="{{ config.overtime_rate or 100 }}"
+                                   value="{{ config.overtime_rate if config.overtime_rate is not none else 100 }}"
                                    class="input input-bordered w-full"/>
                             <label class="label">
-                                <span class="label-text-alt text-base-content/40">100% = ta sama stawka</span>
+                                <span class="label-text-alt text-base-content/40">100% = ta sama stawka; 0% = nadgodziny nie są naliczane (bezpłatne)</span>
                             </label>
                         </div>
                         <div class="form-control">
@@ -121,7 +121,7 @@
                                 <span class="label-text font-medium">Stawka dni poza roboczymi (%)</span>
                             </label>
                             <input type="number" name="offday_rate" min="0" max="500" step="1"
-                                   value="{{ config.offday_rate or 100 }}"
+                                   value="{{ config.offday_rate if config.offday_rate is not none else 100 }}"
                                    class="input input-bordered w-full"/>
                             <label class="label">
                                 <span class="label-text-alt text-base-content/40">np. 150% za sobotę</span>
