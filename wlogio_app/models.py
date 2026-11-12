@@ -19,7 +19,6 @@ HIDEABLE_TYPES = [
     ('force_majeure', 'Siła wyższa'),
     ('child_care', 'Opieka nad dzieckiem'),
     ('unpaid', 'Urlop bezpłatny'),
-    ('holiday', 'Święto'),
     ('sick_leave', 'Zwolnienie lekarskie'),
 ]
 
@@ -77,10 +76,10 @@ class User(UserMixin, db.Model):
     # Ukryte rodzaje dni/urlopów (CSV kluczy z HIDEABLE_TYPES) — ustawienie konta
     # indywidualnego lub firmowego (pracownicy dziedziczą po firmie).
     hidden_entry_types = db.Column(db.String(200), nullable=True)
-    employee_entry_mode = db.Column(db.String(10), nullable=False, default='terminal',
-                                    server_default='terminal')
-    employee_future_leave = db.Column(db.Boolean, nullable=False, default=True,
-                                      server_default=db.true())
+    # Kolumny dotyczą tylko kont firmowych (NULL = ustawienia domyślne: 'terminal' + True).
+    # Konta pracownicze czytają wartość z konta firmy, konta indywidualne mają zawsze pełne prawa.
+    employee_entry_mode = db.Column(db.String(10), nullable=True)
+    employee_future_leave = db.Column(db.Boolean, nullable=True)
     hide_amounts_from_employees = db.Column(db.Boolean, nullable=False, default=False,
                                             server_default=db.false())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -149,7 +148,8 @@ class User(UserMixin, db.Model):
         if not company:
             return ('full', False)
         mode = company.employee_entry_mode if company.employee_entry_mode in ('full', 'today', 'terminal') else 'terminal'
-        return (mode, bool(company.employee_future_leave))
+        future = True if company.employee_future_leave is None else bool(company.employee_future_leave)
+        return (mode, future)
 
     @property
     def amounts_hidden(self):

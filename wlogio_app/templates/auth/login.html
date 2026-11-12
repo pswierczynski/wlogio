@@ -2,7 +2,7 @@
 <html lang="pl" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
     <title>Logowanie — Wlogio</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -82,6 +82,21 @@
                 padding-right: calc(1rem / 1.2);
                 line-height: normal !important;
                 border-radius: calc(12px / 1.2);
+            }
+        }
+        /* Telefon/tablet: przeglądarki mobilne (iOS) przybliżają stronę po kliknięciu w pole,
+           jeśli tekst w polu ma mniej niż 16 px. Na urządzeniach dotykowych pole ma więc
+           po prostu 16 px bez zoomu (to samo wizualnie co 13,3 px x 1,2 na desktopie). */
+        @media (pointer: coarse), (max-width: 640px) {
+            .input.input {
+                zoom: 1;
+                font-family: inherit !important;
+                font-size: 16px !important;
+                line-height: normal !important;
+                height: 3rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+                border-radius: 12px;
             }
         }
         html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
