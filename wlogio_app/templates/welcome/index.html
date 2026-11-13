@@ -189,16 +189,17 @@
             width: 15px;
             height: 15px;
         }
-        /* Usuń z zespołu — czerwony "x" w prawym górnym rogu zdjęcia, widoczny po najechaniu */
+        /* Usuń z zespołu — czerwony okrąg z "x" bez wypełnienia, poza zdjęciem i jego obramowaniem, widoczny po najechaniu */
         .avatar-remove {
             position: absolute;
-            top: 3px;
-            right: 3px;
+            top: -13px;
+            right: -13px;
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background: #ef4444;
-            border: 2px solid oklch(var(--b2));
+            background: none;
+            color: #ef4444;
+            border: 2px solid #ef4444;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -209,7 +210,7 @@
             transition: opacity 0.15s ease, transform 0.15s ease;
         }
         .avatar-remove svg { width: 10px; height: 10px; }
-        .avatar-remove:hover { background: #dc2626; transform: scale(1.12); }
+        .avatar-remove:hover { color: #dc2626; border-color: #dc2626; transform: scale(1.12); }
         .avatar-btn:hover .avatar-remove,
         .avatar-btn:focus-within .avatar-remove { opacity: 1; pointer-events: auto; }
         /* Ekrany dotykowe nie mają hover — "x" widoczny cały czas */
@@ -452,7 +453,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                     <span role="button" aria-label="Usuń z zespołu" class="avatar-remove"
                           x-show="team.is_owner && team.members.includes({{ uid }})" x-cloak
                           @click.stop.prevent="teamRemove({{ uid }}, '{{ (user.name or user.email.split('@')[0])|e }}')">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
                             <path d="M6 6l12 12M18 6L6 18"/>
                         </svg>
                     </span>
