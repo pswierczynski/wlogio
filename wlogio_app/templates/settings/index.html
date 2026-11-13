@@ -181,7 +181,7 @@
                 {% set current_cfg_year = ns.year_groups[0]['year'] if ns.year_groups else 0 %}
 
                 <div class="flex flex-col gap-2"
-                     x-data="{ openYear: {{ current_cfg_year }} }">
+                     x-data="{ openYear: null }">
 
                     {% for group in ns.year_groups %}
                     {% set year = group.year %}
