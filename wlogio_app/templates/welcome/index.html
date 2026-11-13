@@ -192,14 +192,14 @@
         /* Usuń z zespołu — czerwony okrąg z "x" bez wypełnienia, poza zdjęciem i jego obramowaniem, widoczny po najechaniu */
         .avatar-remove {
             position: absolute;
-            top: -13px;
-            right: -13px;
+            top: -10px;
+            right: -10px;
             width: 22px;
             height: 22px;
             border-radius: 50%;
             background: none;
-            color: #ef4444;
-            border: 2px solid #ef4444;
+            color: #ff5861;   /* ten sam czerwony co text-error / badge zwolnienia w całej aplikacji */
+            border: 2px solid #ff5861;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -210,7 +210,7 @@
             transition: opacity 0.15s ease, transform 0.15s ease;
         }
         .avatar-remove svg { width: 10px; height: 10px; }
-        .avatar-remove:hover { color: #dc2626; border-color: #dc2626; transform: scale(1.12); }
+        .avatar-remove:hover { transform: scale(1.12); }
         .avatar-btn:hover .avatar-remove,
         .avatar-btn:focus-within .avatar-remove { opacity: 1; pointer-events: auto; }
         /* Ekrany dotykowe nie mają hover — "x" widoczny cały czas */
