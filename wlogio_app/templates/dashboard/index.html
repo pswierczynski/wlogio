@@ -108,7 +108,7 @@
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100">
 
-            <div class="flex flex-col gap-2 pt-2">
+            <div class="flex flex-col gap-[2px] pt-[2px]">
 
                 {% for month in group.months %}
                 {% set key = month.year ~ '-' ~ month.month %}
@@ -181,8 +181,8 @@
                                 <table class="table table-sm dash-table w-full">
                                     <thead>
                                         <tr class="text-xs text-base-content/50 uppercase tracking-wide">
-                                            <th class="col-date font-semibold">Data</th>
                                             <th class="col-type font-semibold">Typ</th>
+                                            <th class="col-date font-semibold">Data</th>
                                             <th class="col-time font-semibold">Przyjście</th>
                                             <th class="col-time font-semibold">Wyjście</th>
                                             <th class="col-break font-semibold">Przerwa</th>
@@ -210,15 +210,6 @@
                                             {% endfor %}
                                         {% endif %}
                                         <tr class="entry-row transition-colors">
-
-                                            <td class="col-date font-medium text-sm whitespace-nowrap">
-                                                {# Brak godziny zakończenia oznaczamy tylko w MINIONYCH dniach —
-                                                   w bieżącym dniu praca może jeszcze trwać. #}
-                                                {% set missing_end = entry.entry_type == 'work' and entry.time_start and not entry.time_end and entry.date < employee_today %}
-                                                <span class="{% if missing_end %}text-error{% endif %}">
-                                                    {{ entry.date.strftime('%d.%m.%Y') }}
-                                                </span>
-                                            </td>
 
                                             <td class="col-type">
                                                 <div class="flex flex-nowrap items-center gap-1.5">
@@ -303,6 +294,15 @@
                                                 </div>
                                                 {% endif %}
                                                 </div>
+                                            </td>
+
+                                            <td class="col-date font-medium text-sm whitespace-nowrap">
+                                                {# Brak godziny zakończenia oznaczamy tylko w MINIONYCH dniach —
+                                                   w bieżącym dniu praca może jeszcze trwać. #}
+                                                {% set missing_end = entry.entry_type == 'work' and entry.time_start and not entry.time_end and entry.date < employee_today %}
+                                                <span class="{% if missing_end %}text-error{% endif %}">
+                                                    {{ entry.date.strftime('%d.%m.%Y') }}
+                                                </span>
                                             </td>
 
                                             <td class="col-time text-base-content/70 text-sm whitespace-nowrap">
