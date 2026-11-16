@@ -70,9 +70,9 @@
     {% for group in ns.year_groups %}
     {% set year = group.year %}
 
-    {# Aktywny rok ma po 5 px odstępu od sąsiednich lat (reszta pasków: 3 px) #}
+    {# Aktywny rok ma po 7 px odstępu od sąsiednich lat (reszta pasków: 3 px) #}
     <div class="card bg-transparent shadow-none overflow-hidden first:mt-0 last:mb-0"
-         :class="openYear === {{ year }} ? 'my-[var(--bar-gap-x,2px)] first:mt-0 last:mb-0' : ''">
+         :class="openYear === {{ year }} ? 'my-[var(--bar-gap-x,4px)] first:mt-0 last:mb-0' : ''">
 
         <div class="flex items-center justify-between px-4 sm:px-5 py-3 cursor-pointer rounded-box transition-colors select-none"
              :class="openYear === {{ year }} ? 'bg-base-100' : 'bg-base-300/50 hover:bg-base-300/70 text-base-content/60'"
@@ -115,9 +115,10 @@
                 {% for month in group.months %}
                 {% set key = month.year ~ '-' ~ month.month %}
 
-                {# Rozwinięty miesiąc: 5 px do następnego paska (ostatni miesiąc roku: odstęp daje rok) #}
+                {# Rozwinięty miesiąc: 7 px do sąsiednich miesięcy (nad nim i pod nim); przy pierwszym/ostatnim
+                   miesiącu roku odstęp daje nagłówek roku / następny rok #}
                 <div class="card bg-transparent shadow-none overflow-hidden"
-                     :class="openMonth === '{{ key }}' ? 'mb-[var(--bar-gap-x,2px)] last:mb-0' : ''">
+                     :class="openMonth === '{{ key }}' ? 'my-[var(--bar-gap-x,4px)] first:mt-0 last:mb-0' : ''">
 
                     <div class="flex items-center justify-between px-3 sm:px-4 py-3 cursor-pointer transition-colors select-none"
                          :class="openMonth === '{{ key }}' ? 'bg-base-100' : 'bg-base-300/50 hover:bg-base-300/70 text-base-content/60'"

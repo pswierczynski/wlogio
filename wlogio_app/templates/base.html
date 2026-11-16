@@ -85,8 +85,13 @@
            nagłówka miesiąca i dolne narożniki podsumowania (przycina je karta miesiąca). */
         .entry-row:hover > td { background-color: color-mix(in oklab, oklch(var(--b1)) 55%, oklch(var(--b3))); }
         /* Stałe szerokości kolumn tabeli */
-        .col-date { width: 100px; min-width: 100px; }
-        .col-type { width: 110px; min-width: 110px; }
+        /* Typ (badge) i Data dopasowują się do zawartości (width: 1%), a odstęp daty jest liczony z --dg,
+           więc data jest zawsze dokładnie wyśrodkowana między badge a kolumną „Przyjście".
+           Lewy margines badge (21 px) = prawy margines przycisku „Usuń". */
+        .dash-table { --dg: clamp(20px, 6.8vw, 87px); }
+        .col-type { width: 1%; min-width: 0; white-space: nowrap; padding-right: 0; }
+        .col-date { width: 1%; min-width: 0; white-space: nowrap; padding-left: calc(var(--dg) - 3.65px); padding-right: calc(var(--dg) - 14.35px); }
+        .dash-table th:first-child, .dash-table td:first-child { padding-left: 21px; }
         .col-time { width: 70px; min-width: 70px; }
         .col-break { width: 110px; min-width: 110px; }
         .col-hours { width: 80px; min-width: 80px; }
@@ -104,13 +109,13 @@
         input:autofill, input:-moz-autofill { background-color: oklch(var(--b1)) !important; color: oklch(var(--bc)) !important; filter: none; }
     </style>
     <script>
-        /* Odstępy między paskami (3 px, a przy aktywnym roku/miesiącu 5 px) przeliczane na PEŁNE piksele
+        /* Odstępy między paskami (3 px, a przy aktywnym roku/miesiącu 7 px) przeliczane na PEŁNE piksele
            fizyczne ekranu — inaczej przy skali/zoomie ≠ 100% część odstępów ma 1 px, a część 2 px. */
         (function () {
             function setGaps() {
                 var d = window.devicePixelRatio || 1, st = document.documentElement.style;
                 function snap(px) { return Math.max(1, Math.round(px * d)) / d; }
-                var g = snap(3), l = snap(5);
+                var g = snap(3), l = snap(7);
                 st.setProperty('--bar-gap', g + 'px');
                 st.setProperty('--bar-gap-lg', l + 'px');
                 st.setProperty('--bar-gap-x', (l - g) + 'px');
