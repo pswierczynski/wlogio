@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from wlogio_app import db
-from wlogio_app.badges import BADGE_ICONS, BADGE_COLORS
+from wlogio_app.badges import BADGE_ICONS, BADGE_COLORS, BADGE_LABELS
 from wlogio_app.models import User, WorkEntry, MonthConfig, VacationBalance
 from wlogio_app.scope import local_today, get_effective_user, set_viewing_employee, clear_viewing_employee
 from wlogio_app.calculator import (
@@ -249,6 +249,15 @@ def get_employee_month_stats(user_id):
     }
 
 
+# Sekcje listy pracowników: (klucz, nagłówek, kolor kropki)
+EMPLOYEE_GROUPS = [
+    ('working', 'W pracy', '#22c55e'),
+    ('break', 'Na przerwie', '#f59e0b'),
+    ('missing', 'Brak godziny zakończenia', '#ff5861'),
+    ('idle', 'Pozostali', '#9ca3af'),
+]
+
+
 def get_employee_work_flags(employee_ids):
     """
     Znaczniki do obramowania kart pracowników na liście:
@@ -258,7 +267,11 @@ def get_employee_work_flags(employee_ids):
       wg tej samej logiki co Terminal (zielone obramowanie karty),
     - status: 'working' | 'break' | 'idle' — kolor obramowania zdjęcia,
     - badge: aktualny badge pracownika (P/W/U/N/B/H/Z/O/S/D albo None) —
-      liczony tą samą funkcją co w Terminalu.
+      liczony tą samą funkcją co w Terminalu,
+    - break_minutes: suma przerw z dzisiejszego dnia w minutach (0 = brak przerwy),
+    - group: sekcja listy — 'working' | 'break' | 'missing' | 'idle'
+      (praca/przerwa mają pierwszeństwo przed brakiem godziny zakończenia),
+    - status_text: krótki opis pod imieniem ('' = pokaż login).
     """
     if not employee_ids:
         return {}
@@ -273,9 +286,9 @@ def get_employee_work_flags(employee_ids):
         return f'{h} h {m:02d} min' if h else f'{m} min'
 
     def _today_times(entry):
-        """(początek, koniec, tekst przerwy) dzisiejszego wpisu pracy — do karty pracownika."""
+        """(początek, koniec, tekst przerwy, minuty przerwy) dzisiejszego wpisu pracy."""
         if entry is None or entry.entry_type != 'work':
-            return '', '', '—'
+            return '', '', '—', 0
         start = entry.time_start.strftime('%H:%M') if entry.time_start else ''
         end = entry.time_end.strftime('%H:%M') if entry.time_end else ''
         total, running = 0, False
@@ -288,8 +301,8 @@ def get_employee_work_flags(employee_ids):
                 be_m = to_min(be)
                 total += (be_m - bs_m) % (24 * 60)
         if not total and not running:
-            return start, end, '—'
-        return start, end, _fmt_minutes(total) + (' (trwa)' if running else '')
+            return start, end, '—', 0
+        return start, end, _fmt_minutes(total) + (' (trwa)' if running else ''), int(total)
 
     today = local_today()
     missing_end_ids = {
@@ -309,15 +322,38 @@ def get_employee_work_flags(employee_ids):
     for uid in employee_ids:
         entry  = get_today_entry(uid)
         status = compute_status(entry)
-        t_start, t_end, t_break = _today_times(entry)
+        t_start, t_end, t_break, t_break_min = _today_times(entry)
+        missing = uid in missing_end_ids
+        badge = compute_badge(entry, status)
+        if status in ('working', 'break'):
+            group = status
+        elif missing:
+            group = 'missing'
+        else:
+            group = 'idle'
+        if status == 'working':
+            text = f'W pracy od {t_start}' if t_start else 'W pracy'
+        elif status == 'break':
+            text = 'Na przerwie'
+        elif missing:
+            text = 'Brak zakończenia pracy'
+        elif badge in BADGE_LABELS:
+            text = BADGE_LABELS[badge]
+        elif t_end:
+            text = f'Zakończono o {t_end}'
+        else:
+            text = ''
         flags[uid] = {
-            'time_start':  t_start,
-            'time_end':    t_end,
-            'break_text':  t_break,
-            'missing_end': uid in missing_end_ids,
-            'in_work':     status in ('working', 'break'),
-            'status':      status,
-            'badge':       compute_badge(entry, status),
+            'time_start':    t_start,
+            'time_end':      t_end,
+            'break_text':    t_break,
+            'break_minutes': t_break_min,
+            'missing_end':   missing,
+            'in_work':       status in ('working', 'break'),
+            'status':        status,
+            'badge':         badge,
+            'group':         group,
+            'status_text':   text,
         }
     return flags
 
@@ -367,7 +403,8 @@ def index():
                                    stats=stats, flags=flags, format_currency=format_currency,
                                    badge_icons=BADGE_ICONS, badge_colors=BADGE_COLORS,
                                    employee_count=len(employees),
-                                   employee_limit=current_user.employee_limit)
+                                   employee_limit=current_user.employee_limit,
+                                   emp_groups=EMPLOYEE_GROUPS)
     else:
         target = current_user
 

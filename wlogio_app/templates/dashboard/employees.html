@@ -21,7 +21,12 @@
         display: flex; align-items: center; justify-content: center;
         flex-shrink: 0;
     }
-    .emp-badges { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .emp-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    /* Wiersze w sekcji rozdziela cienka linia (działa też po przeniesieniu wiersza JS-em) */
+    .emp-row + .emp-row { border-top: 1px solid oklch(var(--b2)); }
+    /* Przerwa tylko gdy była: bez niej komórka znika (mobile) albo zostaje pusta, by kolumny się nie przesuwały (xl) */
+    .emp-break-cell.emp-nobreak { display: none; }
+    @media (min-width: 1280px) { .emp-break-cell.emp-nobreak { display: block; visibility: hidden; } }
     .emp-badge-missing { background-color: oklch(var(--er)); }
     .emp-badge-hidden { display: none; }
     .emp-badge svg { width: 18px; height: 18px; }
@@ -63,90 +68,107 @@
     </div>
 </div>
 {% else %}
-<div class="flex flex-col gap-3">
-    {% for employee in employees %}
+{# Lista pracowników pogrupowana wg statusu: W pracy / Na przerwie / Brak godziny
+   zakończenia / Pozostali. Sekcje są zawsze w DOM (puste są ukryte), żeby skrypt
+   poniżej mógł przenosić wiersze między nimi po zmianie statusu. #}
+{% for gkey, glabel, gcolor in emp_groups %}
+{% set group_rows = [] %}
+{% for employee in employees %}
+    {% set gfl = flags.get(employee.id) %}
+    {% if (gfl.group if gfl else 'idle') == gkey %}{% if group_rows.append(employee) %}{% endif %}{% endif %}
+{% endfor %}
+<section class="mb-4" data-emp-group="{{ gkey }}"{% if not group_rows %} hidden{% endif %}>
+    <div class="flex items-center gap-2 mb-1.5 px-1">
+        <span class="inline-block rounded-full" style="width:9px;height:9px;background:{{ gcolor }}"></span>
+        <span class="text-sm font-semibold">{{ glabel }}</span>
+        <span class="text-xs text-base-content/40" data-emp-group-count>{{ group_rows|length }}</span>
+    </div>
+    <div class="card bg-base-100 shadow-sm overflow-hidden emp-group-body">
+    {% for employee in group_rows %}
     {% set fl = flags.get(employee.id) %}
-    <div class="card bg-base-100 shadow-sm emp-card{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
-         data-employee-id="{{ employee.id }}">
-        <div class="card-body gap-3 p-4">
-            <div class="flex items-center gap-3">
-                {% if employee.avatar %}
-                <div data-emp-avatar class="w-12 h-12 rounded-full overflow-hidden shrink-0 emp-ring-{{ fl.status if fl else 'idle' }}">
-                    <img src="{{ employee.avatar }}" alt="" class="w-full h-full object-cover"/>
-                </div>
-                {% else %}
-                <div data-emp-avatar class="w-12 h-12 rounded-full bg-neutral flex items-center justify-center shrink-0 emp-ring-{{ fl.status if fl else 'idle' }}">
-                    {% set parts = (employee.name or employee.login).split(' ') %}
-                    <span class="text-lg font-bold text-white">
-                        {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
-                    </span>
-                </div>
-                {% endif %}
-                <div class="min-w-0 flex-1">
-                    <div class="font-semibold truncate emp-name">{{ employee.name or employee.login }}</div>
-                    <div class="text-xs text-base-content/40 truncate">login: {{ employee.login }}</div>
-                </div>
-                {% set b = fl.badge if fl else None %}
-                {% set miss = fl and fl.missing_end %}
-                <div class="emp-badges">
-                    {# Czerwony badge: minione dni bez godziny zakończenia pracy #}
-                    <div data-emp-missing class="emp-badge emp-badge-missing{% if not miss %} emp-badge-hidden{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v9"/><path d="M12 19h.01"/></svg></div>
-                    <div data-emp-badge
-                         class="emp-badge {% if b %}emp-badge-t-{{ b }}{% elif miss %}emp-badge-hidden{% else %}emp-badge-empty{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
-                </div>
-            </div>
+    {% set st = stats.get(employee.id) %}
+    {% set b = fl.badge if fl else None %}
+    {% set miss = fl and fl.missing_end %}
+    {% set brk_min = fl.break_minutes if fl else 0 %}
+    <div class="emp-row emp-card flex flex-wrap xl:flex-nowrap items-center gap-x-4 gap-y-3 px-4 py-3{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
+         data-employee-id="{{ employee.id }}" data-order="{{ employees.index(employee) }}"
+         data-login-text="login: {{ employee.login }}">
 
-            {% set st = stats.get(employee.id) %}
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-3 text-xs border-t border-base-200 pt-3">
-                <div>
-                    <div class="text-base-content/50 mb-0.5">Rozpoczęcie</div>
-                    <div class="font-medium text-sm" data-emp-start>{{ (fl.time_start if fl else '') or '—' }}</div>
-                </div>
-                <div>
-                    <div class="text-base-content/50 mb-0.5">Zakończenie</div>
-                    <div class="font-medium text-sm" data-emp-end>{{ (fl.time_end if fl else '') or '—' }}</div>
-                </div>
-                <div>
-                    <div class="text-base-content/50 mb-0.5">Przerwa</div>
-                    <div class="font-medium text-sm" data-emp-break>{{ (fl.break_text if fl else '') or '—' }}</div>
-                </div>
-                <div>
-                    <div class="text-base-content/50 mb-0.5">Stawka</div>
-                    <div class="font-medium text-sm">
-                        {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
-                    </div>
-                </div>
-                <div>
-                    <div class="text-base-content/50 mb-0.5">Prognoza</div>
-                    <div class="font-medium text-sm">
-                        {% if st and st.hourly_rate %}{{ format_currency(st.forecast) }}{% else %}—{% endif %}
-                    </div>
-                </div>
-                <div>
-                    <div class="text-base-content/50 mb-0.5">Przepracowane</div>
-                    <div class="font-medium text-sm">{% if st %}{{ st.worked_days }} / {{ st.working_days }}{% else %}—{% endif %}</div>
-                </div>
+        <div class="flex items-center gap-3 min-w-0 w-full xl:flex-none xl:w-[200px]">
+            {% if employee.avatar %}
+            <div data-emp-avatar class="w-9 h-9 rounded-full overflow-hidden shrink-0 emp-ring-{{ fl.status if fl else 'idle' }}">
+                <img src="{{ employee.avatar }}" alt="" class="w-full h-full object-cover"/>
             </div>
+            {% else %}
+            <div data-emp-avatar class="w-9 h-9 rounded-full bg-neutral flex items-center justify-center shrink-0 emp-ring-{{ fl.status if fl else 'idle' }}">
+                {% set parts = (employee.name or employee.login).split(' ') %}
+                <span class="text-sm font-bold text-white">{{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}</span>
+            </div>
+            {% endif %}
+            <div class="min-w-0 flex-1">
+                <div class="font-medium truncate emp-name">{{ employee.name or employee.login }}</div>
+                <div class="text-xs text-base-content/40 truncate" data-emp-status>{{ (fl.status_text if fl else '') or ('login: ' ~ employee.login) }}</div>
+            </div>
+        </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}">
-                    <button type="submit" class="btn btn-outline btn-neutral btn-sm px-4">Panel pracy</button>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-4 gap-y-2 w-full xl:contents">
+            <div class="text-sm xl:w-[104px] xl:shrink-0">
+                <span class="xl:hidden block text-xs text-base-content/50">Godziny</span>
+                <span class="font-medium" data-emp-start>{{ (fl.time_start if fl else '') or '—' }}</span>
+                <span class="text-base-content/40">→</span>
+                <span class="font-medium" data-emp-end>{{ (fl.time_end if fl else '') or '—' }}</span>
+            </div>
+            <div class="text-sm emp-break-cell xl:w-[112px] xl:shrink-0{% if not brk_min %} emp-nobreak{% endif %}">
+                <span class="xl:hidden block text-xs text-base-content/50">Przerwa</span>
+                <span class="text-base-content/40 hidden xl:inline">przerwa </span><span class="font-medium" data-emp-break>{{ brk_min }} min</span>
+            </div>
+            <div class="text-sm text-base-content/70 whitespace-nowrap xl:w-[80px] xl:shrink-0 xl:ml-2">
+                <span class="xl:hidden block text-xs text-base-content/50">Stawka</span>
+                {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
+            </div>
+            <div class="text-sm whitespace-nowrap xl:w-[92px] xl:shrink-0">
+                <span class="xl:hidden block text-xs text-base-content/50">Prognoza</span>
+                <span class="font-semibold">{% if st and st.hourly_rate %}{{ format_currency(st.forecast) }}{% else %}—{% endif %}</span>
+            </div>
+            <div class="xl:w-[124px] xl:shrink-0 xl:mr-3">
+                <span class="xl:hidden block text-xs text-base-content/50">Przepracowane</span>
+                {% if st and st.working_days %}
+                <div class="flex items-center gap-2">
+                    <div class="h-1.5 w-[64px] rounded-full bg-base-200 overflow-hidden">
+                        <div class="h-full rounded-full bg-neutral" style="width: {{ [100, (st.worked_days / st.working_days * 100)|round(0)]|min|int }}%"></div>
+                    </div>
+                    <span class="text-sm text-base-content/70 whitespace-nowrap">{{ st.worked_days }} / {{ st.working_days }}</span>
+                </div>
+                {% else %}<span class="text-sm text-base-content/70">—</span>{% endif %}
+            </div>
+        </div>
+
+        <div class="flex items-center gap-5 w-full xl:w-auto justify-between xl:justify-end xl:ml-auto">
+            <div class="emp-badges">
+                {# Czerwony badge: minione dni bez godziny zakończenia pracy #}
+                <div data-emp-missing class="emp-badge emp-badge-missing{% if not miss %} emp-badge-hidden{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v9"/><path d="M12 19h.01"/></svg></div>
+                <div data-emp-badge
+                     class="emp-badge {% if b %}emp-badge-t-{{ b }}{% elif miss %}emp-badge-hidden{% else %}emp-badge-empty{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
+            </div>
+            <div class="flex items-center gap-1">
+                <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}" class="mr-1">
+                    <button type="submit" class="btn btn-outline btn-neutral btn-sm px-4 whitespace-nowrap">Panel pracy</button>
                 </form>
-                <div class="flex items-center gap-1">
-                    <a href="{{ url_for('dashboard.employee_profile', employee_id=employee.id) }}"
-                       class="btn btn-ghost btn-sm btn-square" title="Konto" aria-label="Konto">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    </a>
-                    <a href="{{ url_for('dashboard.employee_settings', employee_id=employee.id) }}"
-                       class="btn btn-ghost btn-sm btn-square" title="Ustawienia" aria-label="Ustawienia">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    </a>
-                </div>
+                <a href="{{ url_for('dashboard.employee_profile', employee_id=employee.id) }}"
+                   class="btn btn-ghost btn-sm btn-square" title="Konto" aria-label="Konto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                </a>
+                <a href="{{ url_for('dashboard.employee_settings', employee_id=employee.id) }}"
+                   class="btn btn-ghost btn-sm btn-square" title="Ustawienia" aria-label="Ustawienia">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </a>
             </div>
         </div>
     </div>
     {% endfor %}
-</div>
+    </div>
+</section>
+{% endfor %}
 {% endif %}
 
 {% if employees %}
@@ -181,8 +203,25 @@
             if (tStart) { tStart.textContent = f.time_start || '—'; }
             var tEnd = card.querySelector('[data-emp-end]');
             if (tEnd) { tEnd.textContent = f.time_end || '—'; }
+            var mins = parseInt(f.break_minutes, 10) || 0;
             var tBrk = card.querySelector('[data-emp-break]');
-            if (tBrk) { tBrk.textContent = f.break_text || '—'; }
+            if (tBrk) { tBrk.textContent = mins + ' min'; }
+            var brkCell = card.querySelector('.emp-break-cell');
+            if (brkCell) { brkCell.classList.toggle('emp-nobreak', mins <= 0); }
+
+            var stTxt = card.querySelector('[data-emp-status]');
+            if (stTxt) { stTxt.textContent = f.status_text || card.getAttribute('data-login-text'); }
+
+            /* Przenieś wiersz do sekcji zgodnej ze statusem (zachowując kolejność listy) */
+            var body = document.querySelector('[data-emp-group="' + (f.group || 'idle') + '"] .emp-group-body');
+            if (body && card.parentNode !== body) {
+                var order = parseInt(card.getAttribute('data-order'), 10);
+                var before = null;
+                body.querySelectorAll('[data-employee-id]').forEach(function (r) {
+                    if (!before && parseInt(r.getAttribute('data-order'), 10) > order) { before = r; }
+                });
+                body.insertBefore(card, before);
+            }
 
             var miss = card.querySelector('[data-emp-missing]');
             if (miss) { miss.classList.toggle('emp-badge-hidden', !missing); }
@@ -200,6 +239,13 @@
                     slot.innerHTML = '';
                 }
             }
+        });
+        /* Liczniki sekcji; puste sekcje ukryte */
+        document.querySelectorAll('[data-emp-group]').forEach(function (sec) {
+            var n = sec.querySelectorAll('[data-employee-id]').length;
+            sec.hidden = n === 0;
+            var c = sec.querySelector('[data-emp-group-count]');
+            if (c) { c.textContent = n; }
         });
     }
 

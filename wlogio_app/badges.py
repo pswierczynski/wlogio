@@ -32,3 +32,15 @@ BADGE_COLORS = {
     'W': '#22c55e',
     'Z': '#ff5861',
 }
+
+# Opis dnia przy pracowniku na liście (linia pod imieniem) — dla badge'y z wpisów nie-pracy.
+BADGE_LABELS = {
+    'B': 'Urlop bezpłatny',
+    'D': 'Opieka nad dzieckiem',
+    'H': 'Święto',
+    'N': 'Urlop na żądanie',
+    'O': 'Urlop opiekuńczy',
+    'S': 'Siła wyższa',
+    'U': 'Urlop',
+    'Z': 'Zwolnienie lekarskie',
+}
