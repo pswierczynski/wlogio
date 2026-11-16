@@ -523,25 +523,22 @@ const INIT_NOTES    = {{ user_notes | tojson }};
         {% if team is not none %}
         <!-- Zespół (konta indywidualne) -->
         <div class="mt-16 flex flex-col items-center gap-2" x-show="teamEnabled">
-            <!-- Akcje zespołu zwinięte pod menu „trzy kropki" -->
-            <div class="relative" x-data="{menu: false}" @keydown.escape.window="menu = false" @click.outside="menu = false">
-                <button type="button" class="btn btn-ghost btn-circle btn-sm text-base-content/60" aria-label="Opcje zespołu"
-                        :aria-expanded="menu" @click="menu = !menu">
+            <!-- Akcje zespołu zwinięte pod menu „trzy kropki" (to samo rozwijane menu daisyUI co menu konta w panelu pracy) -->
+            <div class="dropdown">
+                <label tabindex="0" class="btn btn-ghost btn-circle btn-sm text-base-content/60" aria-label="Opcje zespołu">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-                </button>
-                <ul x-show="menu" x-cloak x-transition.opacity
-                    class="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-30 min-w-[11rem] rounded-xl border border-base-300 bg-base-100 shadow-lg p-1 text-sm">
+                </label>
+                <ul tabindex="0" @click="$el.blur(); document.activeElement && document.activeElement.blur()"
+                    class="dropdown-content menu bg-base-100 rounded-box shadow-lg border border-base-300 w-48 p-1 mt-1 z-50"
+                    style="left:50%; margin-left:-6rem;">
                     <li x-show="!team.in_team || team.is_owner">
-                        <button type="button" class="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200"
-                                @click="menu = false; openAddMember()">Dodaj do zespołu</button>
+                        <a role="button" @click="openAddMember()"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>Dodaj do zespołu</a>
                     </li>
                     <li x-show="team.in_team && !team.is_owner">
-                        <button type="button" class="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200"
-                                @click="menu = false; teamConfirm = 'leave'">Opuść zespół</button>
+                        <a role="button" @click="teamConfirm = 'leave'"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>Opuść zespół</a>
                     </li>
                     <li x-show="team.in_team && team.is_owner">
-                        <button type="button" class="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 text-error"
-                                @click="menu = false; teamConfirm = 'dissolve'">Rozwiąż zespół</button>
+                        <a role="button" class="text-error" @click="teamConfirm = 'dissolve'"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>Rozwiąż zespół</a>
                     </li>
                 </ul>
             </div>
