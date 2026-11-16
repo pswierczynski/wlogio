@@ -72,10 +72,15 @@
             color: oklch(var(--bc));
         }
         /* Panel pracy: dni jako białe paski rozdzielone małymi odstępami (bez obramowań) */
-        .dash-table { border-collapse: separate; border-spacing: 0 2px; }
+        /* Pasek dnia: 37 px + odstęp 3 px = okres 40 px (wielokrotność 20 → całkowita liczba pikseli ekranu
+           przy zoomie 90/110/125/150/175/200%, więc wszystkie odstępy są identyczne). Pasek kolumn = pasek dnia.
+           Odstęp między paskami to przezroczysty border (3 px): przeglądarka zaokrągla grubość obramowania
+           do pełnych pikseli ekranu, więc wszystkie odstępy są identyczne także przy zoomie/skali ≠ 100%. */
+        .dash-table { border-collapse: separate; border-spacing: 0; }
         .dash-table thead tr, .dash-table tbody tr { border-bottom-width: 0; }
-        .dash-table thead th { background: oklch(var(--b1)); padding-top: .25rem; padding-bottom: .25rem; }
-        .entry-row > td { background-color: oklch(var(--b1)); transition: background-color .15s; }
+        /* Pasek z nazwami kolumn ma tę samą wysokość co paski dni (2.5rem = 40 px) */
+        .dash-table thead th { background: oklch(var(--b1)); background-clip: padding-box; padding-top: .25rem; padding-bottom: .25rem; height: 43px; vertical-align: middle; border-top: 3px solid transparent; border-bottom: 3px solid transparent; }
+        .entry-row > td { background-color: oklch(var(--b1)); background-clip: padding-box; transition: background-color .15s; height: 40px; padding-top: .25rem; padding-bottom: .25rem; border-bottom: 3px solid transparent; }
         /* Paski w rozwiniętym miesiącu są prostokątne — zaokrąglone zostają tylko górne narożniki
            nagłówka miesiąca i dolne narożniki podsumowania (przycina je karta miesiąca). */
         .entry-row:hover > td { background-color: color-mix(in oklab, oklch(var(--b1)) 55%, oklch(var(--b3))); }
@@ -98,6 +103,22 @@
         }
         input:autofill, input:-moz-autofill { background-color: oklch(var(--b1)) !important; color: oklch(var(--bc)) !important; filter: none; }
     </style>
+    <script>
+        /* Odstępy między paskami (3 px, a przy aktywnym roku/miesiącu 5 px) przeliczane na PEŁNE piksele
+           fizyczne ekranu — inaczej przy skali/zoomie ≠ 100% część odstępów ma 1 px, a część 2 px. */
+        (function () {
+            function setGaps() {
+                var d = window.devicePixelRatio || 1, st = document.documentElement.style;
+                function snap(px) { return Math.max(1, Math.round(px * d)) / d; }
+                var g = snap(3), l = snap(5);
+                st.setProperty('--bar-gap', g + 'px');
+                st.setProperty('--bar-gap-lg', l + 'px');
+                st.setProperty('--bar-gap-x', (l - g) + 'px');
+            }
+            setGaps();
+            window.addEventListener('resize', setGaps);
+        })();
+    </script>
 </head>
 <body class="bg-base-200 min-h-screen">
 

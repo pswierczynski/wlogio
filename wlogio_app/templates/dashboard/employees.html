@@ -22,9 +22,16 @@
         flex-shrink: 0;
     }
     .emp-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    /* Wiersze w sekcji rozdziela odstęp 2 px (działa też po przeniesieniu wiersza JS-em) */
-    .emp-group-body { display: flex; flex-direction: column; gap: 2px; background: oklch(var(--b2)); }
-    .emp-row { background: oklch(var(--b1)); }
+    /* Wiersze w sekcji rozdziela przezroczysty border 3 px (grubość zaokrąglana do pełnych pikseli ekranu) (działa też po przeniesieniu wiersza JS-em) */
+    .emp-group-body { display: flex; flex-direction: column; background: oklch(var(--b2)); }
+    .emp-row { background: oklch(var(--b1)); background-clip: padding-box; border-bottom: 3px solid transparent; }
+    .emp-row:last-child { border-bottom: 0; }
+    /* Układ jednolinijkowy (xl): pasek 57 px + odstęp 3 px = okres 60 px (całkowita liczba pikseli ekranu
+       przy zoomie 90/110/125/150/175/200%) — wszystkie odstępy między paskami są wtedy identyczne. */
+    @media (min-width: 1280px) {
+        .emp-row { height: 60px; }
+        .emp-row:last-child { height: 57px; }
+    }
     /* Przerwa tylko gdy była: bez niej komórka znika (mobile) albo zostaje pusta, by kolumny się nie przesuwały (xl) */
     .emp-break-cell.emp-nobreak { display: none; }
     @media (min-width: 1280px) { .emp-break-cell.emp-nobreak { display: block; visibility: hidden; } }
@@ -91,7 +98,7 @@
     {% set b = fl.badge if fl else None %}
     {% set miss = fl and fl.missing_end %}
     {% set brk_min = fl.break_minutes if fl else 0 %}
-    <div class="emp-row emp-card flex flex-wrap xl:flex-nowrap items-center gap-x-4 gap-y-3 px-4 py-3{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
+    <div class="emp-row emp-card flex flex-wrap xl:flex-nowrap items-center gap-x-4 gap-y-3 px-4 py-3 xl:py-2{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
          data-employee-id="{{ employee.id }}" data-order="{{ employees.index(employee) }}"
          data-login-text="login: {{ employee.login }}">
 
