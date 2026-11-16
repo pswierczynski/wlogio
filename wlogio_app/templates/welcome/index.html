@@ -8,6 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
+        /* Pola formularzy — jak w reszcie aplikacji (cienka linia #E5E3DC, ciemna ramka po kliknięciu, bez podwójnego obramowania) */
+        .input { border: 1px solid #E5E3DC; border-radius: 12px; background-color: #fff; color: #1A1A19; }
+        .input:focus, .input:focus-within { outline: none; border-color: #1A1A19; }
         /* Logo Wlogio (wordmark) — kolor dziedziczony z tekstu */
         .wlogio-logo{display:inline-block;aspect-ratio:1267.0/375.7;background:currentColor;
             -webkit-mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;
@@ -520,13 +523,27 @@ const INIT_NOTES    = {{ user_notes | tojson }};
         {% if team is not none %}
         <!-- Zespół (konta indywidualne) -->
         <div class="mt-16 flex flex-col items-center gap-2" x-show="teamEnabled">
-            <div class="flex flex-wrap items-center justify-center gap-2">
-                <button type="button" class="btn btn-outline btn-neutral btn-sm"
-                        x-show="!team.in_team || team.is_owner" @click="openAddMember()">Dodaj do zespołu</button>
-                <button type="button" class="btn btn-ghost btn-sm text-base-content/60"
-                        x-show="team.in_team && !team.is_owner" @click="teamConfirm = 'leave'">Opuść zespół</button>
-                <button type="button" class="btn btn-ghost btn-sm text-error"
-                        x-show="team.in_team && team.is_owner" @click="teamConfirm = 'dissolve'">Rozwiąż zespół</button>
+            <!-- Akcje zespołu zwinięte pod menu „trzy kropki" -->
+            <div class="relative" x-data="{menu: false}" @keydown.escape.window="menu = false" @click.outside="menu = false">
+                <button type="button" class="btn btn-ghost btn-circle btn-sm text-base-content/60" aria-label="Opcje zespołu"
+                        :aria-expanded="menu" @click="menu = !menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                </button>
+                <ul x-show="menu" x-cloak x-transition.opacity
+                    class="absolute left-1/2 -translate-x-1/2 top-full mt-1 z-30 min-w-[11rem] rounded-xl border border-base-300 bg-base-100 shadow-lg p-1 text-sm">
+                    <li x-show="!team.in_team || team.is_owner">
+                        <button type="button" class="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200"
+                                @click="menu = false; openAddMember()">Dodaj do zespołu</button>
+                    </li>
+                    <li x-show="team.in_team && !team.is_owner">
+                        <button type="button" class="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200"
+                                @click="menu = false; teamConfirm = 'leave'">Opuść zespół</button>
+                    </li>
+                    <li x-show="team.in_team && team.is_owner">
+                        <button type="button" class="w-full text-left px-3 py-2 rounded-lg hover:bg-base-200 text-error"
+                                @click="menu = false; teamConfirm = 'dissolve'">Rozwiąż zespół</button>
+                    </li>
+                </ul>
             </div>
         </div>
         {% endif %}
@@ -553,7 +570,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
             <h2 class="font-bold text-lg mb-1">Dodaj do zespołu</h2>
             <p class="text-xs text-base-content/50 mb-4">Podaj adres e-mail, którego osoba używa do logowania.</p>
             <input type="email" x-model="teamEmail" x-ref="teamEmail" @keydown.enter="teamInvite()"
-                   placeholder="adres@email.pl" class="input input-bordered w-full" autocomplete="off">
+                   placeholder="adres@email.pl" class="input w-full" autocomplete="off">
             <div class="text-error text-sm mt-2" x-show="teamMsg" x-text="teamMsg"></div>
             <div class="flex justify-end gap-2 mt-4">
                 <button type="button" class="btn btn-ghost btn-sm" @click="teamAdd = false">Anuluj</button>
