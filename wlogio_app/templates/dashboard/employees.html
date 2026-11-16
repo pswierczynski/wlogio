@@ -22,8 +22,9 @@
         flex-shrink: 0;
     }
     .emp-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-    /* Wiersze w sekcji rozdziela cienka linia (działa też po przeniesieniu wiersza JS-em) */
-    .emp-row + .emp-row { border-top: 1px solid oklch(var(--b2)); }
+    /* Wiersze w sekcji rozdziela odstęp 2 px (działa też po przeniesieniu wiersza JS-em) */
+    .emp-group-body { display: flex; flex-direction: column; gap: 2px; background: oklch(var(--b2)); }
+    .emp-row { background: oklch(var(--b1)); }
     /* Przerwa tylko gdy była: bez niej komórka znika (mobile) albo zostaje pusta, by kolumny się nie przesuwały (xl) */
     .emp-break-cell.emp-nobreak { display: none; }
     @media (min-width: 1280px) { .emp-break-cell.emp-nobreak { display: block; visibility: hidden; } }
@@ -69,7 +70,7 @@
 </div>
 {% else %}
 {# Lista pracowników pogrupowana wg statusu: W pracy / Na przerwie / Brak godziny
-   zakończenia / Pozostali. Sekcje są zawsze w DOM (puste są ukryte), żeby skrypt
+   zakończenia / Nieobecni. Sekcje są zawsze w DOM (puste są ukryte), żeby skrypt
    poniżej mógł przenosić wiersze między nimi po zmianie statusu. #}
 {% for gkey, glabel, gcolor in emp_groups %}
 {% set group_rows = [] %}
@@ -83,7 +84,7 @@
         <span class="text-sm font-semibold">{{ glabel }}</span>
         <span class="text-xs text-base-content/40" data-emp-group-count>{{ group_rows|length }}</span>
     </div>
-    <div class="card bg-base-100 shadow-sm overflow-hidden emp-group-body">
+    <div class="card shadow-none overflow-hidden emp-group-body">
     {% for employee in group_rows %}
     {% set fl = flags.get(employee.id) %}
     {% set st = stats.get(employee.id) %}

@@ -254,7 +254,7 @@ EMPLOYEE_GROUPS = [
     ('working', 'W pracy', '#22c55e'),
     ('break', 'Na przerwie', '#f59e0b'),
     ('missing', 'Brak godziny zakończenia', '#ff5861'),
-    ('idle', 'Pozostali', '#9ca3af'),
+    ('idle', 'Nieobecni', '#9ca3af'),
 ]
 
 

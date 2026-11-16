@@ -61,7 +61,7 @@
     {% set _ = ns.year_groups[-1]['months'].append(month) %}
 {% endfor %}
 
-<div class="flex flex-col gap-2 sm:gap-3"
+<div class="flex flex-col gap-[2px]"
      x-data="{
          openYear: {{ current_year }},
          openMonth: '{{ current_month_key }}'
@@ -115,7 +115,7 @@
 
                 <div class="card bg-transparent shadow-none overflow-hidden">
 
-                    <div class="flex items-center justify-between px-3 sm:px-4 py-3 cursor-pointer rounded-box transition-colors select-none"
+                    <div class="flex items-center justify-between px-3 sm:px-4 py-3 cursor-pointer transition-colors select-none"
                          :class="openMonth === '{{ key }}' ? 'bg-base-100' : 'bg-base-300/50 hover:bg-base-300/70 text-base-content/60'"
                          @click="openMonth = openMonth === '{{ key }}' ? null : '{{ key }}'">
                         <div class="flex items-center gap-2">
@@ -175,7 +175,7 @@
                          x-transition:enter-start="opacity-0"
                          x-transition:enter-end="opacity-100">
 
-                        <div class="mt-1">
+                        <div>
                             {% if month.entries %}
                             <div class="overflow-x-auto">
                                 <table class="table table-sm dash-table w-full">
@@ -378,7 +378,7 @@
                             <!-- Podsumowanie miesiąca -->
                             {% set ot_rate_pct = (month.config.overtime_rate if month.config and month.config.overtime_rate is not none else 100) / 100 %}
                             {% set overtime_amount = month.summary.overtime_hours * month.hourly_rate * ot_rate_pct %}
-                            <div class="bg-base-100 rounded-box mt-1 px-3 sm:px-5 py-5 sm:py-6">
+                            <div class="bg-base-100 px-3 sm:px-5 py-5 sm:py-6">
                                 <div class="grid {{ 'grid-cols-3' if hide_amounts else 'grid-cols-2 sm:grid-cols-5' }} gap-3 sm:gap-4 text-sm">
                                     <div>
                                         <div class="text-xs text-base-content/50 mb-0.5">Przepracowane</div>
@@ -448,7 +448,7 @@
                             </div>
 
                             {% else %}
-                            <div class="py-8 text-center text-base-content/40 text-sm bg-base-100 rounded-box mt-1">
+                            <div class="py-8 text-center text-base-content/40 text-sm bg-base-100 mt-[2px]">
                                 Brak wpisów.
                                 {% if emp_can_add %}<a href="{{ url_for('entries.add') }}" class="link link-primary">Dodaj pierwszy dzień</a>{% endif %}
                             </div>
