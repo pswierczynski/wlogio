@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Analiza{% endblock %}
+
+{% block content %}
+<div class="w-full" x-data="analysis()">
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
+        <h1 class="text-xl font-bold">Analiza</h1>
+    </div>
+
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body gap-5">
+
+            {% if is_company %}
+            <p class="text-sm text-base-content/60">
+                Dane zbiorcze wszystkich pracowników{% if employees_count %} ({{ employees_count }}){% endif %} — suma w każdym miesiącu rozliczeniowym.
+            </p>
+            {% endif %}
+
+            {% if rows %}
+            <div class="flex flex-wrap gap-2">
+                <button type="button" class="btn btn-sm" @click="metric = 'salary'"
+                        :class="metric === 'salary' ? 'btn-neutral' : 'btn-outline'">Wynagrodzenie</button>
+                <button type="button" class="btn btn-sm" @click="metric = 'hours'"
+                        :class="metric === 'hours' ? 'btn-neutral' : 'btn-outline'">Przepracowane godziny</button>
+                <button type="button" class="btn btn-sm" @click="metric = 'absence'"
+                        :class="metric === 'absence' ? 'btn-neutral' : 'btn-outline'">Nieobecności</button>
+            </div>
+
+            <div>
+                <div class="text-sm text-base-content/60 mb-2" x-text="subtitle"></div>
+                <div class="relative h-72 sm:h-96">
+                    <canvas id="analysisChart" aria-label="Wykres miesięczny" role="img"></canvas>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center text-base-content/40 py-16">
+                <p class="text-lg mb-1">Brak danych do analizy</p>
+                <p class="text-sm">Wykres pojawi się po dodaniu pierwszych wpisów.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if rows %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const ROWS = {{ rows | tojson }};
+const GREEN = '#22c55e', RED = '#ff5861', INK = '#1A1A19', GRID = '#E5E3DC', MUTED = '#6b7280';
+
+function fmtPLN(v) { return v.toLocaleString('pl-PL', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' zł'; }
+function fmtH(v) { return v.toLocaleString('pl-PL', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' h'; }
+
+/* Obiekt wykresu trzymany poza stanem Alpine (reaktywny proxy psuje Chart.js) */
+let chart = null;
+
+function analysis() {
+    return {
+        metric: 'salary',
+        get subtitle() {
+            return {salary: 'Wynagrodzenie miesięczne (z premią)',
+                    hours: 'Przepracowane godziny w miesiącu',
+                    absence: 'Nieobecności w miesiącu — liczba dni'}[this.metric];
+        },
+        datasets() {
+            const lab = ROWS.map(r => r.label);
+            const line = (label, key, color) => ({
+                label, data: ROWS.map(r => r[key]), borderColor: color, backgroundColor: color,
+                borderWidth: 2.5, tension: 0.4, cubicInterpolationMode: 'monotone',
+                pointRadius: ROWS.length > 24 ? 0 : 3, pointHoverRadius: 5,
+            });
+            if (this.metric === 'salary') return [line('Wynagrodzenie', 'salary', GREEN)];
+            if (this.metric === 'hours') return [line('Godziny', 'hours', GREEN)];
+            return [line('Urlopy', 'vacation', GREEN), line('Zwolnienia', 'sick', RED)];
+        },
+        build() {
+            const m = this.metric;
+            const ctx = document.getElementById('analysisChart');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {labels: ROWS.map(r => r.label), datasets: this.datasets()},
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: {mode: 'index', intersect: false},
+                    plugins: {
+                        legend: {display: false, position: 'top', align: 'end', labels: {usePointStyle: true, boxWidth: 8, boxHeight: 8, padding: 14, color: INK}},
+                        tooltip: {
+                            backgroundColor: INK, padding: 10, cornerRadius: 8, displayColors: true,
+                            callbacks: {label: c => {
+                                const v = c.parsed.y;
+                                if (this.metric === 'salary') return ' ' + fmtPLN(v);
+                                if (this.metric === 'hours') return ' ' + fmtH(v);
+                                return ' ' + c.dataset.label + ': ' + v;
+                            }},
+                        },
+                    },
+                    scales: {
+                        x: {grid: {display: false}, ticks: {color: MUTED, maxRotation: 0, autoSkip: true, maxTicksLimit: 12}, border: {color: GRID}},
+                        y: {beginAtZero: true, grid: {color: GRID}, border: {display: false},
+                            ticks: {color: MUTED, precision: 0, callback: v => this.metric === 'salary' ? v.toLocaleString('pl-PL') : v}},
+                    },
+                },
+            });
+        },
+        refresh() {
+            chart.data.datasets = this.datasets();
+            chart.options.plugins.legend.display = this.metric === 'absence';
+            chart.update();
+        },
+        init() {
+            this.build();
+            this.$watch('metric', () => this.refresh());
+        },
+    };
+}
+</script>
+{% endif %}
+{% endblock %}
