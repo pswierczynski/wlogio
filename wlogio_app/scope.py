@@ -98,6 +98,8 @@ def _employee_day_allowed(user, day, new_type, existing_type=None):
 
 def employee_set_error(entry_date, new_type, existing_type=None):
     """Komunikat błędu, jeśli zalogowany pracownik NIE może ustawić takiego wpisu; None gdy wolno."""
+    if new_type == 'holiday' and existing_type != 'holiday':
+        return 'Pracownik nie może dodawać świąt — są dodawane automatycznie.'
     if _employee_day_allowed(current_user, entry_date, new_type, existing_type):
         return None
     mode, future_leave = current_user.entry_policy

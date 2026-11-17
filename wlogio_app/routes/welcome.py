@@ -26,6 +26,7 @@ TIMEZONE = ZoneInfo('Europe/Warsaw')
 from sqlalchemy import func
 
 from wlogio_app import db
+from wlogio_app.holidays import seed_month_holidays, month_is_empty
 from wlogio_app.models import User, WorkEntry, MonthConfig, Team, TeamMember, TeamInvite, TEAM_MAX_MEMBERS
 from wlogio_app.calculator import (
     get_billing_period, parse_breaks, format_breaks,
@@ -719,7 +720,8 @@ def clock():
             return jsonify({'ok': False, 'error': 'Już zarejestrowano przyjście'}), 400
         if not entry:
             by, bm = get_billing_period(today)
-            get_or_create_month_config(user_id, by, bm)
+            month_cfg = get_or_create_month_config(user_id, by, bm)
+            first_in_month = month_is_empty(user_id, by, bm)
             entry = WorkEntry(
                 user_id=user_id, date=today,
                 billing_year=by, billing_month=bm,
@@ -727,6 +729,9 @@ def clock():
                 hours_worked=Decimal('0'), hours_billed=Decimal('0'),
             )
             db.session.add(entry)
+            if first_in_month:
+                db.session.flush()
+                seed_month_holidays(user_id, by, bm, month_cfg)
         entry.time_start = now
         label = f'Przyjście: {now.strftime("%H:%M")}'
 

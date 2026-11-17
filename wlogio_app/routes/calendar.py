@@ -16,6 +16,7 @@ from flask_login import login_required, current_user
 from wlogio_app.models import WorkEntry, User
 from wlogio_app.routes.dashboard import get_company_employees
 from wlogio_app.scope import local_today
+from wlogio_app.holidays import polish_holidays
 
 calendar_bp = Blueprint('calendar', __name__)
 
@@ -23,45 +24,6 @@ MONTH_NAMES = ['', 'Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec',
                'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
 
 VACATION_TYPES = ('vacation', 'on_demand', 'unpaid')
-
-
-def easter(year):
-    """Niedziela Wielkanocna (algorytm Gaussa/Meeusa)."""
-    a = year % 19
-    b, c = divmod(year, 100)
-    d, e = divmod(b, 4)
-    f = (b + 8) // 25
-    g = (b - f + 1) // 3
-    h = (19 * a + b - d - g + 15) % 30
-    i, k = divmod(c, 4)
-    l = (32 + 2 * e + 2 * i - h - k) % 7
-    m = (a + 11 * h + 22 * l) // 451
-    month, day = divmod(h + l - 7 * m + 114, 31)
-    return date(year, month, day + 1)
-
-
-def polish_holidays(year):
-    """{data: nazwa} świąt ustawowo wolnych od pracy w Polsce."""
-    e = easter(year)
-    h = {
-        date(year, 1, 1): 'Nowy Rok',
-        date(year, 1, 6): 'Trzech Króli',
-        e: 'Wielkanoc',
-        e + timedelta(days=1): 'Poniedziałek Wielkanocny',
-        date(year, 5, 1): 'Święto Pracy',
-        date(year, 5, 3): 'Święto Konstytucji 3 Maja',
-        e + timedelta(days=49): 'Zielone Świątki',
-        e + timedelta(days=60): 'Boże Ciało',
-        date(year, 8, 15): 'Wniebowzięcie NMP',
-        date(year, 11, 1): 'Wszystkich Świętych',
-        date(year, 11, 11): 'Narodowe Święto Niepodległości',
-        date(year, 12, 24): 'Wigilia',
-        date(year, 12, 25): 'Boże Narodzenie',
-        date(year, 12, 26): 'Drugi dzień Świąt',
-    }
-    if year < 2025:  # Wigilia jest dniem wolnym dopiero od 2025 r.
-        h.pop(date(year, 12, 24), None)
-    return h
 
 
 def _months_ahead(today, count=3):

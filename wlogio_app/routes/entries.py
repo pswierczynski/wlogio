@@ -4,6 +4,7 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal
 
 from wlogio_app import db
+from wlogio_app.holidays import seed_month_holidays, month_is_empty
 from wlogio_app.models import WorkEntry, MonthConfig, NOTE_MAX_LENGTH
 from wlogio_app.routes.welcome import parse_open_breaks, format_breaks_with_open
 from wlogio_app.scope import (
@@ -167,7 +168,8 @@ def add():
                 return redirect(url_for('entries.add'))
 
         billing_year, billing_month = get_billing_period(entry_date)
-        get_or_create_month_config(target.id, billing_year, billing_month)
+        month_cfg = get_or_create_month_config(target.id, billing_year, billing_month)
+        first_in_month = month_is_empty(target.id, billing_year, billing_month)
 
         entry = WorkEntry(
             user_id=target.id,
@@ -202,6 +204,9 @@ def add():
         entry.notes = request.form.get('notes', '').strip() or None
 
         db.session.add(entry)
+        if first_in_month:
+            db.session.flush()
+            seed_month_holidays(target.id, billing_year, billing_month, month_cfg)
         db.session.commit()
 
         flash(f'Dodano wpis dla {entry_date.strftime("%d.%m.%Y")}.', 'success')
@@ -216,7 +221,7 @@ def add():
 
     return render_template('entries/form.html',
                            entry=None,
-                           hidden_types=target.hidden_types,
+                           hidden_types=target.hidden_types | ({'holiday'} if is_employee else set()),
                            entry_types=ENTRY_TYPES,
                            today=today.strftime('%Y-%m-%d'),
                            next_vacation=next_vacation,
@@ -413,6 +418,7 @@ def add_range():
         remaining = max(0, balance.vacation_total - used['used_vacation'])
 
     added = 0
+    new_months = {}   # miesiące rozliczeniowe, które przed tym zakresem były puste: (rok, mies) -> config
     for i, entry_date in enumerate(working_days):
         # Wyznacz typ wpisu
         if range_type == 'vacation':
@@ -425,7 +431,10 @@ def add_range():
             entry_type = 'unpaid'
 
         billing_year, billing_month = get_billing_period(entry_date)
-        get_or_create_month_config(target.id, billing_year, billing_month)
+        month_cfg = get_or_create_month_config(target.id, billing_year, billing_month)
+        if (billing_year, billing_month) not in new_months and \
+                month_is_empty(target.id, billing_year, billing_month):
+            new_months[(billing_year, billing_month)] = month_cfg
 
         # sick_leave i vacation mają 8h, unpaid ma 0h
         if entry_type == 'unpaid':
@@ -452,6 +461,9 @@ def add_range():
         db.session.add(entry)
         db.session.flush()
         added += 1
+
+    for (by, bm), cfg in new_months.items():
+        seed_month_holidays(target.id, by, bm, cfg)
 
     db.session.commit()
     flash(f'Dodano {added} dni ({date_from.strftime("%d.%m.%Y")} – {date_to.strftime("%d.%m.%Y")}).', 'success')
@@ -563,7 +575,7 @@ def edit(entry_id):
 
     return render_template('entries/form.html',
                            entry=entry,
-                           hidden_types=target.hidden_types - {entry.entry_type},
+                           hidden_types=(target.hidden_types | ({'holiday'} if current_user.account_type == 'employee' else set())) - {entry.entry_type},
                            entry_types=ENTRY_TYPES,
                            today=entry.date.strftime('%Y-%m-%d'),
                            next_vacation=entry.vacation_day_number,
