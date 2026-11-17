@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Kalendarz{% endblock %}
+
+{% block content %}
+<style>
+    .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+    .cal-head { font-size: .75rem; font-weight: 600; text-align: center; color: rgb(0 0 0 / .45); padding-bottom: 2px; }
+    .cal-day {
+        position: relative; min-height: 64px; border-radius: 10px; padding: 6px 8px;
+        background: oklch(var(--b1)); border: 1px solid #E5E3DC;
+        display: flex; flex-direction: column; justify-content: space-between;
+        transition: border-color .15s, background-color .15s;
+    }
+    .cal-day.is-empty { background: transparent; border-color: transparent; }
+    .cal-day.is-weekend .cal-num { color: rgb(0 0 0 / .4); }
+    .cal-day.has-info { cursor: default; }
+    .cal-day.has-info:hover, .cal-day.has-info:focus-visible { border-color: #1A1A19; outline: none; }
+    .cal-day.is-today { border-color: #1A1A19; }
+    .cal-day.is-today .cal-num { background: #1A1A19; color: #fff; border-radius: 9999px; padding: 0 7px; margin-left: -4px; }
+    .cal-num { font-size: .85rem; font-weight: 600; line-height: 1.4rem; align-self: flex-start; }
+    .cal-dots { display: flex; gap: 4px; flex-wrap: wrap; min-height: 10px; }
+    .cal-dot { width: 10px; height: 10px; border-radius: 9999px; }
+    .dot-vacation { background: #3abff8; }
+    .dot-sick { background: #ff5861; }
+    .dot-holiday { background: #9ca3af; }
+    @media (max-width: 640px) {
+        .cal-day { min-height: 52px; padding: 4px 5px; }
+        .cal-dot { width: 8px; height: 8px; }
+        .cal-grid { gap: 3px; }
+    }
+</style>
+
+<div class="w-full" x-data="calendarView()" @scroll.window="hide()" @keydown.escape.window="hide()">
+    <div class="flex items-center gap-3 mb-6">
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
+        <h1 class="text-xl font-bold">Kalendarz</h1>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mb-4 text-sm text-base-content/70">
+        <span class="inline-flex items-center gap-2"><span class="cal-dot dot-vacation"></span>Urlop</span>
+        <span class="inline-flex items-center gap-2"><span class="cal-dot dot-sick"></span>Zwolnienie lekarskie</span>
+        <span class="inline-flex items-center gap-2"><span class="cal-dot dot-holiday"></span>Święto</span>
+        {% if is_company %}<span class="text-base-content/40">· najedź na dzień, aby zobaczyć kto jest nieobecny</span>{% endif %}
+    </div>
+
+    <div class="flex flex-col gap-5">
+        {% for block in blocks %}
+        <div class="card bg-base-100 shadow-sm">
+            <div class="card-body gap-3 p-4 sm:p-6">
+                <h2 class="font-bold text-lg">{{ block.title }}</h2>
+                <div class="cal-grid">
+                    {% for wd in ['Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'So', 'Nd'] %}
+                    <div class="cal-head">{{ wd }}</div>
+                    {% endfor %}
+                    {% for week in block.weeks %}{% for day in week %}
+                    {% if not day.in_month %}
+                    <div class="cal-day is-empty"></div>
+                    {% else %}
+                    {% set info = days.get(day.iso) %}
+                    {% set has = info and (info.holiday or info.vacation or info.sick) %}
+                    <div class="cal-day{% if day.weekend %} is-weekend{% endif %}{% if day.today %} is-today{% endif %}{% if has %} has-info{% endif %}"
+                         {% if has %}tabindex="0" @mouseenter="show($event, '{{ day.iso }}')" @mouseleave="hide()"
+                         @focus="show($event, '{{ day.iso }}')" @blur="hide()" @click="show($event, '{{ day.iso }}')"{% endif %}>
+                        <span class="cal-num">{{ day.date.day }}</span>
+                        <span class="cal-dots">
+                            {% if info %}
+                            {% if info.vacation %}<span class="cal-dot dot-vacation"></span>{% endif %}
+                            {% if info.sick %}<span class="cal-dot dot-sick"></span>{% endif %}
+                            {% if info.holiday %}<span class="cal-dot dot-holiday"></span>{% endif %}
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% endfor %}{% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Dymek z informacją o dniu -->
+    <div x-show="tip" x-cloak x-transition.opacity.duration.100ms
+         class="fixed z-50 pointer-events-none bg-base-100 border border-base-300 rounded-xl shadow-lg px-3 py-2 text-sm max-w-xs"
+         :style="`left:${x}px; top:${y}px; transform: translate(-50%, -100%)`">
+        <template x-if="tip">
+            <div class="flex flex-col gap-1.5">
+                <div class="font-semibold" x-text="tip.date"></div>
+                <template x-if="tip.holiday">
+                    <div class="flex items-center gap-2"><span class="cal-dot dot-holiday"></span><span x-text="tip.holiday"></span></div>
+                </template>
+                <template x-if="tip.vacation.length">
+                    <div>
+                        <div class="flex items-center gap-2"><span class="cal-dot dot-vacation"></span>
+                            <span x-text="IS_COMPANY ? `Urlop: ${tip.vacation.length} z ${TOTAL}` : 'Urlop'"></span></div>
+                        <div x-show="IS_COMPANY" class="text-xs text-base-content/60 pl-[18px]" x-text="tip.vacation.join(', ')"></div>
+                    </div>
+                </template>
+                <template x-if="tip.sick.length">
+                    <div>
+                        <div class="flex items-center gap-2"><span class="cal-dot dot-sick"></span>
+                            <span x-text="IS_COMPANY ? `Zwolnienie: ${tip.sick.length} z ${TOTAL}` : 'Zwolnienie lekarskie'"></span></div>
+                        <div x-show="IS_COMPANY" class="text-xs text-base-content/60 pl-[18px]" x-text="tip.sick.join(', ')"></div>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</div>
+
+<script>
+const DAYS = {{ days | tojson }};
+const IS_COMPANY = {{ 'true' if is_company else 'false' }};
+const TOTAL = {{ total }};
+const WD = ['niedziela', 'poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota'];
+const MN = ['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
+
+function calendarView() {
+    return {
+        tip: null, x: 0, y: 0,
+        show(ev, iso) {
+            const d = DAYS[iso]; if (!d) return;
+            const dt = new Date(iso + 'T12:00:00');
+            this.tip = {...d, date: `${WD[dt.getDay()]}, ${dt.getDate()} ${MN[dt.getMonth()]}`};
+            const r = ev.currentTarget.getBoundingClientRect();
+            this.x = Math.min(Math.max(r.left + r.width / 2, 130), window.innerWidth - 130);
+            this.y = r.top - 8;
+            if (this.y < 120) { this.y = r.bottom + 8 + 90; }  // za mało miejsca u góry — pokaż pod polem
+        },
+        hide() { this.tip = null; },
+    };
+}
+</script>
+{% endblock %}
