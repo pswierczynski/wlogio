@@ -115,6 +115,11 @@ button{font-family:inherit;}
   background:linear-gradient(90deg,rgba(0,0,0,.42) 0,rgba(0,0,0,.18) 45%,rgba(0,0,0,.04) 70%),linear-gradient(180deg,rgba(0,0,0,.35) 0,rgba(0,0,0,0) 180px);
 }
 .hero .wrap{position:relative; z-index:1; width:100%;}
+/* Wideo w tle hero (desktop): to samo dopasowanie co zdjęcie — cover, kotwica 66% / dół. Zdjęcie pozostaje jako tło zastępcze. */
+.hero-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:66% bottom; z-index:0; opacity:0; transition:opacity .5s ease; pointer-events:none;}
+.hero-video.is-playing{opacity:1;}
+.hero::before{z-index:1;}
+@media (max-width:700px), (orientation:portrait) and (max-width:980px){ .hero-video{display:none;} }
 .hero-copy{max-width:640px;}
 .hero h1{font-size:clamp(32px,3.2vw,48px); font-weight:700; letter-spacing:-0.02em; line-height:1.08; color:#fff;}
 .hero p.lead{margin-top:22px; font-size:16px; max-width:31ch; color:rgba(255,255,255,.92); font-weight:400;}
