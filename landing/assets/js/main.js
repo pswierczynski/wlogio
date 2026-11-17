@@ -138,7 +138,6 @@ window.WLOGIO_APP_URL = (typeof window.WLOGIO_APP_URL === "string") ? window.WLO
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (mobile || reduce) return;
     v.muted = true;
-    v.addEventListener("playing", function () { v.classList.add("is-playing"); });
     v.src = v.getAttribute("data-src");
     var pr = v.play();
     if (pr && pr.catch) pr.catch(function () {});

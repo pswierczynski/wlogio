@@ -108,16 +108,15 @@ button{font-family:inherit;}
 /* Hero: pełne zdjęcie na całą szerokość (assets/img/hero-bg.jpg), białe teksty */
 .hero{
   position:relative; min-height:clamp(600px,56.25vw,900px); display:flex; align-items:flex-start;
-  padding:clamp(125px,11.5vw,180px) 0 72px; background:#2a2622 url("../img/hero-bg.jpg") 66% bottom/cover no-repeat; overflow:hidden; color:#fff;
+  padding:clamp(125px,11.5vw,180px) 0 72px; background:#2a2622; overflow:hidden; color:#fff;
 }
 .hero::before{ /* delikatne przyciemnienie dla czytelności białego tekstu (bez białego gradientu) */
   content:""; position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(90deg,rgba(0,0,0,.42) 0,rgba(0,0,0,.18) 45%,rgba(0,0,0,.04) 70%),linear-gradient(180deg,rgba(0,0,0,.35) 0,rgba(0,0,0,0) 180px);
 }
 .hero .wrap{position:relative; z-index:1; width:100%;}
-/* Wideo w tle hero (desktop): to samo dopasowanie co zdjęcie — cover, kotwica 66% / dół. Zdjęcie pozostaje jako tło zastępcze. */
-.hero-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:66% bottom; z-index:0; opacity:0; transition:opacity .5s ease; pointer-events:none;}
-.hero-video.is-playing{opacity:1;}
+/* Wideo w tle hero (desktop): to samo dopasowanie co zdjęcie — cover, kotwica 66% / dół. Do startu odtwarzania widać pierwszą klatkę wideo (poster), nie zdjęcie. */
+.hero-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:66% bottom; z-index:0; pointer-events:none; background:#2a2622;}
 .hero::before{z-index:1;}
 @media (max-width:700px), (orientation:portrait) and (max-width:980px){ .hero-video{display:none;} }
 .hero-copy{max-width:640px;}
