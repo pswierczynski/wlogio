@@ -98,11 +98,11 @@
     {% set b = fl.badge if fl else None %}
     {% set miss = fl and fl.missing_end %}
     {% set brk_min = fl.break_minutes if fl else 0 %}
-    <div class="emp-row emp-card flex flex-wrap xl:flex-nowrap items-center gap-x-4 gap-y-3 px-4 py-3 xl:py-2{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
+    <div class="emp-row emp-card flex flex-wrap xl:flex-nowrap items-center gap-x-4 xl:gap-x-2 gap-y-5 px-4 py-3 xl:py-2{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
          data-employee-id="{{ employee.id }}" data-order="{{ employees.index(employee) }}"
          data-login-text="login: {{ employee.login }}">
 
-        <div class="flex items-center gap-3 min-w-0 w-full xl:flex-none xl:w-[200px]">
+        <div class="flex items-center gap-4 min-w-0 flex-1 xl:flex-none xl:w-[192px]">
             {% if employee.avatar %}
             <div data-emp-avatar class="w-9 h-9 rounded-full overflow-hidden shrink-0 emp-ring-{{ fl.status if fl else 'idle' }}">
                 <img src="{{ employee.avatar }}" alt="" class="w-full h-full object-cover"/>
@@ -119,30 +119,34 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-x-4 gap-y-2 w-full xl:contents">
-            <div class="text-sm xl:w-[104px] xl:shrink-0">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-3 w-full order-3 xl:order-none xl:contents">
+            <div class="text-sm xl:w-[98px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Godziny</span>
                 <span class="font-medium" data-emp-start>{{ (fl.time_start if fl else '') or '—' }}</span>
                 <span class="text-base-content/40">→</span>
                 <span class="font-medium" data-emp-end>{{ (fl.time_end if fl else '') or '—' }}</span>
             </div>
-            <div class="text-sm emp-break-cell xl:w-[112px] xl:shrink-0{% if not brk_min %} emp-nobreak{% endif %}">
+            <div class="text-sm emp-break-cell whitespace-nowrap xl:w-[112px] xl:shrink-0{% if not brk_min %} emp-nobreak{% endif %}">
                 <span class="xl:hidden block text-xs text-base-content/50">Przerwa</span>
                 <span class="text-base-content/40 hidden xl:inline">przerwa </span><span class="font-medium" data-emp-break>{{ brk_min }} min</span>
             </div>
-            <div class="text-sm text-base-content/70 whitespace-nowrap xl:w-[80px] xl:shrink-0 xl:ml-2">
+            <div class="text-sm text-base-content/70 whitespace-nowrap xl:w-[74px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Stawka</span>
                 {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
             </div>
-            <div class="text-sm whitespace-nowrap xl:w-[92px] xl:shrink-0">
-                <span class="xl:hidden block text-xs text-base-content/50">Prognoza</span>
-                <span class="font-semibold">{% if st and st.hourly_rate %}{{ format_currency(st.forecast) }}{% else %}—{% endif %}</span>
+            <div class="text-sm whitespace-nowrap xl:w-[82px] xl:shrink-0">
+                <span class="xl:hidden block text-xs text-base-content/50">Zarobione</span>
+                {% if st and st.hourly_rate and st.earned is not none %}{{ format_currency(st.earned) }}{% else %}—{% endif %}
             </div>
-            <div class="xl:w-[124px] xl:shrink-0 xl:mr-3">
+            <div class="text-sm whitespace-nowrap xl:w-[82px] xl:shrink-0">
+                <span class="xl:hidden block text-xs text-base-content/50">Prognoza</span>
+                {% if st and st.hourly_rate %}{{ format_currency(st.forecast) }}{% else %}—{% endif %}
+            </div>
+            <div class="xl:w-[104px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Przepracowane</span>
                 {% if st and st.working_days %}
                 <div class="flex items-center gap-2">
-                    <div class="h-1.5 w-[64px] rounded-full bg-base-200 overflow-hidden">
+                    <div class="h-1.5 w-[48px] rounded-full bg-base-200 overflow-hidden">
                         <div class="h-full rounded-full bg-neutral" style="width: {{ [100, (st.worked_days / st.working_days * 100)|round(0)]|min|int }}%"></div>
                     </div>
                     <span class="text-sm text-base-content/70 whitespace-nowrap">{{ st.worked_days }} / {{ st.working_days }}</span>
@@ -151,17 +155,18 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-5 w-full xl:w-auto justify-between xl:justify-end xl:ml-auto">
-            <div class="emp-badges">
-                {# Czerwony badge: minione dni bez godziny zakończenia pracy #}
-                <div data-emp-missing class="emp-badge emp-badge-missing{% if not miss %} emp-badge-hidden{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v9"/><path d="M12 19h.01"/></svg></div>
-                <div data-emp-badge
-                     class="emp-badge {% if b %}emp-badge-t-{{ b }}{% elif miss %}emp-badge-hidden{% else %}emp-badge-empty{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
-            </div>
+        {# Badge: na telefonie w wierszu ze zdjęciem i nazwiskiem (po prawej), na xl przed przyciskami #}
+        <div class="emp-badges order-2 xl:order-none xl:ml-auto xl:w-[70px] xl:justify-end">
+            {# Czerwony badge: minione dni bez godziny zakończenia pracy #}
+            <div data-emp-missing class="emp-badge emp-badge-missing{% if not miss %} emp-badge-hidden{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v9"/><path d="M12 19h.01"/></svg></div>
+            <div data-emp-badge
+                 class="emp-badge {% if b %}emp-badge-t-{{ b }}{% elif miss %}emp-badge-hidden{% else %}emp-badge-empty{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
+        </div>
+        <div class="flex items-center justify-between w-full order-4 xl:order-none xl:w-auto xl:justify-end xl:gap-1">
+            <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}" class="xl:mr-1">
+                <button type="submit" class="btn btn-outline btn-neutral btn-sm px-4 whitespace-nowrap">Panel pracy</button>
+            </form>
             <div class="flex items-center gap-1">
-                <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}" class="mr-1">
-                    <button type="submit" class="btn btn-outline btn-neutral btn-sm px-4 whitespace-nowrap">Panel pracy</button>
-                </form>
                 <a href="{{ url_for('dashboard.employee_profile', employee_id=employee.id) }}"
                    class="btn btn-ghost btn-sm btn-square" title="Konto" aria-label="Konto">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>

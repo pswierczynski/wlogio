@@ -18,12 +18,12 @@
             {% endif %}
 
             {% if rows %}
-            <div class="flex flex-wrap gap-2">
-                <button type="button" class="btn btn-sm" @click="metric = 'salary'"
+            <div class="flex gap-2">
+                <button type="button" class="btn btn-sm flex-1 sm:flex-none px-2 sm:px-4 text-xs sm:text-sm whitespace-nowrap" @click="metric = 'salary'"
                         :class="metric === 'salary' ? 'btn-neutral' : 'btn-outline'">Wynagrodzenie</button>
-                <button type="button" class="btn btn-sm" @click="metric = 'hours'"
-                        :class="metric === 'hours' ? 'btn-neutral' : 'btn-outline'">Przepracowane godziny</button>
-                <button type="button" class="btn btn-sm" @click="metric = 'absence'"
+                <button type="button" class="btn btn-sm flex-1 sm:flex-none px-2 sm:px-4 text-xs sm:text-sm whitespace-nowrap" @click="metric = 'hours'"
+                        :class="metric === 'hours' ? 'btn-neutral' : 'btn-outline'"><span class="sm:hidden">Godziny</span><span class="hidden sm:inline">Przepracowane godziny</span></button>
+                <button type="button" class="btn btn-sm flex-1 sm:flex-none px-2 sm:px-4 text-xs sm:text-sm whitespace-nowrap" @click="metric = 'absence'"
                         :class="metric === 'absence' ? 'btn-neutral' : 'btn-outline'">Nieobecności</button>
             </div>
 

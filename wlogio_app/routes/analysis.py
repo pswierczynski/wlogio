@@ -6,11 +6,13 @@ Dostępna dla kont 'individual' (własne dane) i 'company' (dane zbiorcze wszyst
 pracowników firmy). Konta 'employee' nie mają dostępu. Liczby pochodzą z tej samej
 funkcji build_months_data() co panel pracy i eksport — bez duplikowania logiki.
 """
-from collections import OrderedDict
+from datetime import timedelta
 
 from flask import Blueprint, render_template, abort
 from flask_login import login_required, current_user
 
+from wlogio_app.calculator import get_billing_period_dates, _parse_work_days
+from wlogio_app.holidays import polish_holidays
 from wlogio_app.routes.dashboard import build_months_data, get_company_employees
 
 analysis_bp = Blueprint('analysis', __name__)
@@ -21,21 +23,62 @@ MONTH_SHORT = {
 }
 
 
+def _current_month_complete(month):
+    """
+    Bieżący miesiąc rozliczeniowy jest „pełny” dopiero, gdy wpisano czas pracy
+    za jego ostatni dzień roboczy (ostatni dzień okresu, który jest dniem pracy
+    wg konfiguracji miesiąca i nie jest świętem). Wcześniej dane są niepełne.
+    """
+    cfg = month['config']
+    start = cfg.billing_start_day if cfg and cfg.billing_start_day else None
+    end = cfg.billing_end_day if cfg and cfg.billing_end_day else None
+    d_from, d_to = get_billing_period_dates(month['year'], month['month'], start, end)
+    work_days = _parse_work_days(cfg.work_days) if cfg and cfg.work_days else [0, 1, 2, 3, 4]
+    holidays = set(polish_holidays(d_from.year)) | set(polish_holidays(d_to.year))
+
+    last = d_to
+    while last >= d_from and (last.weekday() not in work_days or last in holidays):
+        last -= timedelta(days=1)
+    for e in month['entries']:
+        if e.date == last and (e.entry_type != 'work' or float(e.hours_worked or 0) > 0):
+            return True
+    return False
+
+
 def _collect(user_ids):
-    """Sumuje miesiące rozliczeniowe wskazanych kont: {(rok, miesiąc): dict sum}."""
+    """
+    Sumuje miesiące rozliczeniowe wskazanych kont: {(rok, miesiąc): dict sum}.
+    Bieżący miesiąc trafia do wyniku dopiero po jego zakończeniu (patrz
+    _current_month_complete); dla konta firmowego — gdy zakończyli go wszyscy
+    pracownicy mający w nim wpisy.
+    """
     totals = {}
+    pending = {}          # bieżący miesiąc: {klucz: [lista sum per konto]}
+    incomplete = set()
     for uid in user_ids:
-        months, _ = build_months_data(uid, include_empty_current=False)
+        months, current_key = build_months_data(uid, include_empty_current=False)
         for m in months:
-            if not m['entries']:
-                continue
+            if not m['entries'] or (m['year'], m['month']) > current_key:
+                continue   # puste i przyszłe (planowane) miesiące nie wchodzą do analizy
             s = m['summary']
-            t = totals.setdefault((m['year'], m['month']),
-                                  {'salary': 0.0, 'hours': 0.0, 'vacation': 0, 'sick': 0})
-            t['salary'] += s['total_with_bonus']
-            t['hours'] += s['total_hours']
-            t['vacation'] += s['vacation_days'] + s['on_demand_days']
-            t['sick'] += s['sick_days']
+            row = {'salary': s['total_with_bonus'], 'hours': s['total_hours'],
+                   'vacation': s['vacation_days'] + s['on_demand_days'], 'sick': s['sick_days']}
+            key = (m['year'], m['month'])
+            if m['is_current']:
+                if not _current_month_complete(m):
+                    incomplete.add(key)
+                pending.setdefault(key, []).append(row)
+                continue
+            t = totals.setdefault(key, {'salary': 0.0, 'hours': 0.0, 'vacation': 0, 'sick': 0})
+            for k, v in row.items():
+                t[k] += v
+    for key, rows in pending.items():
+        if key in incomplete:
+            continue
+        t = totals.setdefault(key, {'salary': 0.0, 'hours': 0.0, 'vacation': 0, 'sick': 0})
+        for row in rows:
+            for k, v in row.items():
+                t[k] += v
     return totals
 
 

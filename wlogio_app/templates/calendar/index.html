@@ -30,7 +30,7 @@
     }
 </style>
 
-<div class="w-full" x-data="calendarView()" @scroll.window="hide()" @keydown.escape.window="hide()"
+<div class="w-full pb-10 sm:pb-12" x-data="calendarView()" @scroll.window="hide()" @keydown.escape.window="hide()"
      @touchstart.window.passive="touchAt = Date.now()"
      @click.window="if (!$event.target.closest('.cal-day.has-info')) hide()">
     <div class="flex items-center gap-3 mb-6">
@@ -42,7 +42,7 @@
         <span class="inline-flex items-center gap-2"><span class="cal-dot dot-vacation"></span>Urlop</span>
         <span class="inline-flex items-center gap-2"><span class="cal-dot dot-sick"></span>Zwolnienie lekarskie</span>
         <span class="inline-flex items-center gap-2"><span class="cal-dot dot-holiday"></span>Święto</span>
-        {% if is_company %}<span class="text-base-content/40">· najedź na dzień, aby zobaczyć kto jest nieobecny</span>{% endif %}
+        {% if is_company %}<span class="text-base-content/40">Najedź na dzień, aby zobaczyć kto jest nieobecny</span>{% endif %}
     </div>
 
     <div class="flex flex-col gap-5">

@@ -189,6 +189,21 @@ def build_months_data(user_id, date_from=None, date_to=None, include_empty_curre
             sick_pay_rate=sick_pay_percent,
         )
 
+        # Wynagrodzenie z dni już przepracowanych (do dziś włącznie) — bez przyszłych urlopów/świąt.
+        # Tylko dla bieżącego okresu; reszta miesięcy go nie potrzebuje.
+        earned_to_date = None
+        if key == current_key:
+            _today = local_today()
+            past_views = [v for v in entry_views if v.date <= _today]
+            earned_to_date = calculate_month_summary(
+                past_views, hourly_rate, expected_hours, bonus,
+                hours_per_day=hours_per_day,
+                overtime_rate=overtime_rate,
+                work_days=work_days,
+                offday_rate=offday_rate,
+                sick_pay_rate=sick_pay_percent,
+            )['actual_salary']
+
         forecast = calculate_forecast(
             expected_hours,
             summary['overtime_hours'],
@@ -211,6 +226,7 @@ def build_months_data(user_id, date_from=None, date_to=None, include_empty_curre
             'fixed_salary':  float(config.fixed_salary) if config and config.fixed_salary is not None else None,
             'working_days':  working_days,
             'forecast':      forecast,
+            'earned_to_date': earned_to_date,
             'hours_per_day': hours_per_day,
             'sick_pay_percent': sick_pay_percent,
         })
@@ -244,6 +260,7 @@ def get_employee_month_stats(user_id):
     return {
         'hourly_rate':  current['hourly_rate'],
         'forecast':     current['forecast'],
+        'earned':       current['earned_to_date'],
         'worked_days':  current['summary']['work_days'],
         'working_days': current['working_days'],
     }
