@@ -120,25 +120,25 @@
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-3 w-full order-3 xl:order-none xl:contents">
-            <div class="text-sm xl:w-[98px] xl:shrink-0">
+            <div class="text-sm xl:w-[108px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Godziny</span>
                 <span class="font-medium" data-emp-start>{{ (fl.time_start if fl else '') or '—' }}</span>
                 <span class="text-base-content/40">→</span>
                 <span class="font-medium" data-emp-end>{{ (fl.time_end if fl else '') or '—' }}</span>
             </div>
-            <div class="text-sm emp-break-cell whitespace-nowrap xl:w-[112px] xl:shrink-0{% if not brk_min %} emp-nobreak{% endif %}">
+            <div class="text-sm emp-break-cell whitespace-nowrap xl:w-[84px] xl:shrink-0{% if not brk_min %} emp-nobreak{% endif %}">
                 <span class="xl:hidden block text-xs text-base-content/50">Przerwa</span>
-                <span class="text-base-content/40 hidden xl:inline">przerwa </span><span class="font-medium" data-emp-break>{{ brk_min }} min</span>
+                <span data-emp-break>{{ brk_min }} min</span>
             </div>
-            <div class="text-sm text-base-content/70 whitespace-nowrap xl:w-[74px] xl:shrink-0">
+            <div class="text-sm text-base-content/70 whitespace-nowrap xl:w-[84px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Stawka</span>
                 {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
             </div>
-            <div class="text-sm whitespace-nowrap xl:w-[82px] xl:shrink-0">
+            <div class="text-sm whitespace-nowrap xl:w-[84px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Zarobione</span>
                 {% if st and st.hourly_rate and st.earned is not none %}{{ format_currency(st.earned) }}{% else %}—{% endif %}
             </div>
-            <div class="text-sm whitespace-nowrap xl:w-[82px] xl:shrink-0">
+            <div class="text-sm whitespace-nowrap xl:w-[84px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Prognoza</span>
                 {% if st and st.hourly_rate %}{{ format_currency(st.forecast) }}{% else %}—{% endif %}
             </div>
