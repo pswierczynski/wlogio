@@ -271,8 +271,18 @@ EMPLOYEE_GROUPS = [
     ('working', 'W pracy', '#22c55e'),
     ('break', 'Na przerwie', '#f59e0b'),
     ('missing', 'Brak godziny zakończenia', '#ff5861'),
+    ('vacation', 'Na urlopie', '#3abff8'),
+    ('sick', 'Na zwolnieniu lekarskim', '#ff5861'),
     ('idle', 'Nieobecni', '#9ca3af'),
 ]
+
+# Badge'y dnia, które wrzucają pracownika do sekcji „Na urlopie” (każdy rodzaj nieobecności
+# poza zwolnieniem i świętem) oraz krótki opis rodzaju pod imieniem.
+VACATION_BADGES = ('U', 'N', 'B', 'O', 'D', 'S')
+LEAVE_TEXT = {
+    'U': 'Wypoczynkowy', 'N': 'Na żądanie', 'B': 'Bezpłatny', 'O': 'Opiekuńczy',
+    'D': 'Opieka nad dzieckiem', 'S': 'Siła wyższa', 'Z': 'Zwolnienie lekarskie',
+}
 
 
 def get_employee_work_flags(employee_ids):
@@ -286,9 +296,9 @@ def get_employee_work_flags(employee_ids):
     - badge: aktualny badge pracownika (P/W/U/N/B/H/Z/O/S/D albo None) —
       liczony tą samą funkcją co w Terminalu,
     - break_minutes: suma przerw z dzisiejszego dnia w minutach (0 = brak przerwy),
-    - group: sekcja listy — 'working' | 'break' | 'missing' | 'idle'
+    - group: sekcja listy — 'working' | 'break' | 'missing' | 'vacation' | 'sick' | 'idle'
       (praca/przerwa mają pierwszeństwo przed brakiem godziny zakończenia),
-    - status_text: krótki opis pod imieniem ('' = pokaż login).
+    - status_text: krótki opis pod imieniem (rodzaj nieobecności, „Brak aktywności” itd.).
     """
     if not employee_ids:
         return {}
@@ -346,6 +356,10 @@ def get_employee_work_flags(employee_ids):
             group = status
         elif missing:
             group = 'missing'
+        elif badge in VACATION_BADGES:
+            group = 'vacation'
+        elif badge == 'Z':
+            group = 'sick'
         else:
             group = 'idle'
         if status == 'working':
@@ -354,12 +368,14 @@ def get_employee_work_flags(employee_ids):
             text = 'Na przerwie'
         elif missing:
             text = 'Brak zakończenia pracy'
+        elif badge in LEAVE_TEXT:
+            text = LEAVE_TEXT[badge]
         elif badge in BADGE_LABELS:
             text = BADGE_LABELS[badge]
         elif t_end:
             text = f'Zakończono o {t_end}'
         else:
-            text = ''
+            text = 'Brak aktywności'
         flags[uid] = {
             'time_start':    t_start,
             'time_end':      t_end,

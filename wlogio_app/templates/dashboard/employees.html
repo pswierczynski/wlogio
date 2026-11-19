@@ -8,10 +8,14 @@
     .emp-card-missing-end .emp-name { color: oklch(var(--er)); }
     .emp-card-in-work .emp-name     { color: #22c55e; }
     .emp-card-on-break .emp-name    { color: #f59e0b; }  /* przerwa ma pierwszeństwo przed zielonym */
+    .emp-card-vacation .emp-name    { color: #3abff8; }  /* urlop (każdego rodzaju) */
+    .emp-card-sick .emp-name        { color: #ff5861; }  /* zwolnienie lekarskie */
 
     /* Obramowanie zdjęcia wg statusu — kolory jak w Terminalu, bez pulsowania */
     .emp-ring-working { box-shadow: 0 0 0 3px #22c55e; }
     .emp-ring-break   { box-shadow: 0 0 0 3px #f59e0b; }
+    .emp-ring-vacation { box-shadow: 0 0 0 3px #3abff8; }
+    .emp-ring-sick    { box-shadow: 0 0 0 3px #ff5861; }
     .emp-ring-idle    { box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08); }
 
     /* Badge pracownika po prawej stronie bloku; bez badge'a — puste kółko
@@ -98,51 +102,45 @@
     {% set b = fl.badge if fl else None %}
     {% set miss = fl and fl.missing_end %}
     {% set brk_min = fl.break_minutes if fl else 0 %}
-    <div class="emp-row emp-card flex flex-wrap xl:flex-nowrap items-center gap-x-4 xl:gap-x-2 gap-y-5 px-4 py-3 xl:py-2{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}"
+    <div class="emp-row emp-card flex flex-wrap xl:flex-nowrap items-center gap-x-4 xl:gap-x-2 gap-y-5 px-4 py-3 xl:py-2{% if fl and fl.in_work %} emp-card-in-work{% if fl.status == 'break' %} emp-card-on-break{% endif %}{% elif fl and fl.missing_end %} emp-card-missing-end{% endif %}{% if fl and fl.group in ('vacation', 'sick') %} emp-card-{{ fl.group }}{% endif %}"
          data-employee-id="{{ employee.id }}" data-order="{{ employees.index(employee) }}"
-         data-login-text="login: {{ employee.login }}">
+         data-default-text="Brak aktywności">
 
-        <div class="flex items-center gap-4 min-w-0 flex-1 xl:flex-none xl:w-[192px]">
+        <div class="flex items-center gap-4 min-w-0 flex-1 xl:flex-none xl:w-[256px]">
             {% if employee.avatar %}
-            <div data-emp-avatar class="w-9 h-9 rounded-full overflow-hidden shrink-0 emp-ring-{{ fl.status if fl else 'idle' }}">
+            <div data-emp-avatar class="w-9 h-9 rounded-full overflow-hidden shrink-0 emp-ring-{{ fl.group if fl and fl.group in ('vacation', 'sick') else (fl.status if fl else 'idle') }}">
                 <img src="{{ employee.avatar }}" alt="" class="w-full h-full object-cover"/>
             </div>
             {% else %}
-            <div data-emp-avatar class="w-9 h-9 rounded-full bg-neutral flex items-center justify-center shrink-0 emp-ring-{{ fl.status if fl else 'idle' }}">
+            <div data-emp-avatar class="w-9 h-9 rounded-full bg-neutral flex items-center justify-center shrink-0 emp-ring-{{ fl.group if fl and fl.group in ('vacation', 'sick') else (fl.status if fl else 'idle') }}">
                 {% set parts = (employee.name or employee.login).split(' ') %}
                 <span class="text-sm font-bold text-white">{{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}</span>
             </div>
             {% endif %}
             <div class="min-w-0 flex-1">
                 <div class="font-medium truncate emp-name">{{ employee.name or employee.login }}</div>
-                <div class="text-xs text-base-content/40 truncate" data-emp-status>{{ (fl.status_text if fl else '') or ('login: ' ~ employee.login) }}</div>
+                <div class="text-xs text-base-content/40 truncate" data-emp-status>{{ (fl.status_text if fl else '') or 'Brak aktywności' }}</div>
             </div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-3 w-full order-3 xl:order-none xl:contents">
-            <div class="text-sm xl:w-[108px] xl:shrink-0">
-                <span class="xl:hidden block text-xs text-base-content/50">Godziny</span>
-                <span class="font-medium" data-emp-start>{{ (fl.time_start if fl else '') or '—' }}</span>
-                <span class="text-base-content/40">→</span>
-                <span class="font-medium" data-emp-end>{{ (fl.time_end if fl else '') or '—' }}</span>
-            </div>
-            <div class="text-sm emp-break-cell whitespace-nowrap xl:w-[84px] xl:shrink-0{% if not brk_min %} emp-nobreak{% endif %}">
+            <div class="text-sm emp-break-cell whitespace-nowrap xl:w-[96px] xl:shrink-0{% if not brk_min %} emp-nobreak{% endif %}">
                 <span class="xl:hidden block text-xs text-base-content/50">Przerwa</span>
                 <span data-emp-break>{{ brk_min }} min</span>
             </div>
-            <div class="text-sm text-base-content/70 whitespace-nowrap xl:w-[84px] xl:shrink-0">
+            <div class="text-sm text-base-content/70 whitespace-nowrap xl:w-[96px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Stawka</span>
                 {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
             </div>
-            <div class="text-sm whitespace-nowrap xl:w-[84px] xl:shrink-0">
+            <div class="text-sm whitespace-nowrap xl:w-[96px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Zarobione</span>
                 {% if st and st.hourly_rate and st.earned is not none %}{{ format_currency(st.earned) }}{% else %}—{% endif %}
             </div>
-            <div class="text-sm whitespace-nowrap xl:w-[84px] xl:shrink-0">
-                <span class="xl:hidden block text-xs text-base-content/50">Prognoza</span>
+            <div class="text-sm font-semibold whitespace-nowrap xl:w-[96px] xl:shrink-0">
+                <span class="xl:hidden block text-xs font-normal text-base-content/50">Prognoza</span>
                 {% if st and st.hourly_rate %}{{ format_currency(st.forecast) }}{% else %}—{% endif %}
             </div>
-            <div class="xl:w-[104px] xl:shrink-0">
+            <div class="xl:w-[112px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Przepracowane</span>
                 {% if st and st.working_days %}
                 <div class="flex items-center gap-2">
@@ -156,7 +154,7 @@
         </div>
 
         {# Badge: na telefonie w wierszu ze zdjęciem i nazwiskiem (po prawej), na xl przed przyciskami #}
-        <div class="emp-badges order-2 xl:order-none xl:ml-auto xl:w-[70px] xl:justify-end">
+        <div class="emp-badges order-2 xl:order-none xl:ml-auto xl:mr-4 xl:w-[70px] xl:justify-end">
             {# Czerwony badge: minione dni bez godziny zakończenia pracy #}
             <div data-emp-missing class="emp-badge emp-badge-missing{% if not miss %} emp-badge-hidden{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v9"/><path d="M12 19h.01"/></svg></div>
             <div data-emp-badge
@@ -192,7 +190,7 @@
 (function () {
     var URL = "{{ url_for('dashboard.employees_flags') }}";
     var BADGE_ICONS = {{ badge_icons | tojson }};
-    var STATUSES = ['working', 'break', 'idle'];
+    var STATUSES = ['working', 'break', 'idle', 'vacation', 'sick'];
     var BADGES = {{ badge_colors.keys() | list | tojson }};
 
     function apply(flags) {
@@ -205,17 +203,16 @@
             card.classList.toggle('emp-card-in-work', inWork);
             card.classList.toggle('emp-card-missing-end', missing && !inWork);
             card.classList.toggle('emp-card-on-break', f.status === 'break');
+            card.classList.toggle('emp-card-vacation', f.group === 'vacation');
+            card.classList.toggle('emp-card-sick', f.group === 'sick');
 
             var avatar = card.querySelector('[data-emp-avatar]');
             if (avatar) {
                 STATUSES.forEach(function (st) { avatar.classList.remove('emp-ring-' + st); });
-                avatar.classList.add('emp-ring-' + (STATUSES.indexOf(f.status) >= 0 ? f.status : 'idle'));
+                var ring = (f.group === 'vacation' || f.group === 'sick') ? f.group : f.status;
+                avatar.classList.add('emp-ring-' + (STATUSES.indexOf(ring) >= 0 ? ring : 'idle'));
             }
 
-            var tStart = card.querySelector('[data-emp-start]');
-            if (tStart) { tStart.textContent = f.time_start || '—'; }
-            var tEnd = card.querySelector('[data-emp-end]');
-            if (tEnd) { tEnd.textContent = f.time_end || '—'; }
             var mins = parseInt(f.break_minutes, 10) || 0;
             var tBrk = card.querySelector('[data-emp-break]');
             if (tBrk) { tBrk.textContent = mins + ' min'; }
@@ -223,7 +220,7 @@
             if (brkCell) { brkCell.classList.toggle('emp-nobreak', mins <= 0); }
 
             var stTxt = card.querySelector('[data-emp-status]');
-            if (stTxt) { stTxt.textContent = f.status_text || card.getAttribute('data-login-text'); }
+            if (stTxt) { stTxt.textContent = f.status_text || card.getAttribute('data-default-text'); }
 
             /* Przenieś wiersz do sekcji zgodnej ze statusem (zachowując kolejność listy) */
             var body = document.querySelector('[data-emp-group="' + (f.group || 'idle') + '"] .emp-group-body');
