@@ -9,17 +9,6 @@
             {% if entry %}Edytuj — {{ entry.date.strftime('%d.%m.%Y') }}
             {% else %}Dodaj nowy dzień{% endif %}
         </h1>
-        {% if entry and emp_can_modify(entry) %}
-        <form method="POST" action="{{ url_for('entries.delete', entry_id=entry.id) }}" class="ml-auto"
-              onsubmit="return confirm('Usunąć ten dzień ({{ entry.date.strftime('%d.%m.%Y') }})?')">
-            <button type="submit" class="btn btn-ghost btn-sm btn-square text-error" title="Usuń dzień" aria-label="Usuń dzień">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-            </button>
-        </form>
-        {% endif %}
     </div>
 
     <div class="card bg-base-100 shadow-sm">
@@ -563,9 +552,22 @@
                         <span x-text="isRangeType() && rangeMode === 'range' && preview ? 'Dodaj ' + preview.total_days + ' dni' : '{% if entry %}Zapisz zmiany{% else %}Dodaj dzień{% endif %}'"></span>
                     </button>
                     <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost">Anuluj</a>
+                    {% if entry and emp_can_modify(entry) %}
+                    <button type="submit" form="deleteEntryForm" class="btn btn-ghost btn-square text-error"
+                            title="Usuń dzień" aria-label="Usuń dzień">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                    </button>
+                    {% endif %}
                 </div>
 
             </form>
+            {% if entry and emp_can_modify(entry) %}
+            <form id="deleteEntryForm" method="POST" action="{{ url_for('entries.delete', entry_id=entry.id) }}"
+                  onsubmit="return confirm('Usunąć ten dzień ({{ entry.date.strftime('%d.%m.%Y') }})?')"></form>
+            {% endif %}
         </div>
     </div>
 </div>

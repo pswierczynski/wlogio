@@ -75,6 +75,7 @@
     <div x-show="ids.length" x-cloak class="flex items-center gap-4 h-9 mb-2" style="padding-left: 21px;">
         <input type="checkbox" class="dash-check" aria-label="Zaznacz wszystkie dni miesiąca"
                :checked="allSel" x-effect="$el.indeterminate = someSel" @change="toggleAll()">
+        <span class="text-sm text-base-content/60 -ml-1 select-none cursor-pointer" @click="toggleAll()">Zaznacz wszystko</span>
         <button type="button" x-show="selected.length" x-cloak @click="confirmDelete = true"
                 class="btn btn-ghost btn-sm gap-2 px-2 text-error" title="Usuń zaznaczone dni">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
