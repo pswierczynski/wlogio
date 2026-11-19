@@ -92,11 +92,31 @@
         .col-type { width: 1%; min-width: 0; white-space: nowrap; padding-right: 0; }
         .col-date { width: 1%; min-width: 0; white-space: nowrap; padding-left: calc(var(--dg) - 3.65px); padding-right: calc(var(--dg) - 14.35px); }
         .dash-table th:first-child, .dash-table td:first-child { padding-left: 21px; }
+        .dash-table th:last-child, .dash-table td:last-child { padding-right: 21px; }
+        .col-check { width: 1%; padding-right: 0; }
+        .entry-link { cursor: pointer; }
+        .entry-row.is-selected > td { background-color: oklch(var(--b2)); }
+        /* Kwadratowe pole wyboru w stylu Gmaila: ciemnoszara ramka, po zaznaczeniu wypełnienie z „ptaszkiem" */
+        .dash-check {
+            appearance: none; -webkit-appearance: none; display: block; flex-shrink: 0; cursor: pointer;
+            width: 18px; height: 18px; border: 2px solid #5f6368; border-radius: 3px; background: #fff;
+            background-position: center; background-repeat: no-repeat; background-size: 12px;
+            transition: background-color .12s;
+        }
+        .dash-check:hover { background-color: #f1f1ef; }
+        .dash-check:checked {
+            background-color: #5f6368;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+        }
+        .dash-check:indeterminate {
+            background-color: #5f6368;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M6 12h12'/%3E%3C/svg%3E");
+        }
+        .dash-check:focus-visible { outline: 2px solid #1A1A19; outline-offset: 2px; }
         .col-time { width: 70px; min-width: 70px; }
         .col-break { width: 110px; min-width: 110px; }
         .col-hours { width: 80px; min-width: 80px; }
         .col-salary { width: 100px; min-width: 100px; }
-        .col-actions { width: 100px; min-width: 100px; }
 
         /* Autouzupełnianie przeglądarki: bez niebieskiego/żółtego tła pól (Chrome/Edge/Safari/Firefox) */
         input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active {

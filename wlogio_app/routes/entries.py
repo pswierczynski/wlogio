@@ -588,6 +588,31 @@ def edit(entry_id):
                            employee_today=local_today().strftime('%Y-%m-%d') if is_employee else '')
 
 
+def _remove_entry(entry, target):
+    """
+    Usuwa wpis (bez commita) i zwraca (rok_urlopu|None). Gdy miesiąc rozliczeniowy
+    zostaje pusty, kasuje też jego konfigurację. Numeracja urlopów jest przeliczana
+    przez wywołującego (raz na rok), żeby przy usuwaniu wielu dni nie powtarzać pracy.
+    """
+    billing_year  = entry.billing_year
+    billing_month = entry.billing_month
+    vacation_year = entry.date.year if entry.entry_type in ('vacation', 'on_demand') else None
+
+    db.session.delete(entry)
+    db.session.flush()
+
+    remaining = WorkEntry.query.filter_by(
+        user_id=target.id, billing_year=billing_year, billing_month=billing_month,
+    ).count()
+    if remaining == 0:
+        config = MonthConfig.query.filter_by(
+            user_id=target.id, billing_year=billing_year, billing_month=billing_month,
+        ).first()
+        if config:
+            db.session.delete(config)
+    return vacation_year
+
+
 @entries_bp.route('/delete/<int:entry_id>', methods=['POST'])
 @login_required
 def delete(entry_id):
@@ -603,36 +628,50 @@ def delete(entry_id):
         flash('Pracownik może usuwać tylko bieżący dzień lub dni urlopu/święta/zwolnienia.', 'error')
         return redirect(url_for('dashboard.index'))
 
-    date_str      = entry.date.strftime('%d.%m.%Y')
-    billing_year  = entry.billing_year
-    billing_month = entry.billing_month
-    entry_year    = entry.date.year
-    was_vacation  = entry.entry_type in ('vacation', 'on_demand')
-
-    db.session.delete(entry)
-    db.session.flush()
-
-    remaining = WorkEntry.query.filter_by(
-        user_id=target.id,
-        billing_year=billing_year,
-        billing_month=billing_month,
-    ).count()
-
-    if remaining == 0:
-        config = MonthConfig.query.filter_by(
-            user_id=target.id,
-            billing_year=billing_year,
-            billing_month=billing_month,
-        ).first()
-        if config:
-            db.session.delete(config)
-
-    if was_vacation:
-        renumber_vacations(target.id, entry_year)
-
+    date_str = entry.date.strftime('%d.%m.%Y')
+    vacation_year = _remove_entry(entry, target)
+    if vacation_year:
+        renumber_vacations(target.id, vacation_year)
     db.session.commit()
 
     flash(f'Usunięto wpis dla {date_str}.', 'success')
+    return redirect(url_for('dashboard.index'))
+
+
+@entries_bp.route('/delete-many', methods=['POST'])
+@login_required
+def delete_many():
+    """Usuwa zaznaczone dni z panelu pracy (po potwierdzeniu w oknie dialogowym)."""
+    target, resp = require_entry_user()
+    if resp:
+        return resp
+
+    ids = []
+    for raw in request.form.getlist('entry_ids'):
+        if raw.isdigit():
+            ids.append(int(raw))
+    entries = WorkEntry.query.filter(
+        WorkEntry.user_id == target.id, WorkEntry.id.in_(ids)).all() if ids else []
+
+    is_employee = current_user.account_type == 'employee'
+    removed, skipped, years = 0, 0, set()
+    for entry in entries:
+        if is_employee and not employee_can_delete(entry):
+            skipped += 1
+            continue
+        vy = _remove_entry(entry, target)
+        if vy:
+            years.add(vy)
+        removed += 1
+    for y in years:
+        db.session.flush()
+        renumber_vacations(target.id, y)
+    db.session.commit()
+
+    if removed:
+        flash(f'Usunięto zaznaczone dni: {removed}.', 'success')
+    if skipped:
+        flash(f'Pominięto dni, których nie możesz usunąć: {skipped}.', 'error')
     return redirect(url_for('dashboard.index'))
 
 

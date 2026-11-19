@@ -61,11 +61,31 @@
     {% set _ = ns.year_groups[-1]['months'].append(month) %}
 {% endfor %}
 
-<div class="flex flex-col gap-[var(--bar-gap,3px)]"
-     x-data="{
-         openYear: {{ current_year }},
-         openMonth: '{{ current_month_key }}'
-     }">
+{# Id dni, które można zaznaczyć (i usunąć) w każdym miesiącu — dla zbiorczego zaznaczania #}
+{% set mid = namespace(d={}) %}
+{% for m in months_data %}
+    {% set ids = [] %}
+    {% for e in m.entries %}{% if emp_can_modify(e) %}{% set _ = ids.append(e.id) %}{% endif %}{% endfor %}
+    {% set _ = mid.d.update({m.year ~ '-' ~ m.month: ids}) %}
+{% endfor %}
+
+<div x-data='dashPanel({{ current_year }}, "{{ current_month_key }}", {{ mid.d | tojson }})'>
+
+    {# Pasek zaznaczania (jak w Gmailu): kwadrat zaznacza wszystkie dni rozwiniętego miesiąca #}
+    <div x-show="ids.length" x-cloak class="flex items-center gap-4 h-9 mb-2" style="padding-left: 21px;">
+        <input type="checkbox" class="dash-check" aria-label="Zaznacz wszystkie dni miesiąca"
+               :checked="allSel" x-effect="$el.indeterminate = someSel" @change="toggleAll()">
+        <button type="button" x-show="selected.length" x-cloak @click="confirmDelete = true"
+                class="btn btn-ghost btn-sm gap-2 px-2 text-error" title="Usuń zaznaczone dni">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            <span class="text-sm" x-text="'Usuń (' + selected.length + ')'"></span>
+        </button>
+    </div>
+
+<div class="flex flex-col gap-[var(--bar-gap,3px)]">
 
     {% for group in ns.year_groups %}
     {% set year = group.year %}
@@ -166,11 +186,6 @@
                             </span>
                             {% endif %}
                             {% endif %}
-                            {% if emp_can_add %}
-                            <a href="{{ url_for('entries.add') }}"
-                               @click.stop
-                               class="btn btn-ghost btn-xs text-base-content shrink-0">+ Dodaj</a>
-                            {% endif %}
                         </div>
                     </div>
 
@@ -186,6 +201,7 @@
                                 <table class="table table-sm dash-table w-full">
                                     <thead>
                                         <tr class="text-xs text-base-content/50 uppercase tracking-wide">
+                                            <th class="col-check"></th>
                                             <th class="col-type font-semibold">Typ</th>
                                             <th class="col-date font-semibold">Data</th>
                                             <th class="col-time font-semibold">Przyjście</th>
@@ -193,7 +209,6 @@
                                             <th class="col-break font-semibold">Przerwa</th>
                                             <th class="col-hours font-semibold text-right">Godziny</th>
                                             {% if not hide_amounts %}<th class="col-salary font-semibold text-right">Wynagrodzenie</th>{% endif %}
-                                            <th class="col-actions font-semibold"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -214,7 +229,19 @@
                                                 {% endif %}
                                             {% endfor %}
                                         {% endif %}
-                                        <tr class="entry-row transition-colors">
+                                        {% set can_modify = emp_can_modify(entry) %}
+                                        {# Brak godziny zakończenia oznaczamy tylko w MINIONYCH dniach — w bieżącym dniu praca może jeszcze trwać. #}
+                                        {% set missing_end = entry.entry_type == 'work' and entry.time_start and not entry.time_end and entry.date < employee_today %}
+                                        <tr class="entry-row transition-colors{% if can_modify %} entry-link{% endif %}"
+                                            {% if can_modify %}:class="selected.includes({{ entry.id }}) ? 'is-selected' : ''"
+                                            @click="rowClick($event, '{{ url_for('entries.edit', entry_id=entry.id) }}')"{% endif %}>
+
+                                            <td class="col-check">
+                                                {% if can_modify %}
+                                                <input type="checkbox" class="dash-check" aria-label="Zaznacz dzień {{ entry.date.strftime('%d.%m.%Y') }}"
+                                                       :checked="selected.includes({{ entry.id }})" @change="toggle({{ entry.id }})">
+                                                {% endif %}
+                                            </td>
 
                                             <td class="col-type">
                                                 <div class="flex flex-nowrap items-center gap-1.5">
@@ -302,12 +329,8 @@
                                             </td>
 
                                             <td class="col-date font-medium text-sm whitespace-nowrap">
-                                                {# Brak godziny zakończenia oznaczamy tylko w MINIONYCH dniach —
-                                                   w bieżącym dniu praca może jeszcze trwać. #}
-                                                {% set missing_end = entry.entry_type == 'work' and entry.time_start and not entry.time_end and entry.date < employee_today %}
-                                                <span class="{% if missing_end %}text-error{% endif %}">
-                                                    {{ entry.date.strftime('%d.%m.%Y') }}
-                                                </span>
+                                                {% if can_modify %}<a href="{{ url_for('entries.edit', entry_id=entry.id) }}" class="{% if missing_end %}text-error{% endif %}" title="Edytuj dzień">{{ entry.date.strftime('%d.%m.%Y') }}</a>
+                                                {% else %}<span class="{% if missing_end %}text-error{% endif %}">{{ entry.date.strftime('%d.%m.%Y') }}</span>{% endif %}
                                             </td>
 
                                             <td class="col-time text-base-content/70 text-sm whitespace-nowrap">
@@ -360,20 +383,6 @@
                                                 {% else %}—{% endif %}
                                             </td>
                                             {% endif %}
-                                            <td class="col-actions text-right whitespace-nowrap">
-                                                {% set can_modify = emp_can_modify(entry) %}
-                                                <div class="flex items-center justify-end gap-1">
-                                                    {% if can_modify %}
-                                                    <a href="{{ url_for('entries.edit', entry_id=entry.id) }}"
-                                                       class="btn btn-ghost btn-xs">Edytuj</a>
-                                                    <form method="POST"
-                                                          action="{{ url_for('entries.delete', entry_id=entry.id) }}"
-                                                          onsubmit="return confirm('Usunąć wpis?')">
-                                                        <button type="submit" class="btn btn-ghost btn-xs text-error">Usuń</button>
-                                                    </form>
-                                                    {% endif %}
-                                                </div>
-                                            </td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
@@ -472,6 +481,23 @@
 
 </div>
 
+    {# Potwierdzenie usunięcia zaznaczonych dni #}
+    <form id="bulkDeleteForm" method="POST" action="{{ url_for('entries.delete_many') }}">
+        <template x-for="id in selected" :key="id"><input type="hidden" name="entry_ids" :value="id"></template>
+    </form>
+    <div class="modal" :class="confirmDelete ? 'modal-open' : ''" x-cloak @keydown.escape.window="confirmDelete = false">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Usunąć zaznaczone dni?</h3>
+            <p class="py-3 text-base-content/70" x-text="'Zostanie usuniętych dni: ' + selected.length + '. Tej operacji nie można cofnąć.'"></p>
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" @click="confirmDelete = false">Anuluj</button>
+                <button type="submit" form="bulkDeleteForm" class="btn border-0 text-white" style="background-color:#ff5861;">Usuń</button>
+            </div>
+        </div>
+        <div class="modal-backdrop bg-black/30" @click="confirmDelete = false"></div>
+    </div>
+</div>
+
 {% if not months_data %}
 <div class="card bg-base-100 shadow-sm">
     <div class="card-body items-center text-center py-16">
@@ -481,4 +507,26 @@
 </div>
 {% endif %}
 
+
+<script>
+/* Stan panelu pracy: rozwinięty rok/miesiąc oraz zaznaczanie dni (jak w Gmailu) */
+function dashPanel(year, month, monthIds) {
+    return {
+        openYear: year, openMonth: month, monthIds: monthIds,
+        selected: [], confirmDelete: false,
+        get ids() { return this.monthIds[this.openMonth] || []; },
+        get allSel() { return this.ids.length > 0 && this.ids.every(i => this.selected.includes(i)); },
+        get someSel() { return this.selected.length > 0 && !this.allSel; },
+        toggleAll() { this.selected = this.allSel ? [] : this.ids.slice(); },
+        toggle(id) {
+            this.selected = this.selected.includes(id) ? this.selected.filter(i => i !== id) : this.selected.concat([id]);
+        },
+        rowClick(ev, url) {                       /* pasek dnia = link do edycji (poza polem wyboru i linkami) */
+            if (ev.target.closest('input, button, label, a')) { return; }
+            window.location.href = url;
+        },
+        init() { this.$watch('openMonth', () => { this.selected = []; }); },
+    };
+}
+</script>
 {% endblock %}
