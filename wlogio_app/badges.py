@@ -22,15 +22,15 @@ BADGE_ICONS = {
 
 BADGE_COLORS = {
     'B': '#9ca3af',
-    'D': '#3abff8',
+    'D': '#0565FE',
     'H': '#9ca3af',
-    'N': '#f59e0b',
-    'O': '#3abff8',
-    'P': '#22c55e',
-    'S': '#f59e0b',
-    'U': '#3abff8',
-    'W': '#22c55e',
-    'Z': '#ff5861',
+    'N': '#FA930D',
+    'O': '#0565FE',
+    'P': '#16C72E',
+    'S': '#FA930D',
+    'U': '#0565FE',
+    'W': '#16C72E',
+    'Z': '#E63946',
 }
 
 # Opis dnia przy pracowniku na liście (linia pod imieniem) — dla badge'y z wpisów nie-pracy.

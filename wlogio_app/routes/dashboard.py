@@ -268,11 +268,11 @@ def get_employee_month_stats(user_id):
 
 # Sekcje listy pracowników: (klucz, nagłówek, kolor kropki)
 EMPLOYEE_GROUPS = [
-    ('working', 'W pracy', '#22c55e'),
-    ('break', 'Na przerwie', '#f59e0b'),
-    ('missing', 'Brak godziny zakończenia', '#ff5861'),
-    ('vacation', 'Na urlopie', '#3abff8'),
-    ('sick', 'Na zwolnieniu lekarskim', '#ff5861'),
+    ('working', 'W pracy', '#16C72E'),
+    ('break', 'Na przerwie', '#FA930D'),
+    ('missing', 'Brak godziny zakończenia', '#E63946'),
+    ('vacation', 'Na urlopie', '#0565FE'),
+    ('sick', 'Na zwolnieniu lekarskim', '#E63946'),
     ('idle', 'Nieobecni', '#9ca3af'),
 ]
 

@@ -64,13 +64,13 @@
         }
         .label-appear { animation: labelAppear 0.35s ease forwards; }
 
-        /* Jeden pomarańczowy w całej aplikacji (#f59e0b = obramowanie zdjęcia w przerwie) — nadpisuje kolor warning z daisyUI */
-        :root, [data-theme] { --wa: 76.9% 0.188 70.08; }
-        .text-warning { color: #f59e0b; }
+        /* Jeden pomarańczowy w całej aplikacji (#FA930D = obramowanie zdjęcia w przerwie) — nadpisuje kolor warning z daisyUI */
+        :root, [data-theme] { --su: 72.18% 0.2297 143.85; --wa: 75.58% 0.1708 62.54; --in: 56.11% 0.2404 261.11; --er: 61.22% 0.2082 22.24; }
+        .text-warning { color: #FA930D; }
 
         /* Obramowanie zdjęcia: cienki biały odstęp (2px) + kolorowy pierścień (3px) */
-        .ring-status-working { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #22c55e; }
-        .ring-status-break   { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #f59e0b; }
+        .ring-status-working { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #16C72E; }
+        .ring-status-break   { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #FA930D; }
         .ring-status-idle    { box-shadow: 0 0 0 2px #fff, 0 0 0 5px rgba(0,0,0,0.08); }
 
         /* Pulsowanie obramowania — tylko na ekranie głównym avatarów, tylko rozmiar, bez zmiany koloru */
@@ -81,25 +81,25 @@
             animation: pulseBreak 1.7s ease-in-out infinite;
         }
         @keyframes pulseWorking {
-            0%, 100% { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #22c55e; }
-            50%      { box-shadow: 0 0 0 2px #fff, 0 0 0 8px #22c55e; }
+            0%, 100% { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #16C72E; }
+            50%      { box-shadow: 0 0 0 2px #fff, 0 0 0 8px #16C72E; }
         }
         @keyframes pulseBreak {
-            0%, 100% { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #f59e0b; }
-            50%      { box-shadow: 0 0 0 2px #fff, 0 0 0 8px #f59e0b; }
+            0%, 100% { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #FA930D; }
+            50%      { box-shadow: 0 0 0 2px #fff, 0 0 0 8px #FA930D; }
         }
         /* Zmiana statusu: obramowanie najpierw rozszerza się od zera (z lekkim przeskokiem),
            a dopiero potem zaczyna pulsować (na ekranie głównym). Klasa .ring-changed
            ustawiana jest tylko przy faktycznej zmianie statusu. */
         @keyframes ringInWorking {
-            0%   { box-shadow: 0 0 0 0 #fff, 0 0 0 0 #22c55e; }
-            60%  { box-shadow: 0 0 0 2px #fff, 0 0 0 8px #22c55e; }
-            100% { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #22c55e; }
+            0%   { box-shadow: 0 0 0 0 #fff, 0 0 0 0 #16C72E; }
+            60%  { box-shadow: 0 0 0 2px #fff, 0 0 0 8px #16C72E; }
+            100% { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #16C72E; }
         }
         @keyframes ringInBreak {
-            0%   { box-shadow: 0 0 0 0 #fff, 0 0 0 0 #f59e0b; }
-            60%  { box-shadow: 0 0 0 2px #fff, 0 0 0 8px #f59e0b; }
-            100% { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #f59e0b; }
+            0%   { box-shadow: 0 0 0 0 #fff, 0 0 0 0 #FA930D; }
+            60%  { box-shadow: 0 0 0 2px #fff, 0 0 0 8px #FA930D; }
+            100% { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #FA930D; }
         }
         @keyframes ringInIdle {
             0%   { box-shadow: 0 0 0 2px rgba(255,255,255,0), 0 0 0 8px rgba(0,0,0,0); }
@@ -202,8 +202,8 @@
             height: 22px;
             border-radius: 50%;
             background: none;
-            color: #ff5861;   /* ten sam czerwony co text-error / badge zwolnienia w całej aplikacji */
-            border: 2px solid #ff5861;
+            color: #E63946;   /* ten sam czerwony co text-error / badge zwolnienia w całej aplikacji */
+            border: 2px solid #E63946;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -229,16 +229,16 @@
         .badge-pop { animation: badgePop 1.1s cubic-bezier(0.34, 1.56, 0.64, 1); }
         @media (prefers-reduced-motion: reduce) { .badge-pop { animation: none; } }
 
-        .badge-type-P { background-color: #22c55e; }  /* zielony — praca zdalna */
-        .badge-type-U { background-color: #3abff8; }  /* niebieski — urlop */
-        .badge-type-Z { background-color: #ff5861; }  /* czerwony — zwolnienie */
-        .badge-type-O { background-color: #3abff8; }  /* niebieski jak urlop — urlop opiekuńczy */
-        .badge-type-S { background-color: #f59e0b; }  /* pomarańczowy jak na żądanie — siła wyższa */
-        .badge-type-D { background-color: #3abff8; }  /* niebieski jak urlop — opieka nad dzieckiem */
-        .badge-type-N { background-color: #f59e0b; }  /* pomarańczowy — urlop na żądanie */
+        .badge-type-P { background-color: #16C72E; }  /* zielony — praca zdalna */
+        .badge-type-U { background-color: #0565FE; }  /* niebieski — urlop */
+        .badge-type-Z { background-color: #E63946; }  /* czerwony — zwolnienie */
+        .badge-type-O { background-color: #0565FE; }  /* niebieski jak urlop — urlop opiekuńczy */
+        .badge-type-S { background-color: #FA930D; }  /* pomarańczowy jak na żądanie — siła wyższa */
+        .badge-type-D { background-color: #0565FE; }  /* niebieski jak urlop — opieka nad dzieckiem */
+        .badge-type-N { background-color: #FA930D; }  /* pomarańczowy — urlop na żądanie */
         .badge-type-B { background-color: #9ca3af; }  /* szary jak praca/zdalna — urlop bezpłatny */
         .badge-type-H { background-color: #9ca3af; }  /* szary — święto */
-        .badge-type-W { background-color: #22c55e; }  /* zielony jak zdalna — praca stacjonarna */
+        .badge-type-W { background-color: #16C72E; }  /* zielony jak zdalna — praca stacjonarna */
 
         /* ---- Ekran PIN i ekran przycisków: osobne ekrany, biała karta na szarym tle ---- */
         .kiosk-card {
@@ -279,8 +279,8 @@
             border: 2px solid #cfcfcb; background: transparent;
             transition: background 0.15s, border-color 0.15s;
         }
-        .pin-dot.filled { background: #22c55e; border-color: #22c55e; }
-        .pin-dot.error  { background: #ff5861; border-color: #ff5861; animation: shake 0.4s ease; }
+        .pin-dot.filled { background: #16C72E; border-color: #16C72E; }
+        .pin-dot.error  { background: #E63946; border-color: #E63946; animation: shake 0.4s ease; }
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-6px); }
@@ -327,7 +327,7 @@
         .clock-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .clock-dark  { background: #1A1A19; color: #fff; }
         .clock-light { background: #fff; border-color: #e2e0da; color: #1A1A19; }
-        .clock-light.clock-break-icon svg { color: #f59e0b; }
+        .clock-light.clock-break-icon svg { color: #FA930D; }
         .clock-btn.clock-ended { background: transparent; border-color: #e2e0da; color: #9ca3af; opacity: 1; }
         .clock-btn:not(:disabled):active { transform: scale(0.98); }
         .clock-dark:not(:disabled):hover { background: #2b2b29; }

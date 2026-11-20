@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
+        /* Kolory systemowe daisyUI: zielony, pomarańczowy, niebieski, czerwony — jak w reszcie aplikacji */
+        :root, [data-theme] { --su: 72.18% 0.2297 143.85; --wa: 75.58% 0.1708 62.54; --in: 56.11% 0.2404 261.11; --er: 61.22% 0.2082 22.24; }
         /* Logo Wlogio (wordmark) — kolor dziedziczony z tekstu */
         .wlogio-logo{display:inline-block;aspect-ratio:1267.0/375.7;background:currentColor;
             -webkit-mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;
