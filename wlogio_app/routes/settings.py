@@ -151,6 +151,11 @@ def company_settings():
         current_user.employee_entry_mode != 'full'
         and request.form.get('employee_future_leave') == 'on'
     )
+    # Praca zdalna w panelu w bieżącym dniu — opcja tylko dla trybu "tylko terminal"
+    current_user.employee_remote_today = (
+        current_user.employee_entry_mode == 'terminal'
+        and request.form.get('employee_remote_today') == 'on'
+    )
     db.session.commit()
     flash('Ustawienia zostały zapisane.', 'success')
     return redirect(url_for('settings.index'))

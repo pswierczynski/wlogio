@@ -22,7 +22,7 @@
           class="flex flex-col gap-6"
           x-data="{ mode: '{{ current_user.employee_entry_mode or 'terminal' }}' }">
 
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body p-4 sm:p-6">
                 <h2 class="card-title text-base mb-2">Kwoty w panelach pracowników</h2>
                 <label class="flex items-start gap-3 cursor-pointer">
@@ -40,7 +40,7 @@
             </div>
         </div>
 
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body p-4 sm:p-6">
                 <h2 class="card-title text-base mb-2">Funkcjonalność kont pracowniczych</h2>
                 <div class="flex flex-col gap-4">
@@ -89,11 +89,24 @@
                             </span>
                         </span>
                     </label>
+
+                    <label class="flex items-start gap-3 ml-7" x-show="mode === 'terminal'" x-cloak>
+                        <input type="checkbox" name="employee_remote_today"
+                               class="checkbox checkbox-sm mt-0.5 cursor-pointer"
+                               {% if current_user.employee_remote_today %}checked{% endif %}>
+                        <span class="cursor-pointer">
+                            <span class="font-medium text-sm">Zezwól na dodawanie pracy zdalnej</span>
+                            <span class="block text-xs text-base-content/50 mt-0.5">
+                                Pracownik może w swoim panelu pracy dodać pracę zdalną w bieżącym dniu
+                                oraz ją edytować i usunąć. Pozostałą pracę nadal rejestruje w terminalu.
+                            </span>
+                        </span>
+                    </label>
                 </div>
             </div>
         </div>
 
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body p-4 sm:p-6">
                 <h2 class="card-title text-base mb-1">Widoczne rodzaje dni i urlopów</h2>
                 <p class="text-xs text-base-content/50 mb-3">
@@ -122,7 +135,7 @@
 
 
         <!-- Limity urlopów -->
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body p-4 sm:p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="card-title text-base">Limity urlopów</h2>
@@ -161,7 +174,7 @@
         </div>
 
         <!-- Konfiguracje miesięcy pogrupowane po latach -->
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body p-4 sm:p-6">
                 <h2 class="card-title text-base mb-4">Konfiguracje miesięcy</h2>
 
@@ -284,7 +297,7 @@
 
         {% if not settings_employee and current_user.account_type != 'employee' %}
         <form method="POST" action="{{ url_for('settings.visibility') }}" class="flex flex-col gap-4">
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body p-4 sm:p-6">
                 <h2 class="card-title text-base mb-1">Widoczne rodzaje dni i urlopów</h2>
                 <p class="text-xs text-base-content/50 mb-3">

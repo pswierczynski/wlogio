@@ -12,11 +12,12 @@
     .emp-card-sick .emp-name        { color: #E63946; }  /* zwolnienie lekarskie */
 
     /* Obramowanie zdjęcia wg statusu — kolory jak w Terminalu, bez pulsowania */
-    .emp-ring-working { box-shadow: 0 0 0 3px #16C72E; }
-    .emp-ring-break   { box-shadow: 0 0 0 3px #FA930D; }
-    .emp-ring-vacation { box-shadow: 0 0 0 3px #0565FE; }
-    .emp-ring-sick    { box-shadow: 0 0 0 3px #E63946; }
-    .emp-ring-idle    { box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08); }
+    /* 2 px białego odstępu między zdjęciem a kolorową ramką (3 px) — jak w Terminalu */
+    .emp-ring-working  { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #16C72E; }
+    .emp-ring-break    { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #FA930D; }
+    .emp-ring-vacation { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #0565FE; }
+    .emp-ring-sick     { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #E63946; }
+    .emp-ring-idle     { box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0, 0, 0, 0.08); }
 
     /* Badge pracownika po prawej stronie bloku; bez badge'a — puste kółko
        z szarym obrysem (to samo miejsce, nic się nie przesuwa). */
@@ -38,6 +39,8 @@
     }
     /* Przerwa tylko gdy była: bez niej komórka znika (mobile) albo zostaje pusta, by kolumny się nie przesuwały (xl) */
     .emp-break-cell.emp-nobreak { display: none; }
+    /* Telefon: w jednym wierszu tylko Zarobione, Prognoza i Przepracowane — bez przerwy i stawki */
+    @media (max-width: 767px) { .emp-break-cell { display: none !important; } }
     @media (min-width: 1280px) { .emp-break-cell.emp-nobreak { display: block; visibility: hidden; } }
     .emp-badge-missing { background-color: oklch(var(--er)); }
     .emp-badge-hidden { display: none; }
@@ -123,12 +126,12 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-3 w-full order-3 xl:order-none xl:contents">
+        <div class="grid grid-cols-3 md:grid-cols-6 gap-x-4 gap-y-3 w-full order-3 xl:order-none xl:contents">
             <div class="text-sm emp-break-cell whitespace-nowrap xl:w-[96px] xl:shrink-0{% if not brk_min %} emp-nobreak{% endif %}">
                 <span class="xl:hidden block text-xs text-base-content/50">Przerwa</span>
                 <span data-emp-break>{{ brk_min }} min</span>
             </div>
-            <div class="text-sm text-base-content/70 whitespace-nowrap xl:w-[96px] xl:shrink-0">
+            <div class="hidden md:block text-sm text-base-content/70 whitespace-nowrap xl:w-[96px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Stawka</span>
                 {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
             </div>

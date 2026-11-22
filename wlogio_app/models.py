@@ -79,6 +79,9 @@ class User(UserMixin, db.Model):
     # Kolumny dotyczą tylko kont firmowych (NULL = ustawienia domyślne: 'terminal' + True).
     # Konta pracownicze czytają wartość z konta firmy, konta indywidualne mają zawsze pełne prawa.
     employee_entry_mode = db.Column(db.String(10), nullable=True)
+    # Tylko konta 'company': pracownik może w panelu dodać pracę zdalną w bieżącym dniu
+    # (dotyczy trybu 'tylko terminal'). NULL = False.
+    employee_remote_today = db.Column(db.Boolean, nullable=True)
     employee_future_leave = db.Column(db.Boolean, nullable=True)
     hide_amounts_from_employees = db.Column(db.Boolean, nullable=False, default=False,
                                             server_default=db.false())
@@ -150,6 +153,14 @@ class User(UserMixin, db.Model):
         mode = company.employee_entry_mode if company.employee_entry_mode in ('full', 'today', 'terminal') else 'terminal'
         future = True if company.employee_future_leave is None else bool(company.employee_future_leave)
         return (mode, future)
+
+    @property
+    def remote_today_allowed(self):
+        """Czy konto pracownicze może w panelu dodać pracę zdalną w bieżącym dniu mimo trybu 'tylko terminal'."""
+        if not self.is_employee_account or not self.company_id:
+            return False
+        company = User.query.get(self.company_id)
+        return bool(company and company.employee_remote_today)
 
     @property
     def amounts_hidden(self):

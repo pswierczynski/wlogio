@@ -9,7 +9,7 @@ from wlogio_app.models import WorkEntry, MonthConfig, NOTE_MAX_LENGTH
 from wlogio_app.routes.welcome import parse_open_breaks, format_breaks_with_open
 from wlogio_app.scope import (
     require_entry_user, local_today, employee_set_error, employee_can_delete,
-    employee_can_add_any,
+    employee_can_add_any, entry_policy_type,
 )
 from flask_login import current_user
 from wlogio_app.calculator import (
@@ -137,10 +137,14 @@ def add():
     if request.method == 'POST':
         entry_date_str = request.form.get('date', '')
         entry_type = request.form.get('entry_type', 'work')
+        # Praca zdalna to osobny typ w formularzu; w bazie: entry_type 'work' + is_remote
+        is_remote_type = entry_type == 'remote'
 
         if entry_type in target.hidden_types:
             flash('Ten rodzaj dnia jest wyłączony w ustawieniach.', 'error')
             return redirect(url_for('entries.add'))
+        if is_remote_type:
+            entry_type = 'work'
 
         err = notes_too_long()
         if err:
@@ -162,7 +166,7 @@ def add():
             return redirect(url_for('entries.add'))
 
         if current_user.account_type == 'employee':
-            err = employee_set_error(entry_date, entry_type, None)
+            err = employee_set_error(entry_date, 'remote' if is_remote_type else entry_type, None)
             if err:
                 flash(err, 'error')
                 return redirect(url_for('entries.add'))
@@ -184,7 +188,7 @@ def add():
             if not ok:
                 flash(msg, 'error')
                 return redirect(url_for('entries.add'))
-            entry.is_remote = request.form.get('is_remote') == 'on'
+            entry.is_remote = is_remote_type
             if entry.is_remote:
                 entry.remote_trip_number = get_next_remote_number(
                     target.id, entry_date.year, db.session
@@ -230,6 +234,7 @@ def add():
                            existing_breaks=[],
                            employee_mode=is_employee and current_user.entry_policy[0] != 'full',
                            employee_policy=current_user.entry_policy if is_employee else ('full', False),
+                           employee_remote=current_user.remote_today_allowed if is_employee else False,
                            note_max=NOTE_MAX_LENGTH,
                            employee_today=local_today().strftime('%Y-%m-%d') if is_employee else '')
 
@@ -499,15 +504,21 @@ def edit(entry_id):
 
     is_employee = current_user.account_type == 'employee'
     if is_employee:
-        err = employee_set_error(entry.date, entry.entry_type, entry.entry_type)
+        _t = entry_policy_type(entry.entry_type, entry.is_remote)
+        err = employee_set_error(entry.date, _t, _t)
         if err:
             flash(err, 'error')
             return redirect(url_for('dashboard.index'))
 
     if request.method == 'POST':
         old_type   = entry.entry_type
+        old_policy_type = entry_policy_type(entry.entry_type, entry.is_remote)
         entry_year = entry.date.year
         entry_type = request.form.get('entry_type', 'work')
+        is_remote_type = entry_type == 'remote'      # praca zdalna = 'work' + is_remote
+        new_policy_type = entry_type
+        if is_remote_type:
+            entry_type = 'work'
 
         err = notes_too_long()
         if err:
@@ -515,7 +526,7 @@ def edit(entry_id):
             return redirect(url_for('entries.edit', entry_id=entry_id))
 
         if is_employee:
-            err = employee_set_error(entry.date, entry_type, old_type)
+            err = employee_set_error(entry.date, new_policy_type, old_policy_type)
             if err:
                 flash(err, 'error')
                 return redirect(url_for('entries.edit', entry_id=entry_id))
@@ -531,7 +542,7 @@ def edit(entry_id):
             if not ok:
                 flash(msg, 'error')
                 return redirect(url_for('entries.edit', entry_id=entry_id))
-            entry.is_remote = request.form.get('is_remote') == 'on'
+            entry.is_remote = is_remote_type
         elif entry_type == 'unpaid':
             entry.time_start = None
             entry.time_end = None
@@ -575,7 +586,7 @@ def edit(entry_id):
 
     return render_template('entries/form.html',
                            entry=entry,
-                           hidden_types=(target.hidden_types | ({'holiday'} if current_user.account_type == 'employee' else set())) - {entry.entry_type},
+                           hidden_types=(target.hidden_types | ({'holiday'} if current_user.account_type == 'employee' else set())) - {entry.entry_type} - ({'remote'} if entry.is_remote else set()),
                            entry_types=ENTRY_TYPES,
                            today=entry.date.strftime('%Y-%m-%d'),
                            next_vacation=entry.vacation_day_number,
@@ -584,6 +595,7 @@ def edit(entry_id):
                            existing_breaks=existing_breaks,
                            employee_mode=is_employee and current_user.entry_policy[0] != 'full',
                            employee_policy=current_user.entry_policy if is_employee else ('full', False),
+                           employee_remote=current_user.remote_today_allowed if is_employee else False,
                            note_max=NOTE_MAX_LENGTH,
                            employee_today=local_today().strftime('%Y-%m-%d') if is_employee else '')
 

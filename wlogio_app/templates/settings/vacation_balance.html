@@ -8,7 +8,7 @@
         <h1 class="text-xl font-bold">Limity urlopów</h1>
     </div>
 
-    <div class="card bg-base-100 shadow-sm" {% if current_user.account_type == 'employee' %}inert{% endif %}>
+    <div class="card bg-base-100" {% if current_user.account_type == 'employee' %}inert{% endif %}>
         <div class="card-body gap-5">
 
             <div class="alert alert-info text-sm">
@@ -80,7 +80,7 @@
                 </div>
 
                 <div class="flex gap-3 pt-2">
-                    <button type="submit" class="btn btn-primary flex-1">Zapisz</button>
+                    <button type="submit" class="btn btn-primary px-10">Zapisz</button>
                     <a href="{{ (settings_home or url_for('settings.index')) }}" class="btn btn-ghost">Anuluj</a>
                 </div>
 

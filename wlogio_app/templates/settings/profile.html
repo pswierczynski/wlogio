@@ -13,7 +13,7 @@
     <div class="flex flex-col gap-4" {% if current_user.account_type == 'employee' %}inert{% endif %}>
 
         <!-- Avatar -->
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body gap-4">
                 <h2 class="font-semibold">Zdjęcie profilowe</h2>
 
@@ -60,8 +60,9 @@
             </div>
         </div>
 
-        <!-- PIN -->
-        <div class="card bg-base-100 shadow-sm">
+        {# PIN: konto firmowe go nie potrzebuje (nie występuje na liście Terminalu) #}
+        {% if profile_user.account_type != 'company' %}
+        <div class="card bg-base-100">
             <div class="card-body gap-4">
                 <h2 class="font-semibold">PIN do ekranu powitalnego</h2>
                 <div class="flex items-center gap-2">
@@ -81,9 +82,10 @@
                 </p>
             </div>
         </div>
+        {% endif %}
 
         <!-- Rodzaj konta -->
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body gap-2">
                 <h2 class="font-semibold">Rodzaj konta</h2>
                 <p class="text-sm">{{ profile_user.account_type_label|capitalize }}</p>
@@ -94,7 +96,7 @@
         </div>
 
         <!-- Imię i nazwisko -->
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body gap-4">
                 <h2 class="font-semibold">{% if profile_user.account_type == 'company' %}Nazwa firmy{% else %}Imię i nazwisko{% endif %}</h2>
                 <form method="POST" class="flex gap-3">
@@ -109,7 +111,7 @@
         </div>
 
         <!-- Zmiana hasła -->
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body gap-4">
                 <h2 class="font-semibold">Zmiana hasła</h2>
                 <form method="POST" class="flex flex-col gap-3">
@@ -125,14 +127,14 @@
                     <input type="password" name="new_password2"
                            class="input input-bordered w-full"
                            placeholder="Powtórz nowe hasło"/>
-                    <button type="submit" class="btn btn-primary w-full">Zmień hasło</button>
+                    <button type="submit" class="btn btn-primary self-start px-8">Zmień hasło</button>
                 </form>
             </div>
         </div>
 
         {% if is_self and profile_user.account_type in ('individual', 'company') %}
         <!-- Hasło do terminala -->
-        <div class="card bg-base-100 shadow-sm">
+        <div class="card bg-base-100">
             <div class="card-body gap-4">
                 <h2 class="font-semibold">Hasło do Terminalu pracy</h2>
                 <form method="POST" class="flex flex-col gap-3">
@@ -146,7 +148,7 @@
                     <input type="password" name="new_terminal_password2"
                            class="input input-bordered w-full"
                            placeholder="Powtórz nowe hasło do terminala"/>
-                    <button type="submit" class="btn btn-primary w-full">Zmień hasło do terminala</button>
+                    <button type="submit" class="btn btn-primary self-start px-8">Zmień hasło do terminala</button>
                 </form>
                 <p class="text-xs text-base-content/40">Musi być inne niż hasło do panelu pracy.</p>
             </div>
@@ -155,7 +157,7 @@
 
         {% if not is_self and current_user.is_company %}
         <!-- Usunięcie konta pracownika (wymaga PIN-u pracownika) -->
-        <div class="card bg-base-100 shadow-sm" x-data="{ showDelete: false, pin: '' }">
+        <div class="card bg-base-100" x-data="{ showDelete: false, pin: '' }">
             <div class="card-body gap-3">
                 <h2 class="font-semibold">Usuń konto</h2>
                 <p class="text-sm text-base-content/50">

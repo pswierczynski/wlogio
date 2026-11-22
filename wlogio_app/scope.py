@@ -91,9 +91,18 @@ def _employee_day_allowed(user, day, new_type, existing_type=None):
     today = local_today()
     if mode == 'today' and day == today:
         return True
-    if future_leave and day >= today and new_type != 'work' and existing_type != 'work':
+    # Praca zdalna w bieżącym dniu (opcja firmy; ma sens w trybie "tylko terminal")
+    if day == today and new_type == 'remote' and existing_type in (None, 'remote') and user.remote_today_allowed:
+        return True
+    work_like = ('work', 'remote')
+    if future_leave and day >= today and new_type not in work_like and existing_type not in work_like:
         return True
     return False
+
+
+def entry_policy_type(entry_type, is_remote=False):
+    """Typ do oceny uprawnień: praca zdalna ('work' + is_remote) to osobny rodzaj 'remote'."""
+    return 'remote' if entry_type == 'work' and is_remote else entry_type
 
 
 def employee_set_error(entry_date, new_type, existing_type=None):
@@ -102,6 +111,8 @@ def employee_set_error(entry_date, new_type, existing_type=None):
         return 'Pracownik nie może dodawać świąt — są dodawane automatycznie.'
     if _employee_day_allowed(current_user, entry_date, new_type, existing_type):
         return None
+    if new_type == 'remote' and current_user.remote_today_allowed:
+        return 'Pracę zdalną możesz dodać tylko w bieżącym dniu.'
     mode, future_leave = current_user.entry_policy
     if mode == 'today':
         if future_leave:
@@ -113,14 +124,16 @@ def employee_set_error(entry_date, new_type, existing_type=None):
 
 
 def employee_can_delete(entry):
-    return _employee_day_allowed(current_user, entry.date, entry.entry_type, entry.entry_type)
+    t = entry_policy_type(entry.entry_type, entry.is_remote)
+    return _employee_day_allowed(current_user, entry.date, t, t)
 
 
 def employee_can_modify(entry):
     """Czy bieżący pracownik może edytować/usunąć ten wpis (używane w szablonach)."""
     if current_user.account_type != 'employee':
         return True
-    return _employee_day_allowed(current_user, entry.date, entry.entry_type, entry.entry_type)
+    t = entry_policy_type(entry.entry_type, entry.is_remote)
+    return _employee_day_allowed(current_user, entry.date, t, t)
 
 
 def employee_can_add_any():
@@ -128,7 +141,7 @@ def employee_can_add_any():
     if current_user.account_type != 'employee':
         return True
     mode, future_leave = current_user.entry_policy
-    return mode in ('full', 'today') or future_leave
+    return mode in ('full', 'today') or future_leave or current_user.remote_today_allowed
 
 
 def require_entry_user():

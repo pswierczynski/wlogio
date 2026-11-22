@@ -100,7 +100,8 @@ def register():
                     company_size=company_size if account_type == 'company' else None)
         user.set_password(password)
         user.set_terminal_password(terminal_password)
-        user.generate_pin()
+        if account_type != 'company':      # konto firmowe nie ma PIN-u (nie występuje na liście Terminalu)
+            user.generate_pin()
         db.session.add(user)
         db.session.commit()
 

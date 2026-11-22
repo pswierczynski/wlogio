@@ -2,7 +2,7 @@
 {% block title %}{% if entry %}Edytuj wpis{% else %}Dodaj dzień{% endif %}{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+<div class="w-full">
     <div class="flex items-center gap-3 mb-6">
         <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost btn-sm">← Wróć</a>
         <h1 class="text-lg sm:text-xl font-bold">
@@ -11,23 +11,33 @@
         </h1>
     </div>
 
-    <div class="card bg-base-100 shadow-sm">
+    <div class="card bg-base-100">
         <div class="card-body gap-5 p-4 sm:p-8">
             <form method="POST"
                   action="{% if entry %}{{ url_for('entries.edit', entry_id=entry.id) }}{% else %}{{ url_for('entries.add') }}{% endif %}"
-                  x-init="$watch('dateFrom', v => { if (entryType === 'work' && !workAllowed(v)) { entryType = 'vacation'; onEntryTypeChange(); } }); if (entryType === 'work' && !workAllowed(dateFrom)) { entryType = 'vacation'; onEntryTypeChange(); }"
+                  x-init="$watch('dateFrom', v => { if (!typeAllowed(v)) { entryType = remoteAllowed(v) ? 'remote' : 'vacation'; onEntryTypeChange(); } }); if (!typeAllowed(dateFrom)) { entryType = remoteAllowed(dateFrom) ? 'remote' : 'vacation'; onEntryTypeChange(); }"
                   x-data="{
                     employeeMode: {{ 'true' if employee_mode else 'false' }},
                     employeeToday: '{{ employee_today or '' }}',
                     empMode: '{{ employee_policy[0] }}',
+                    empRemote: {{ 'true' if employee_remote else 'false' }},
                     workAllowed(d) { return !this.employeeMode || (this.empMode === 'today' && d === this.employeeToday); },
-                    entryType: '{% if entry %}{{ entry.entry_type }}{% else %}work{% endif %}',
+                    /* Praca zdalna: jak praca; dodatkowo opcja firmy - praca zdalna w biezacym dniu (tryb tylko terminal) */
+                    remoteAllowed(d) { return this.workAllowed(d) || (this.empRemote && d === this.employeeToday); },
+                    isWork() { return this.entryType === 'work' || this.entryType === 'remote'; },
+                    /* Czy wybrany typ jest dozwolony dla tej daty (dotyczy tylko pracy i pracy zdalnej) */
+                    typeAllowed(d) {
+                        if (this.entryType === 'work') return this.workAllowed(d);
+                        if (this.entryType === 'remote') return this.remoteAllowed(d);
+                        return true;
+                    },
+                    {% set cur_type = ('remote' if entry.is_remote else 'work') if (entry and entry.entry_type == 'work') else (entry.entry_type if entry else 'work') %}
+                    entryType: '{{ cur_type }}',
 
                     /* --- Godziny pracy --- */
                     calcResult: null,
                     timeStart:  '{% if entry and entry.time_start %}{{ entry.time_start.strftime('%H:%M') }}{% endif %}',
                     timeEnd:    '{% if entry and entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% endif %}',
-                    isRemote: {% if entry and entry.is_remote %}true{% else %}false{% endif %},
                     validationError: null,
 
                     /* --- Wiele przerw: lista obiektów {start, end} --- */
@@ -227,7 +237,7 @@
                     },
 
                     submitForm(event) {
-                        if (this.entryType === 'work') {
+                        if (this.isWork()) {
                             if (!this.validate()) { event.preventDefault(); return; }
                         }
                         if (this.isRangeType() && this.rangeMode === 'range') {
@@ -260,6 +270,7 @@
                     <div class="flex flex-wrap gap-2">
                         {% set type_labels = {
                             'work': 'Praca',
+                            'remote': 'Praca zdalna',
                             'vacation': 'Urlop',
                             'on_demand': 'Na żądanie',
                             'unpaid': 'Bezpłatny',
@@ -271,11 +282,11 @@
                         } %}
                         {% for type_key, type_label in type_labels.items() if type_key not in hidden_types %}
                         <label class="cursor-pointer"
-                               {% if type_key == 'work' %}x-show="workAllowed(dateFrom)"{% endif %}>
+                               {% if type_key == 'work' %}x-show="workAllowed(dateFrom)"{% elif type_key == 'remote' %}x-show="remoteAllowed(dateFrom)"{% endif %}>
                             <input type="radio" name="entry_type" value="{{ type_key }}"
                                    class="sr-only" x-model="entryType"
                                    @change="onEntryTypeChange()"
-                                   {% if (entry and entry.entry_type == type_key) or (not entry and type_key == 'work') %}checked{% endif %}>
+                                   {% if cur_type == type_key %}checked{% endif %}>
                             <span class="btn btn-sm whitespace-nowrap"
                                   :class="entryType === '{{ type_key }}' ? 'btn-primary' : 'border border-base-300 bg-base-100 hover:bg-base-200 hover:border-base-300'">
                                 {{ type_label }}
@@ -398,7 +409,7 @@
                 </div>
 
                 <!-- GODZINY PRACY (tylko work) -->
-                <div x-show="entryType === 'work'" x-cloak class="flex flex-col gap-4 mt-6">
+                <div x-show="isWork()" x-cloak class="flex flex-col gap-4 mt-6">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="form-control">
                             <label class="label">
@@ -499,16 +510,9 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3"{% if 'remote' in hidden_types and not (entry and entry.is_remote) %} style="display:none"{% endif %}>
-                        <input type="checkbox" name="is_remote" class="checkbox"
-                               x-model="isRemote"
-                               {% if entry and entry.is_remote %}checked{% endif %}/>
-                        <div>
-                            <span class="text-sm font-medium">Praca zdalna</span>
-                            {% if next_remote %}
-                            <span class="text-xs text-base-content/40 ml-2">(dzień nr {{ next_remote }})</span>
-                            {% endif %}
-                        </div>
+                    {# Praca zdalna jest osobnym typem dnia (obok "Praca"), nie dodatkowym checkboxem #}
+                    <div x-show="entryType === 'remote'" x-cloak class="text-sm text-base-content/60">
+                        Praca zdalna{% if next_remote %} &mdash; dzień nr <strong>{{ next_remote }}</strong>{% endif %}
                     </div>
                 </div>
 
@@ -546,9 +550,9 @@
                 <!-- PRZYCISKI -->
                 <div class="flex gap-3 pt-2">
                     <button type="submit"
-                            class="btn btn-primary flex-1"
-                            :disabled="(entryType === 'work' && !!validationError) || (isRangeType() && rangeMode === 'range' && (!rangeConfirmed || !preview))"
-                            :class="(entryType === 'work' && !!validationError) || (isRangeType() && rangeMode === 'range' && (!rangeConfirmed || !preview)) ? 'btn-disabled' : ''">
+                            class="btn btn-primary px-10"
+                            :disabled="(isWork() && !!validationError) || (isRangeType() && rangeMode === 'range' && (!rangeConfirmed || !preview))"
+                            :class="(isWork() && !!validationError) || (isRangeType() && rangeMode === 'range' && (!rangeConfirmed || !preview)) ? 'btn-disabled' : ''">
                         <span x-text="isRangeType() && rangeMode === 'range' && preview ? 'Dodaj ' + preview.total_days + ' dni' : '{% if entry %}Zapisz zmiany{% else %}Dodaj dzień{% endif %}'"></span>
                     </button>
                     <a href="{{ url_for('dashboard.index') }}" class="btn btn-ghost">Anuluj</a>

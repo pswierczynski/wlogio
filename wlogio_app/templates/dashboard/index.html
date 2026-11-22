@@ -11,7 +11,7 @@
               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
     </svg>
     <span class="text-sm flex-1">
-        Przeglądasz panel pracownika: <strong>{{ viewing_employee.name or viewing_employee.login }}</strong>
+        Pracownik: <strong>{{ viewing_employee.name or viewing_employee.login }}</strong>
     </span>
     <form method="POST" action="{{ url_for('dashboard.employee_exit') }}">
         <button type="submit" class="btn btn-ghost btn-sm">← Lista pracowników</button>
