@@ -118,7 +118,12 @@ button{font-family:inherit;}
 /* Wideo w tle hero (desktop): to samo dopasowanie co zdjęcie — cover, kotwica 66% / dół. Do startu odtwarzania widać pierwszą klatkę wideo (poster), nie zdjęcie. */
 .hero-video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:66% bottom; z-index:0; pointer-events:none; background:#2a2622;}
 .hero::before{z-index:1;}
-@media (max-width:700px), (orientation:portrait) and (max-width:980px){ .hero-video{display:none;} }
+/* Mobile / pion: wideo poziome (1472x640) skalowane tak, by laptop+terminal miały te same marginesy i położenie co na zdjęciu pionowym (szerokość 240.7vw, dół wideo = dół sekcji). Górę wypełnia rozmyta pierwsza klatka wideo. */
+@media (max-width:700px), (orientation:portrait) and (max-width:980px){
+  .hero{isolation:isolate;}
+  .hero::after{content:""; position:absolute; inset:-30px; z-index:-1; background:url("/assets/video/hero-poster.jpg?v=3") 50% 0/cover no-repeat; filter:blur(24px); pointer-events:none;}
+  .hero-video{inset:auto; left:-121.3vw; bottom:0; top:auto; width:240.7vw; height:auto; aspect-ratio:1472/640; object-fit:fill; -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 16vw); mask-image:linear-gradient(180deg,transparent 0,#000 16vw);}
+}
 .hero-copy{max-width:640px;}
 .hero h1{font-size:clamp(32px,3.2vw,48px); font-weight:700; letter-spacing:-0.02em; line-height:1.08; color:#fff;}
 .hero p.lead{margin-top:22px; font-size:16px; max-width:31ch; color:rgba(255,255,255,.92); font-weight:400;}
@@ -409,8 +414,7 @@ input:-moz-autofill{background-color:#fff !important; color:var(--ink) !importan
    i przesunięte tak, by laptop + terminal były na środku z równymi marginesami.
    Tekst jest nad urządzeniami, przycisk pod nimi. Wysokość sekcji = 152vw — dół zdjęcia przycięty, urządzenia przy dole sekcji. */
 @media (max-width:700px), (orientation:portrait) and (max-width:980px){
-  .hero{display:block; height:152vw; min-height:0; padding:clamp(96px,27vw,136px) 0 5vw; background-image:url("../img/hero-bg-mobile.jpg");
-        background-size:119vw auto; background-position:-19vw -5vw; background-repeat:no-repeat; background-color:#cfc8bd;}
+  .hero{display:block; height:152vw; min-height:0; padding:clamp(96px,27vw,136px) 0 5vw; background-image:none; background-color:#2a2622;}
   .hero::before{background:linear-gradient(180deg,rgba(0,0,0,.6) 0,rgba(0,0,0,.45) 26%,rgba(0,0,0,.12) 44%,rgba(0,0,0,0) 62%,rgba(0,0,0,.12) 100%);}
   .hero .wrap{height:100%; display:flex; flex-direction:column; align-items:flex-start; text-align:left;}
   .hero-copy{display:contents;}
@@ -442,7 +446,6 @@ input:-moz-autofill{background-color:#fff !important; color:var(--ink) !importan
 /* Hero — animacja wejścia tekstów i tła */
 @keyframes heroUp{from{opacity:0; transform:translateY(22px);} to{opacity:1; transform:none;}}
 @keyframes heroBg{from{opacity:0; transform:scale(1.05);} to{opacity:1; transform:none;}}
-.js .hero::after{content:none;}
 .js .hero h1{animation:heroUp .9s .15s cubic-bezier(.2,.7,.2,1) both;}
 .js .hero p.lead{animation:heroUp .9s .35s cubic-bezier(.2,.7,.2,1) both;}
 .js .hero .hero-cta{animation:heroUp .9s .55s cubic-bezier(.2,.7,.2,1) both;}

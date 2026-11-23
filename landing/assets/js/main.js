@@ -130,13 +130,12 @@ window.WLOGIO_APP_URL = (typeof window.WLOGIO_APP_URL === "string") ? window.WLO
     });
   });
 
-  /* Wideo w tle hero — tylko desktop (poziome ekrany), bez reduced-motion. Na telefonie zostaje zdjęcie. */
+  /* Wideo w tle hero — desktop i mobile (inny kadr w CSS), bez reduced-motion — wtedy zostaje pierwsza klatka. */
   (function () {
     var v = document.querySelector(".hero-video");
     if (!v) return;
-    var mobile = window.matchMedia("(max-width:700px), (orientation:portrait) and (max-width:980px)").matches;
     var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (mobile || reduce) return;
+    if (reduce) return;
     v.muted = true;
     v.src = v.getAttribute("data-src");
     var pr = v.play();
