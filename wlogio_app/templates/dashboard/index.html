@@ -342,7 +342,7 @@
                                             </td>
 
                                             <td class="col-break text-base-content/70 text-xs whitespace-nowrap">
-                                                {% if break_total_min.v > 0 %}
+                                                {% if break_total_min.v > 0 and not (entry.entry_type == 'work' and entry.time_start and not entry.time_end) %}
                                                     {% set paid_break = (month.config.paid_break_minutes if month.config and month.config.paid_break_minutes is not none else 15) | int %}
                                                     {% if break_total_min.v <= paid_break %}
                                                         {{ break_total_min.v }}min

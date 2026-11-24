@@ -391,57 +391,6 @@ def render_terminal(kiosk):
     )
 
 
-def auto_close_stale_entries():
-    """
-    Zamyka wpisy gdzie time_start ustawiony ale time_end brak
-    i od time_start minęło >= 24 godziny.
-    """
-
-    now_dt   = datetime.now(TIMEZONE)
-    now_time = now_dt.time()
-    today     = now_dt.date()
-    yesterday = today - timedelta(days=1)
-
-    stale = WorkEntry.query.filter(
-        WorkEntry.time_start.isnot(None),
-        WorkEntry.time_end.is_(None),
-        WorkEntry.date.in_([today, yesterday]),
-    ).all()
-
-    changed = False
-    for entry in stale:
-        start_naive = datetime.combine(entry.date, entry.time_start)
-        start_aware = start_naive.replace(tzinfo=TIMEZONE)
-        if (now_dt - start_aware).total_seconds() >= 24 * 3600:
-            breaks_list = parse_open_breaks(entry.breaks)
-            if breaks_list and breaks_list[-1][1] is None:
-                breaks_list[-1] = (breaks_list[-1][0], now_time)
-                entry.breaks = format_breaks_with_open(breaks_list)
-
-            entry.time_end = now_time
-
-            # Pobierz parametry z config miesiąca
-            month_config = MonthConfig.query.filter_by(
-                user_id=entry.user_id,
-                billing_year=entry.billing_year,
-                billing_month=entry.billing_month,
-            ).first()
-            round_minutes      = _get_config_value(month_config, 'round_minutes',      DEFAULT_ROUND_MINUTES)
-            paid_break_minutes = _get_config_value(month_config, 'paid_break_minutes', DEFAULT_PAID_BREAK_MINUTES)
-
-            closed_breaks = parse_breaks(entry.breaks)
-            calc = calculate_hours(entry.time_start, entry.time_end, closed_breaks,
-                                   round_minutes=round_minutes,
-                                   paid_break_minutes=paid_break_minutes)
-            entry.hours_worked        = Decimal(str(calc['hours_worked']))
-            entry.hours_billed        = Decimal(str(calc['hours_billed']))
-            entry.extra_break_minutes = calc['extra_break_minutes']
-            changed = True
-
-    if changed:
-        db.session.commit()
-
-
 def parse_open_breaks(breaks_str):
     if not breaks_str or not breaks_str.strip():
         return []
@@ -482,8 +431,6 @@ def statuses():
     owner = get_terminal_owner()
     if not owner:
         return jsonify({}), 401
-
-    auto_close_stale_entries()
 
     today = datetime.now(TIMEZONE).date()
     users = get_terminal_users(owner)

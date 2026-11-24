@@ -63,7 +63,7 @@
 - Kliknięcie "Koniec przerwy" domyka ostatni otwarty segment
 - Przycisk "Przerwa" jest aktywny zawsze gdy status = `working` — można rozpoczynać wiele przerw w ciągu dnia
 - **Frontend wyświetla tylko OSTATNIĄ przerwę** pod przyciskami (`get_last_break()` w `welcome.py`), plus opcjonalny licznik `(przerw dzisiaj: N)` gdy więcej niż 1
-- `auto_close_stale_entries()` (po 24h bez `time_end`) domyka też ostatnią otwartą przerwę
+- Brak automatycznego zamykania dnia: wpis bez `time_end` zostaje otwarty, dopóki użytkownik go nie zakończy. Dni `work` z `time_start` bez `time_end` są pomijane w godzinach, nadgodzinach, wynagrodzeniu i licznikach (`calculate_month_summary`)
 
 ### Dashboard (`dashboard/index.html`)
 - Kolumna "Przerwy" (zmieniona z "Przerwa") wyświetla każdy segment `breaks` w osobnej linii

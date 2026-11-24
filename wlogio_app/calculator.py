@@ -217,6 +217,11 @@ def calculate_month_summary(entries, hourly_rate, expected_hours, bonus=0,
     child_care_days    = 0
 
     for entry in entries:
+        # Dzień pracy rozpoczęty, ale bez godziny zakończenia — nie liczymy
+        # godzin, nadgodzin, wynagrodzenia ani dni, dopóki nie ma końca.
+        if entry.entry_type == 'work' and entry.time_start and not entry.time_end:
+            continue
+
         billed = Decimal(str(entry.hours_billed))
 
         if entry.entry_type == 'unpaid':
