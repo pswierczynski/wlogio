@@ -119,7 +119,7 @@
             {% else %}
             <div data-emp-avatar style="background-color: {{ avatar_color(employee.id) }};" class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 emp-ring-{{ fl.group if fl and fl.group in ('vacation', 'sick') else (fl.status if fl else 'idle') }}">
                 {% set parts = (employee.name or employee.login).split(' ') %}
-                <span class="text-sm font-bold text-neutral">{{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}</span>
+                <span class="text-sm font-bold text-white">{{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}</span>
             </div>
             {% endif %}
             <div class="min-w-0 flex-1">
