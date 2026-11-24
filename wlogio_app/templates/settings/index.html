@@ -144,31 +144,31 @@
                        class="btn btn-outline btn-sm">Edytuj</a>
                     {% endif %}
                 </div>
+                {% set bal_icons = {
+                    'vacation': '<circle cx="12" cy="5" r="3"/><path d="M3 12 Q6 8 9 12 Q12 16 15 12 Q18 8 21 12"/><path d="M3 18 Q6 14 9 18 Q12 22 15 18 Q18 14 21 18"/>',
+                    'on_demand': '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>',
+                    'remote': '<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/>',
+                    'care_leave': '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8Z"/>',
+                    'force_majeure': '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+                    'child_care': '<circle cx="9" cy="6" r="2.6"/><path d="M4.5 17c0-3 2-5 4.5-5s4.5 2 4.5 5"/><circle cx="18" cy="10" r="2"/><path d="M14.7 17c.2-2.2 1.6-3.6 3.3-3.6s3.1 1.4 3.3 3.6"/>'
+                } %}
+                
                 <div class="grid grid-cols-3 gap-4">
-                    <div class="text-center p-3 bg-base-200 rounded-xl">
-                        <div class="text-2xl font-bold text-base-content">{{ balance.vacation_total }}</div>
-                        <div class="text-xs text-base-content/60 mt-1">Urlop (dni)</div>
+                    {% for key, label, total in [
+                        ('vacation', 'Urlop (dni)', balance.vacation_total),
+                        ('on_demand', 'Na żądanie (dni)', balance.on_demand_total),
+                        ('remote', 'Praca zdalna (dni)', balance.remote_total),
+                        ('care_leave', 'Opiekuńczy (dni)', balance.care_leave_total),
+                        ('force_majeure', 'Siła wyższa (dni)', balance.force_majeure_total),
+                        ('child_care', 'Opieka nad dz. (dni)', balance.child_care_total)] %}
+                    <div class="p-3 pl-5 bg-base-200 rounded-xl flex items-center gap-4 sm:gap-5">
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-base-content/30 shrink-0 ml-1">{{ bal_icons[key] | safe }}</svg>
+                        <div class="flex flex-col min-w-0">
+                            <div class="text-2xl font-bold text-base-content">{{ total }}</div>
+                            <div class="text-xs text-base-content/60 mt-1">{{ label }}</div>
+                        </div>
                     </div>
-                    <div class="text-center p-3 bg-base-200 rounded-xl">
-                        <div class="text-2xl font-bold text-base-content">{{ balance.on_demand_total }}</div>
-                        <div class="text-xs text-base-content/60 mt-1">Na żądanie (dni)</div>
-                    </div>
-                    <div class="text-center p-3 bg-base-200 rounded-xl">
-                        <div class="text-2xl font-bold text-base-content">{{ balance.remote_total }}</div>
-                        <div class="text-xs text-base-content/60 mt-1">Praca zdalna (dni)</div>
-                    </div>
-                    <div class="text-center p-3 bg-base-200 rounded-xl">
-                        <div class="text-2xl font-bold text-base-content">{{ balance.care_leave_total }}</div>
-                        <div class="text-xs text-base-content/60 mt-1">Opiekuńczy (dni)</div>
-                    </div>
-                    <div class="text-center p-3 bg-base-200 rounded-xl">
-                        <div class="text-2xl font-bold text-base-content">{{ balance.force_majeure_total }}</div>
-                        <div class="text-xs text-base-content/60 mt-1">Siła wyższa (dni)</div>
-                    </div>
-                    <div class="text-center p-3 bg-base-200 rounded-xl">
-                        <div class="text-2xl font-bold text-base-content">{{ balance.child_care_total }}</div>
-                        <div class="text-xs text-base-content/60 mt-1">Opieka nad dz. (dni)</div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
