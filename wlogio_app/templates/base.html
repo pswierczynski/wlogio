@@ -86,8 +86,6 @@
         /* Najechanie na pasek dnia: przyciemnione tło + delikatny cień tylko pod paskiem. Cień rysowany jest
            na całym wierszu (filter na <tr>), więc obejmuje cały pasek, a nie poszczególne kolumny. */
         .entry-row:hover > td { background-color: color-mix(in oklab, oklch(var(--b1)) 55%, oklch(var(--b3))); }
-        .entry-row { position: relative; transition: filter .15s; }
-        .entry-row:hover { z-index: 1; filter: drop-shadow(0 4px 4px rgba(0, 0, 0, .11)); }
         /* Stałe szerokości kolumn tabeli */
         /* Typ (badge) i Data dopasowują się do zawartości (width: 1%), a odstęp daty jest liczony z --dg,
            więc data jest zawsze dokładnie wyśrodkowana między badge a kolumną „Przyjście".
