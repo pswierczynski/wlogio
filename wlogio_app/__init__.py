@@ -54,6 +54,15 @@ def create_app(config_name='default'):
     app.register_blueprint(analysis_bp, url_prefix='/app/analysis')
     app.register_blueprint(calendar_bp, url_prefix='/app/calendar')
 
+    # Kolory zdjęć profilowych bez wgranego zdjęcia: stały (zależny od id konta) wybór z palety,
+    # ten sam algorytm co w JS w Terminalu (avatarColor), więc kolor jest wszędzie taki sam.
+    AVATAR_COLORS = ['#A8C9B0', '#83B8B0', '#9DB7D5', '#B6A7D8', '#D6A6B8',
+                     '#E8B49A', '#D8B76C', '#C9826B', '#8E9BA8', '#A8AD78']
+
+    @app.template_global('avatar_color')
+    def avatar_color(user_id):
+        return AVATAR_COLORS[(int(user_id or 0) * 7) % len(AVATAR_COLORS)]
+
     @app.context_processor
     def inject_nav_context():
         """

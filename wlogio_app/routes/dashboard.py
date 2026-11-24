@@ -91,7 +91,8 @@ class EntryView:
         return getattr(self._entry, name)
 
 
-def build_months_data(user_id, date_from=None, date_to=None, include_empty_current=True):
+def build_months_data(user_id, date_from=None, date_to=None, include_empty_current=True,
+                      inherit_config=False):
     """
     Buduje listę danych miesięcy rozliczeniowych (dokładnie te same obliczenia
     co panel pracy) — opcjonalnie ograniczoną do wpisów w zakresie dat
@@ -142,8 +143,17 @@ def build_months_data(user_id, date_from=None, date_to=None, include_empty_curre
         entries = periods[key]
         config  = configs.get(key)
 
+        # inherit_config: bieżący okres bez własnych ustawień liczy się wg ustawień ostatniego
+        # wcześniejszego okresu (stawka, godziny, dni robocze) — bez premii, bo ta jest jednorazowa.
+        inherited = False
+        if config is None and inherit_config and key == current_key:
+            earlier = [k for k in configs if k < key]
+            if earlier:
+                config = configs[max(earlier)]
+                inherited = True
+
         hourly_rate    = float(config.hourly_rate) if config else 0.0
-        bonus          = float(config.bonus) if config and config.bonus else 0.0
+        bonus          = float(config.bonus) if config and config.bonus and not inherited else 0.0
 
         # Pobierz parametry z config
         round_minutes      = int(_get_config_value(config, 'round_minutes',      DEFAULT_ROUND_MINUTES))
@@ -252,7 +262,7 @@ def get_employee_month_stats(user_id):
     # Okres rozliczeniowy trwa ok. miesiąca — wystarczy zawęzić wpisy do
     # ostatnich ~2 miesięcy zamiast ładować całą historię każdego pracownika.
     months_data, current_key = build_months_data(
-        user_id, date_from=date.today() - timedelta(days=62)
+        user_id, date_from=date.today() - timedelta(days=62), inherit_config=True
     )
     current = next((m for m in months_data if m['is_current']), None)
     if current is None:

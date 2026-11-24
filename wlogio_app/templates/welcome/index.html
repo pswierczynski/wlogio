@@ -412,8 +412,8 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                         <img src="{{ user.avatar }}" alt="{{ user.name or '' }}"
                              class="w-full h-full rounded-full object-cover"/>
                         {% else %}
-                        <div class="w-full h-full rounded-full bg-neutral flex items-center justify-center">
-                            <span class="text-4xl font-bold text-white select-none">
+                        <div class="w-full h-full rounded-full flex items-center justify-center" style="background-color: {{ avatar_color(user.id) }};">
+                            <span class="text-4xl font-bold text-neutral select-none">
                                 {% set parts = (user.name or user.email.split('@')[0]).split(' ') %}
                                 {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
                             </span>
@@ -591,8 +591,8 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                                 <img :src="selectedAvatar" class="w-full h-full rounded-full object-cover"/>
                             </template>
                             <template x-if="!selectedAvatar">
-                                <div class="w-full h-full rounded-full bg-neutral flex items-center justify-center">
-                                    <span class="id-initials font-bold text-white" x-text="getInitials(selectedName)"></span>
+                                <div class="w-full h-full rounded-full flex items-center justify-center" :style="{ backgroundColor: avatarColor(selectedUserId) }">
+                                    <span class="id-initials font-bold text-neutral" x-text="getInitials(selectedName)"></span>
                                 </div>
                             </template>
                         </div>
@@ -676,8 +676,8 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                                 <img :src="selectedAvatar" class="w-full h-full rounded-full object-cover"/>
                             </template>
                             <template x-if="!selectedAvatar">
-                                <div class="w-full h-full rounded-full bg-neutral flex items-center justify-center">
-                                    <span class="id-initials font-bold text-white" x-text="getInitials(selectedName)"></span>
+                                <div class="w-full h-full rounded-full flex items-center justify-center" :style="{ backgroundColor: avatarColor(selectedUserId) }">
+                                    <span class="id-initials font-bold text-neutral" x-text="getInitials(selectedName)"></span>
                                 </div>
                             </template>
                         </div>
@@ -925,6 +925,12 @@ function welcomeApp() {
                     }
                 }
             } catch (e) { /* ignoruj błędy sieciowe */ }
+        },
+
+        avatarColor(id) {
+            /* ta sama paleta i algorytm co avatar_color() w Pythonie */
+            const c = ['#A8C9B0', '#83B8B0', '#9DB7D5', '#B6A7D8', '#D6A6B8', '#E8B49A', '#D8B76C', '#C9826B', '#8E9BA8', '#A8AD78'];
+            return c[(parseInt(id, 10) * 7) % c.length] || c[0];
         },
 
         getInitials(name) {

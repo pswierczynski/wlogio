@@ -25,8 +25,8 @@
                                  class="w-full h-full object-cover"/>
                         </div>
                         {% else %}
-                        <div class="w-20 h-20 rounded-full bg-neutral flex items-center justify-center ring-2 ring-base-300">
-                            <span class="text-2xl font-bold text-white">
+                        <div class="w-20 h-20 rounded-full flex items-center justify-center ring-2 ring-base-300" style="background-color: {{ avatar_color(profile_user.id) }};">
+                            <span class="text-2xl font-bold text-neutral">
                                 {% set parts = (profile_user.name or profile_user.email or profile_user.login or '?').split(' ') %}
                                 {{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}
                             </span>
@@ -182,8 +182,8 @@
                         <input type="text" inputmode="numeric" name="pin" x-model="pin" maxlength="4"
                                placeholder="PIN" class="input input-bordered w-full text-center tracking-widest"/>
                         <div class="flex gap-2">
-                            <button type="button" class="btn btn-ghost flex-1" @click="showDelete = false">Anuluj</button>
-                            <button type="submit" class="btn btn-error flex-1" :disabled="pin.length !== 4">
+                            <button type="button" class="btn btn-ghost" @click="showDelete = false">Anuluj</button>
+                            <button type="submit" class="btn btn-error px-8" :disabled="pin.length !== 4">
                                 Usuń pracownika
                             </button>
                         </div>

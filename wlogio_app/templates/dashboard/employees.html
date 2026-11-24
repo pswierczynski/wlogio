@@ -13,11 +13,11 @@
 
     /* Obramowanie zdjęcia wg statusu — kolory jak w Terminalu, bez pulsowania */
     /* 2 px białego odstępu między zdjęciem a kolorową ramką (3 px) — jak w Terminalu */
-    .emp-ring-working  { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #16C72E; }
-    .emp-ring-break    { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #FA930D; }
-    .emp-ring-vacation { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #0565FE; }
-    .emp-ring-sick     { box-shadow: 0 0 0 2px #fff, 0 0 0 5px #E63946; }
-    .emp-ring-idle     { box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0, 0, 0, 0.08); }
+    .emp-ring-working  { box-shadow: 0 0 0 1px #fff, 0 0 0 4px #16C72E; }
+    .emp-ring-break    { box-shadow: 0 0 0 1px #fff, 0 0 0 4px #FA930D; }
+    .emp-ring-vacation { box-shadow: 0 0 0 1px #fff, 0 0 0 4px #0565FE; }
+    .emp-ring-sick     { box-shadow: 0 0 0 1px #fff, 0 0 0 4px #E63946; }
+    .emp-ring-idle     { box-shadow: 0 0 0 1px #fff, 0 0 0 3px rgba(0, 0, 0, 0.08); }
 
     /* Badge pracownika po prawej stronie bloku; bez badge'a — puste kółko
        z szarym obrysem (to samo miejsce, nic się nie przesuwa). */
@@ -117,9 +117,9 @@
                 <img src="{{ employee.avatar }}" alt="" class="w-full h-full object-cover"/>
             </div>
             {% else %}
-            <div data-emp-avatar class="w-9 h-9 rounded-full bg-neutral flex items-center justify-center shrink-0 emp-ring-{{ fl.group if fl and fl.group in ('vacation', 'sick') else (fl.status if fl else 'idle') }}">
+            <div data-emp-avatar style="background-color: {{ avatar_color(employee.id) }};" class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 emp-ring-{{ fl.group if fl and fl.group in ('vacation', 'sick') else (fl.status if fl else 'idle') }}">
                 {% set parts = (employee.name or employee.login).split(' ') %}
-                <span class="text-sm font-bold text-white">{{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}</span>
+                <span class="text-sm font-bold text-neutral">{{ parts[0][0].upper() }}{% if parts|length > 1 %}{{ parts[1][0].upper() }}{% endif %}</span>
             </div>
             {% endif %}
             <div class="min-w-0 flex-1">
@@ -139,7 +139,7 @@
             </div>
             <div class="text-sm whitespace-nowrap xl:w-[96px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Zarobione</span>
-                {% if st and st.hourly_rate and st.earned is not none %}{{ format_currency(st.earned) }}{% else %}—{% endif %}
+                {{ format_currency((st.earned if st and st.earned else 0)) }}
             </div>
             <div class="text-sm font-semibold whitespace-nowrap xl:w-[96px] xl:shrink-0">
                 <span class="xl:hidden block text-xs font-normal text-base-content/50">Prognoza</span>
@@ -165,6 +165,8 @@
             <div data-emp-badge
                  class="emp-badge {% if b %}emp-badge-t-{{ b }}{% elif miss %}emp-badge-hidden{% else %}emp-badge-empty{% endif %}{% if b and fl and fl.status == 'break' %} emp-badge-on-break{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
         </div>
+        {# Delikatna linia pod wierszem ze zdjęciem, imieniem i badge (tylko na komórce) #}
+        <div class="order-2 w-full h-px bg-base-content/10 md:hidden" aria-hidden="true"></div>
         <div class="flex items-center justify-between w-full order-4 xl:order-none xl:w-auto xl:justify-end xl:gap-1">
             <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}" class="xl:mr-1">
                 <button type="submit" class="btn btn-outline btn-neutral btn-sm px-4 whitespace-nowrap">Panel pracy</button>

@@ -80,14 +80,14 @@
         .dash-table thead tr, .dash-table tbody tr { border-bottom-width: 0; }
         /* Pasek z nazwami kolumn ma tę samą wysokość co paski dni (2.5rem = 40 px) */
         .dash-table thead th { background: oklch(var(--b1)); background-clip: padding-box; padding-top: .25rem; padding-bottom: .25rem; height: 43px; vertical-align: middle; border-top: 3px solid transparent; border-bottom: 3px solid transparent; }
-        .entry-row > td { background-color: oklch(var(--b1)); background-clip: padding-box; transition: background-color .15s, box-shadow .15s; height: 40px; padding-top: .25rem; padding-bottom: .25rem; border-bottom: 3px solid transparent; }
+        .entry-row > td { background-color: oklch(var(--b1)); background-clip: padding-box; transition: background-color .15s; height: 40px; padding-top: .25rem; padding-bottom: .25rem; border-bottom: 3px solid transparent; }
         /* Paski w rozwiniętym miesiącu są prostokątne — zaokrąglone zostają tylko górne narożniki
            nagłówka miesiąca i dolne narożniki podsumowania (przycina je karta miesiąca). */
-        /* Najechanie na pasek dnia: przyciemnione tło + cień u góry i u dołu paska (ujemny spread
-           nie wychodzi na boki między kolumnami), nad sąsiednimi paskami (z-index). */
-        .entry-row:hover > td { background-color: color-mix(in oklab, oklch(var(--b1)) 55%, oklch(var(--b3)));
-            position: relative; z-index: 1;
-            box-shadow: 0 5px 8px -4px rgba(0, 0, 0, .20), 0 -5px 8px -4px rgba(0, 0, 0, .10); }
+        /* Najechanie na pasek dnia: przyciemnione tło + delikatny cień tylko pod paskiem. Cień rysowany jest
+           na całym wierszu (filter na <tr>), więc obejmuje cały pasek, a nie poszczególne kolumny. */
+        .entry-row:hover > td { background-color: color-mix(in oklab, oklch(var(--b1)) 55%, oklch(var(--b3))); }
+        .entry-row { position: relative; transition: filter .15s; }
+        .entry-row:hover { z-index: 1; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .07)); }
         /* Stałe szerokości kolumn tabeli */
         /* Typ (badge) i Data dopasowują się do zawartości (width: 1%), a odstęp daty jest liczony z --dg,
            więc data jest zawsze dokładnie wyśrodkowana między badge a kolumną „Przyjście".
