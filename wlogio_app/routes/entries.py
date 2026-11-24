@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from wlogio_app import db
 from wlogio_app.holidays import seed_month_holidays, month_is_empty
-from wlogio_app.models import WorkEntry, MonthConfig, NOTE_MAX_LENGTH
+from wlogio_app.models import WorkEntry, MonthConfig, TrashEntry, NOTE_MAX_LENGTH
 from wlogio_app.routes.welcome import parse_open_breaks, format_breaks_with_open
 from wlogio_app.scope import (
     require_entry_user, local_today, employee_set_error, employee_can_delete,
@@ -602,7 +602,7 @@ def edit(entry_id):
 
 def _remove_entry(entry, target):
     """
-    Usuwa wpis (bez commita) i zwraca (rok_urlopu|None). Gdy miesiąc rozliczeniowy
+    Przenosi wpis do kosza (bez commita) i zwraca (rok_urlopu|None). Gdy miesiąc rozliczeniowy
     zostaje pusty, kasuje też jego konfigurację. Numeracja urlopów jest przeliczana
     przez wywołującego (raz na rok), żeby przy usuwaniu wielu dni nie powtarzać pracy.
     """
@@ -610,6 +610,7 @@ def _remove_entry(entry, target):
     billing_month = entry.billing_month
     vacation_year = entry.date.year if entry.entry_type in ('vacation', 'on_demand') else None
 
+    db.session.add(TrashEntry.from_entry(entry))
     db.session.delete(entry)
     db.session.flush()
 
@@ -646,14 +647,14 @@ def delete(entry_id):
         renumber_vacations(target.id, vacation_year)
     db.session.commit()
 
-    flash(f'Usunięto wpis dla {date_str}.', 'success')
+    flash(f'Dzień {date_str} przeniesiono do kosza.', 'success')
     return redirect(url_for('dashboard.index'))
 
 
 @entries_bp.route('/delete-many', methods=['POST'])
 @login_required
 def delete_many():
-    """Usuwa zaznaczone dni z panelu pracy (po potwierdzeniu w oknie dialogowym)."""
+    """Przenosi zaznaczone dni z panelu pracy do kosza (bez pytania o potwierdzenie)."""
     target, resp = require_entry_user()
     if resp:
         return resp
@@ -681,7 +682,7 @@ def delete_many():
     db.session.commit()
 
     if removed:
-        flash(f'Usunięto zaznaczone dni: {removed}.', 'success')
+        flash(f'Przeniesiono do kosza dni: {removed}.', 'success')
     if skipped:
         flash(f'Pominięto dni, których nie możesz usunąć: {skipped}.', 'error')
     return redirect(url_for('dashboard.index'))

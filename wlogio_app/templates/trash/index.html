@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Kosz{% endblock %}
+
+{% block content %}
+{% set type_labels = {
+    'work': 'Praca', 'vacation': 'Urlop', 'on_demand': 'Urlop na żądanie', 'unpaid': 'Urlop bezpłatny',
+    'holiday': 'Święto', 'sick_leave': 'Zwolnienie lekarskie', 'care_leave': 'Urlop opiekuńczy',
+    'force_majeure': 'Siła wyższa', 'child_care': 'Opieka nad dzieckiem'} %}
+
+<div x-data='trashPanel({{ (first.year ~ "-" ~ first.user) | tojson if first else "null" }}, {{ first.month | tojson if first else "null" }}, {{ month_ids | tojson }})'>
+
+    <div class="flex items-center justify-between gap-3 mb-3">
+        <div>
+            <h1 class="text-xl font-bold">Kosz</h1>
+            <p class="text-xs text-base-content/50 mt-1">Usunięte dni są tu przechowywane {{ retention_days }} dni, potem znikają automatycznie.</p>
+        </div>
+        {% if total %}
+        <button type="button" class="btn btn-ghost btn-sm text-error" @click="confirmEmpty = true">Opróżnij kosz</button>
+        {% endif %}
+    </div>
+
+    {% if total %}
+    {# Pasek zaznaczania — jak w panelu pracy #}
+    <div x-show="ids.length" x-cloak class="flex items-center gap-4 h-9 mb-2 flex-wrap" style="padding-left: 21px;">
+        <input type="checkbox" class="dash-check" aria-label="Zaznacz wszystkie dni miesiąca"
+               :checked="allSel" x-effect="$el.indeterminate = someSel" @change="toggleAll()">
+        <span class="text-sm text-base-content/60 -ml-1 select-none cursor-pointer" @click="toggleAll()">Zaznacz wszystko</span>
+        <button type="submit" form="trashRestoreForm" x-show="selected.length" x-cloak class="btn btn-ghost btn-sm gap-2 px-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a5 5 0 010 10H9M3 10l4-4M3 10l4 4"/></svg>
+            <span class="text-sm" x-text="'Przywróć (' + selected.length + ')'"></span>
+        </button>
+        <button type="button" x-show="selected.length" x-cloak @click="confirmPurge = true" class="btn btn-ghost btn-sm gap-2 px-2 text-error">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <span class="text-sm" x-text="'Usuń trwale (' + selected.length + ')'"></span>
+        </button>
+    </div>
+
+    {% for g in groups %}
+    {% if is_company %}
+    <div class="flex items-center gap-3 mt-4 mb-2 px-1">
+        {% if g.user.avatar %}
+        <img src="{{ g.user.avatar }}" class="w-8 h-8 rounded-full object-cover" alt="">
+        {% else %}
+        <span class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white" style="background-color: {{ avatar_color(g.user.id) }};">{{ (g.user.name or g.user.login or '?')[:1] | upper }}</span>
+        {% endif %}
+        <span class="font-semibold">{{ g.user.name or g.user.login }}</span>
+    </div>
+    {% endif %}
+
+    <div class="flex flex-col gap-[var(--bar-gap,3px)]">
+    {% for y in g.years %}
+    {% set yk = y.year ~ '-' ~ g.user.id %}
+    <div class="card bg-transparent shadow-none overflow-hidden"
+         :class="openYear === '{{ yk }}' ? 'my-[var(--bar-gap-x,4px)] first:mt-0 last:mb-0' : ''">
+        <div class="flex items-center justify-between px-4 sm:px-5 py-3 cursor-pointer rounded-box transition-colors select-none"
+             :class="openYear === '{{ yk }}' ? 'bg-base-100' : 'bg-base-300/50 hover:bg-base-300/70 text-base-content/60'"
+             @click="openYear = openYear === '{{ yk }}' ? null : '{{ yk }}'">
+            <div class="flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-base-content/40 transition-transform duration-200 shrink-0"
+                     :class="openYear === '{{ yk }}' ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                <span class="font-bold text-base sm:text-lg">{{ y.year }}</span>
+            </div>
+            <span class="text-xs text-base-content/50">{{ y.count }} {{ 'dzień' if y.count == 1 else 'dni' }}</span>
+        </div>
+
+        <div x-show="openYear === '{{ yk }}'" x-cloak>
+            <div class="flex flex-col gap-[var(--bar-gap,3px)] pt-[var(--bar-gap,3px)]">
+            {% for m in y.months %}
+            <div class="card bg-transparent shadow-none overflow-hidden"
+                 :class="openMonth === '{{ m.key }}' ? 'my-[var(--bar-gap-x,4px)] first:mt-0 last:mb-0' : ''">
+                <div class="flex items-center justify-between px-3 sm:px-4 py-3 cursor-pointer transition-colors select-none"
+                     :class="openMonth === '{{ m.key }}' ? 'bg-base-100' : 'bg-base-300/50 hover:bg-base-300/70 text-base-content/60'"
+                     @click="openMonth = openMonth === '{{ m.key }}' ? null : '{{ m.key }}'">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-base-content/40 transition-transform duration-200 shrink-0"
+                             :class="openMonth === '{{ m.key }}' ? 'rotate-90' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        <span class="font-semibold text-sm sm:text-base">{{ m.name }}</span>
+                    </div>
+                    <span class="text-xs text-base-content/50">{{ m.entries | length }}</span>
+                </div>
+
+                <div x-show="openMonth === '{{ m.key }}'" x-cloak>
+                    <div class="overflow-x-auto">
+                        <table class="table table-sm dash-table w-full">
+                            <thead>
+                                <tr class="text-xs text-base-content/50 uppercase tracking-wide">
+                                    <th class="col-check"></th>
+                                    <th class="font-semibold">Data</th>
+                                    <th class="font-semibold">Rodzaj</th>
+                                    <th class="font-semibold hidden sm:table-cell">Godziny</th>
+                                    <th class="font-semibold text-right">Usunięto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for e in m.entries %}
+                                {% set left = retention_days - (now - e.deleted_at).days %}
+                                <tr class="entry-row transition-colors entry-link"
+                                    :class="selected.includes({{ e.id }}) ? 'is-selected' : ''"
+                                    @click="rowClick($event, {{ e.id }})">
+                                    <td class="col-check">
+                                        <input type="checkbox" class="dash-check" aria-label="Zaznacz dzień"
+                                               :checked="selected.includes({{ e.id }})" @change="toggle({{ e.id }})">
+                                    </td>
+                                    <td class="text-sm whitespace-nowrap">{{ e.date.strftime('%d.%m.%Y') }}</td>
+                                    <td class="text-sm">{{ type_labels.get(e.entry_type, e.entry_type) }}{% if e.is_remote %} <span class="text-base-content/50">(zdalnie)</span>{% endif %}</td>
+                                    <td class="text-sm text-base-content/70 whitespace-nowrap hidden sm:table-cell">
+                                        {% if e.time_start %}{{ e.time_start.strftime('%H:%M') }}–{% if e.time_end %}{{ e.time_end.strftime('%H:%M') }}{% else %}…{% endif %}{% else %}—{% endif %}
+                                    </td>
+                                    <td class="text-xs text-base-content/50 text-right whitespace-nowrap">
+                                        {{ e.deleted_at.strftime('%d.%m.%Y') }}
+                                        <span class="hidden sm:inline">· {{ 'znika dziś' if left <= 0 else 'zostało ' ~ left ~ ' dni' }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+    {% endfor %}
+
+    <form id="trashRestoreForm" method="POST" action="{{ url_for('trash.restore') }}">
+        <template x-for="id in selected" :key="id"><input type="hidden" name="entry_ids" :value="id"></template>
+    </form>
+    <form id="trashPurgeForm" method="POST" action="{{ url_for('trash.purge') }}">
+        <template x-for="id in selected" :key="id"><input type="hidden" name="entry_ids" :value="id"></template>
+    </form>
+    <form id="trashEmptyForm" method="POST" action="{{ url_for('trash.empty') }}"></form>
+
+    <div class="modal" :class="confirmPurge ? 'modal-open' : ''" x-cloak @keydown.escape.window="confirmPurge = false; confirmEmpty = false">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Usunąć trwale zaznaczone dni?</h3>
+            <p class="py-3 text-base-content/70" x-text="'Zostanie usuniętych dni: ' + selected.length + '. Tej operacji nie można cofnąć.'"></p>
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" @click="confirmPurge = false">Anuluj</button>
+                <button type="submit" form="trashPurgeForm" class="btn border-0 text-white" style="background-color:#E63946;">Usuń trwale</button>
+            </div>
+        </div>
+        <div class="modal-backdrop bg-black/30" @click="confirmPurge = false"></div>
+    </div>
+    <div class="modal" :class="confirmEmpty ? 'modal-open' : ''" x-cloak>
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Opróżnić kosz?</h3>
+            <p class="py-3 text-base-content/70">Wszystkie dni w koszu ({{ total }}) zostaną usunięte trwale. Tej operacji nie można cofnąć.</p>
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" @click="confirmEmpty = false">Anuluj</button>
+                <button type="submit" form="trashEmptyForm" class="btn border-0 text-white" style="background-color:#E63946;">Opróżnij</button>
+            </div>
+        </div>
+        <div class="modal-backdrop bg-black/30" @click="confirmEmpty = false"></div>
+    </div>
+    {% else %}
+    <div class="card bg-base-100 shadow-sm">
+        <div class="card-body items-center text-center py-16">
+            <h3 class="text-lg font-semibold text-base-content/60">Kosz jest pusty</h3>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+/* Stan kosza: rozwinięty rok/miesiąc i zaznaczanie dni (jak w panelu pracy) */
+function trashPanel(year, month, monthIds) {
+    return {
+        openYear: year, openMonth: month, monthIds: monthIds,
+        selected: [], confirmPurge: false, confirmEmpty: false,
+        get ids() { return this.monthIds[this.openMonth] || []; },
+        get allSel() { return this.ids.length > 0 && this.ids.every(i => this.selected.includes(i)); },
+        get someSel() { return this.selected.length > 0 && !this.allSel; },
+        toggleAll() { this.selected = this.allSel ? [] : this.ids.slice(); },
+        toggle(id) {
+            this.selected = this.selected.includes(id) ? this.selected.filter(i => i !== id) : this.selected.concat([id]);
+        },
+        rowClick(ev, id) {                         /* klik w pasek = zaznacz/odznacz */
+            if (ev.target.closest('input, button, label, a')) { return; }
+            this.toggle(id);
+        },
+        init() { this.$watch('openMonth', () => { this.selected = []; }); },
+    };
+}
+</script>
+{% endblock %}

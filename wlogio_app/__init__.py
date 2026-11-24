@@ -41,6 +41,7 @@ def create_app(config_name='default'):
     from wlogio_app.routes.export import export_bp
     from wlogio_app.routes.analysis import analysis_bp
     from wlogio_app.routes.calendar import calendar_bp
+    from wlogio_app.routes.trash import trash_bp
 
     # UWAGA: nazwy endpointów (np. 'auth.login', 'dashboard.index') się NIE zmieniają —
     # zmienia się tylko prefiks URL, więc wszystkie url_for() w szablonach działają bez zmian.
@@ -53,6 +54,7 @@ def create_app(config_name='default'):
     app.register_blueprint(export_bp, url_prefix='/app/export')
     app.register_blueprint(analysis_bp, url_prefix='/app/analysis')
     app.register_blueprint(calendar_bp, url_prefix='/app/calendar')
+    app.register_blueprint(trash_bp, url_prefix='/app/trash')
 
     # Kolory zdjęć profilowych bez wgranego zdjęcia: stały (zależny od id konta) wybór z palety,
     # ten sam algorytm co w JS w Terminalu (avatarColor), więc kolor jest wszędzie taki sam.

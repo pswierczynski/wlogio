@@ -101,6 +101,8 @@ class User(UserMixin, db.Model):
                                     cascade='all, delete-orphan')
     vacation_balances = db.relationship('VacationBalance', backref='user', lazy='dynamic',
                                         cascade='all, delete-orphan')
+    trash_entries = db.relationship('TrashEntry', backref='user', lazy='dynamic',
+                                    cascade='all, delete-orphan')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
@@ -195,6 +197,9 @@ class User(UserMixin, db.Model):
         return f'<User {self.email or self.login}>'
 
 
+TRASH_RETENTION_DAYS = 30
+
+
 class WorkEntry(db.Model):
     """
     Pojedynczy dzień w rejestrze.
@@ -239,6 +244,52 @@ class WorkEntry(db.Model):
 
     def __repr__(self):
         return f'<WorkEntry {self.date} [{self.entry_type}] {self.hours_billed}h>'
+
+
+class TrashEntry(db.Model):
+    """
+    Kosz: kopia usuniętego dnia (WorkEntry). Osobna tabela zamiast flagi
+    „usunięty", dzięki temu nie blokuje unikalności (user_id, date) i żadne
+    zapytanie o WorkEntry nie musi pomijać usuniętych dni.
+    Wpisy starsze niż TRASH_RETENTION_DAYS są kasowane automatycznie.
+    """
+    __tablename__ = 'trash_entries'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    deleted_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    date = db.Column(db.Date, nullable=False)
+    billing_year = db.Column(db.Integer, nullable=False)
+    billing_month = db.Column(db.Integer, nullable=False)
+    entry_type = db.Column(db.String(20), nullable=False, default='work')
+    time_start = db.Column(db.Time, nullable=True)
+    time_end = db.Column(db.Time, nullable=True)
+    breaks = db.Column(db.Text, nullable=True)
+    extra_break_minutes = db.Column(db.Integer, default=0)
+    hours_worked = db.Column(db.Numeric(5, 2), nullable=False, default=0)
+    hours_billed = db.Column(db.Numeric(5, 2), nullable=False, default=8)
+    vacation_day_number = db.Column(db.Integer, nullable=True)
+    is_remote = db.Column(db.Boolean, default=False)
+    remote_trip_number = db.Column(db.Integer, nullable=True)
+    notes = db.Column(db.String(500), nullable=True)
+
+    COPY_FIELDS = (
+        'date', 'billing_year', 'billing_month', 'entry_type', 'time_start', 'time_end',
+        'breaks', 'extra_break_minutes', 'hours_worked', 'hours_billed',
+        'vacation_day_number', 'is_remote', 'remote_trip_number', 'notes',
+    )
+
+    @classmethod
+    def from_entry(cls, entry):
+        return cls(user_id=entry.user_id, **{f: getattr(entry, f) for f in cls.COPY_FIELDS})
+
+    def to_entry(self):
+        return WorkEntry(user_id=self.user_id, **{f: getattr(self, f) for f in self.COPY_FIELDS})
+
+    def __repr__(self):
+        return f'<TrashEntry {self.date} [{self.entry_type}]>'
+
 
 
 class MonthConfig(db.Model):
