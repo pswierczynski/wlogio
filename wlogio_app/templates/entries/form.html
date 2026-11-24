@@ -386,9 +386,10 @@
                                     <template x-for="day in (preview ? preview.days : [])" :key="day.date">
                                         <div class="flex items-center justify-between px-4 py-2 text-sm">
                                             <span x-text="day.date" class="font-medium"></span>
-                                            <span class="badge badge-sm"
-                                                  :class="day.type === 'vacation' ? 'badge badge-info badge-sm whitespace-nowrap py-1 h-6' : day.type === 'sick_leave' ? 'badge badge-error badge-sm whitespace-nowrap py-1 h-6' : day.type === 'care_leave' ? 'badge badge-secondary badge-sm whitespace-nowrap py-1 h-6' : 'badge badge-neutral badge-sm whitespace-nowrap py-1 h-6'"
-                                                  x-text="day.type === 'vacation' ? 'Urlop' : day.type === 'sick_leave' ? 'Zwolnienie' : day.type === 'care_leave' ? 'Opiekuńczy' : 'Bezpłatny'"></span>
+                                            {# Kolory jak badge typów dnia: zwolnienie czerwone, święto szare, wszystkie urlopy niebieskie #}
+                                            <span class="badge badge-sm whitespace-nowrap py-1 h-6 border-0 text-white"
+                                                  :style="{ backgroundColor: ({ sick_leave: '#E63946', holiday: '#9ca3af' })[day.type] || '#0565FE' }"
+                                                  x-text="({ vacation: 'Urlop', on_demand: 'Na żądanie', unpaid: 'Bezpłatny', sick_leave: 'Zwolnienie', care_leave: 'Opiekuńczy', force_majeure: 'Siła wyższa', child_care: 'Opieka nad dzieckiem', holiday: 'Święto' })[day.type] || day.type"></span>
                                         </div>
                                     </template>
                                 </div>

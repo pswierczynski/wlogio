@@ -22,7 +22,7 @@
     /* Badge pracownika po prawej stronie bloku; bez badge'a — puste kółko
        z szarym obrysem (to samo miejsce, nic się nie przesuwa). */
     .emp-badge {
-        width: 32px; height: 32px; border-radius: 50%;
+        width: 24px; height: 24px; border-radius: 50%;   /* jak badge w panelu pracy */
         display: flex; align-items: center; justify-content: center;
         flex-shrink: 0;
     }
@@ -44,7 +44,9 @@
     @media (min-width: 1280px) { .emp-break-cell.emp-nobreak { display: block; visibility: hidden; } }
     .emp-badge-missing { background-color: oklch(var(--er)); }
     .emp-badge-hidden { display: none; }
-    .emp-badge svg { width: 18px; height: 18px; }
+    .emp-badge svg { width: 14px; height: 14px; }
+    /* Badge pracy (P/W) podczas przerwy — pomarańczowy */
+    .emp-badge-on-break { background-color: #FA930D !important; }
     .emp-badge-empty { border: 2px solid oklch(var(--b3)); }
     {% for code, color in badge_colors.items() %}
     .emp-badge-t-{{ code }} { background-color: {{ color }}; }
@@ -59,7 +61,7 @@
         </span>
     </div>
     {% if employee_count >= employee_limit %}
-    <button type="button" class="btn btn-primary btn-sm gap-1" disabled title="Osiągnięto limit pracowników">
+    <button type="button" class="btn btn-primary btn-sm gap-1" disabled title="Osiągnięto limit pracowników" style="border-color: transparent;">
         Limit osiągnięty
     </button>
     {% else %}
@@ -161,7 +163,7 @@
             {# Czerwony badge: minione dni bez godziny zakończenia pracy #}
             <div data-emp-missing class="emp-badge emp-badge-missing{% if not miss %} emp-badge-hidden{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v9"/><path d="M12 19h.01"/></svg></div>
             <div data-emp-badge
-                 class="emp-badge {% if b %}emp-badge-t-{{ b }}{% elif miss %}emp-badge-hidden{% else %}emp-badge-empty{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
+                 class="emp-badge {% if b %}emp-badge-t-{{ b }}{% elif miss %}emp-badge-hidden{% else %}emp-badge-empty{% endif %}{% if b and fl and fl.status == 'break' %} emp-badge-on-break{% endif %}">{% if b %}{{ badge_icons[b]|safe }}{% endif %}</div>
         </div>
         <div class="flex items-center justify-between w-full order-4 xl:order-none xl:w-auto xl:justify-end xl:gap-1">
             <form method="POST" action="{{ url_for('dashboard.employee_select', employee_id=employee.id) }}" class="xl:mr-1">
@@ -251,6 +253,7 @@
                     slot.classList.add(missing ? 'emp-badge-hidden' : 'emp-badge-empty');
                     slot.innerHTML = '';
                 }
+                slot.classList.toggle('emp-badge-on-break', f.status === 'break' && !!f.badge);
             }
         });
         /* Liczniki sekcji; puste sekcje ukryte */

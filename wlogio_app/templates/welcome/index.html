@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ekran powitalny — Wlogio</title>
+    <title>Wlogio - Terminal</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -233,10 +233,10 @@
         .badge-type-U { background-color: #0565FE; }  /* niebieski — urlop */
         .badge-type-Z { background-color: #E63946; }  /* czerwony — zwolnienie */
         .badge-type-O { background-color: #0565FE; }  /* niebieski jak urlop — urlop opiekuńczy */
-        .badge-type-S { background-color: #FA930D; }  /* pomarańczowy jak na żądanie — siła wyższa */
+        .badge-type-S { background-color: #0565FE; }  /* niebieski jak urlop — siła wyższa */
         .badge-type-D { background-color: #0565FE; }  /* niebieski jak urlop — opieka nad dzieckiem */
-        .badge-type-N { background-color: #FA930D; }  /* pomarańczowy — urlop na żądanie */
-        .badge-type-B { background-color: #9ca3af; }  /* szary jak praca/zdalna — urlop bezpłatny */
+        .badge-type-N { background-color: #0565FE; }  /* niebieski jak urlop — urlop na żądanie */
+        .badge-type-B { background-color: #0565FE; }  /* niebieski jak urlop — urlop bezpłatny */
         .badge-type-H { background-color: #9ca3af; }  /* szary — święto */
         .badge-type-W { background-color: #16C72E; }  /* zielony jak zdalna — praca stacjonarna */
 
@@ -913,14 +913,14 @@ function welcomeApp() {
                         const info = data[String(this.selectedUserId)];
                         if (info) {
                             this.clockStatus   = info.status || 'idle';
-                            this.selectedBadge = info.badge  || null;
+                            this.selectedBadge = this.gateBadge(info.badge, info.status);
                         }
                     }
                     /* Odśwież selectedBadge jeśli jesteśmy na ekranie pin */
                     if (this.screen === 'pin' && this.selectedUserId) {
                         const info = data[String(this.selectedUserId)];
                         if (info) {
-                            this.selectedBadge = info.badge || null;
+                            this.selectedBadge = this.gateBadge(info.badge, info.status);
                         }
                     }
                 }
@@ -982,11 +982,20 @@ function welcomeApp() {
             window.location.reload();
         },
 
+        /* Badge pracy (P/W) tylko gdy użytkownik faktycznie pracuje — podczas przerwy
+           (pomarańczowa ramka) i poza pracą go nie pokazujemy. Pozostałe badge bez zmian. */
+        gateBadge(badge, status) {
+            if ((badge === 'P' || badge === 'W') && status !== 'working') { return null; }
+            return badge || null;
+        },
+
         selectUser(userId, name, avatar, badge) {
             this.selectedUserId = userId;
             this.selectedName   = name;
             this.selectedAvatar = avatar;
-            this.selectedBadge  = badge;
+            /* badge bierzemy z aktualnych danych (nie z atrybutu klikniętego avatara, który bywa nieświeży) */
+            const _uid = String(userId);
+            this.selectedBadge  = this.gateBadge(this.badges[_uid] !== undefined ? this.badges[_uid] : badge, this.statuses[_uid]);
             this.pin            = '';
             this.pinError       = false;
             this.ringChanged    = {};   /* animacje obramowania tylko dla zmian od tej chwili */
@@ -1023,7 +1032,7 @@ function welcomeApp() {
                 this.breaksCount = data.breaks_count || 0;
                 this.clockDate   = data.date;
                 this.clockStatus = data.status || 'idle';
-                this.selectedBadge = data.badge || null;
+                this.selectedBadge = this.gateBadge(data.badge, data.status);
                 if (this.statuses[String(this.selectedUserId)] !== this.clockStatus) {
                     this.ringChanged[String(this.selectedUserId)] = true;
                 }
@@ -1055,7 +1064,7 @@ function welcomeApp() {
                 this.breakEnd    = data.break_end;
                 this.breaksCount = data.breaks_count || 0;
                 this.clockStatus = data.status || 'idle';
-                this.selectedBadge = data.badge || null;
+                this.selectedBadge = this.gateBadge(data.badge, data.status);
                 if (this.statuses[String(this.selectedUserId)] !== this.clockStatus) {
                     this.ringChanged[String(this.selectedUserId)] = true;
                 }

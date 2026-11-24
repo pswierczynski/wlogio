@@ -285,6 +285,25 @@ LEAVE_TEXT = {
 }
 
 
+def _login_from_name(name):
+    """'Jan Kowalski' -> 'jan.kowalski' (małe litery, bez polskich znaków i spacji)."""
+    import re, unicodedata
+    s = (name or '').lower().replace('ł', 'l')
+    s = unicodedata.normalize('NFD', s)
+    s = ''.join(c for c in s if not unicodedata.combining(c))
+    s = re.sub(r'\s+', '.', s.strip())
+    return re.sub(r'\.+', '.', re.sub(r'[^a-z0-9.-]', '', s))
+
+
+def _today_break_entry_id(user_id):
+    """Id dzisiejszego wpisu pracy, jeśli użytkownik jest teraz na przerwie (badge pracy robi się wtedy pomarańczowy)."""
+    from wlogio_app.routes.welcome import get_today_entry, compute_status
+    entry = get_today_entry(user_id)
+    if entry is not None and compute_status(entry) == 'break':
+        return entry.id
+    return None
+
+
 def get_employee_work_flags(employee_ids):
     """
     Znaczniki do obramowania kart pracowników na liście:
@@ -352,6 +371,9 @@ def get_employee_work_flags(employee_ids):
         t_start, t_end, t_break, t_break_min = _today_times(entry)
         missing = uid in missing_end_ids
         badge = compute_badge(entry, status)
+        # Podczas przerwy badge pracy zostaje (P/W) — lista rysuje go na pomarańczowo
+        if status == 'break' and entry is not None and entry.entry_type == 'work':
+            badge = 'P' if entry.is_remote else 'W'
         if status in ('working', 'break'):
             group = status
         elif missing:
@@ -482,6 +504,7 @@ def index():
         viewing_employee=(target if current_user.is_company else None),
         employee_today=local_today(),
         hide_amounts=current_user.amounts_hidden,
+        break_entry_id=_today_break_entry_id(target.id),
     )
 
 
@@ -526,8 +549,13 @@ def employee_new():
         password  = request.form.get('password', '')
         password2 = request.form.get('password2', '')
 
+        if not login and name:
+            login = _login_from_name(name)      # imie.nazwisko
         if not name or not login or not password:
             flash('Imię i nazwisko, login i hasło są wymagane.', 'error')
+            return redirect(url_for('dashboard.employee_new'))
+        if len(name.split()) < 2:
+            flash('Podaj imię i nazwisko pracownika (oba człony).', 'error')
             return redirect(url_for('dashboard.employee_new'))
         if password != password2:
             flash('Hasła nie są identyczne.', 'error')

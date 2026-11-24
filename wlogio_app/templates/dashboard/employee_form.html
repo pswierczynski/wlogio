@@ -19,20 +19,22 @@
             <form method="POST" class="flex flex-col gap-6">
 
                 <!-- SEKCJA: Dane konta -->
-                <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-4"
+                     x-data="{ name: '', login: '', touched: false,
+                              slug(n) { return (n || '').toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, '.').replace(/[^a-z0-9.-]/g, '').replace(/[.]+/g, '.'); } }">
                     <h2 class="font-semibold text-base border-b border-base-200 pb-2">Dane konta</h2>
 
                     <div class="form-control">
                         <label class="label"><span class="label-text font-medium">Imię i nazwisko</span></label>
-                        <input type="text" name="name" required
+                        <input type="text" name="name" required x-model="name" @input="if (!touched) { login = slug(name) }"
                                class="input input-bordered w-full" placeholder="Jan Kowalski"/>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="form-control">
                             <label class="label"><span class="label-text font-medium">Login</span></label>
-                            <input type="text" name="login" required autocomplete="off"
-                                   class="input input-bordered w-full" placeholder="jkowalski"/>
+                            <input type="text" name="login" required autocomplete="off" x-model="login" @input="touched = true"
+                                   class="input input-bordered w-full" placeholder="jan.kowalski"/>
                         </div>
                         <div></div>
                         <div class="form-control">
@@ -103,7 +105,7 @@
                         <label class="cursor-pointer">
                             <input type="checkbox" name="work_days" value="{{ val }}" class="sr-only peer"
                                    {% if val in work_days_set %}checked{% endif %}/>
-                            <span class="btn btn-sm w-12 peer-checked:btn-primary border border-base-300 bg-base-100 hover:bg-base-200 peer-checked:border-transparent">
+                            <span class="btn btn-sm w-12 border border-base-300 bg-base-100 hover:bg-base-200 peer-checked:bg-[#1A1A19] peer-checked:text-white peer-checked:border-[#1A1A19]">
                                 {{ label }}
                             </span>
                         </label>
@@ -136,7 +138,7 @@
                             <label class="cursor-pointer">
                                 <input type="radio" name="round_minutes" value="{{ mins }}" class="sr-only peer"
                                        {% if current_round == mins %}checked{% endif %}/>
-                                <span class="btn btn-sm peer-checked:btn-primary border border-base-300 bg-base-100 hover:bg-base-200 peer-checked:border-transparent">
+                                <span class="btn btn-sm border border-base-300 bg-base-100 hover:bg-base-200 peer-checked:bg-[#1A1A19] peer-checked:text-white peer-checked:border-[#1A1A19]">
                                     {{ mins }} min
                                 </span>
                             </label>
