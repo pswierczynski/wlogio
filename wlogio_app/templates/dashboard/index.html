@@ -242,11 +242,12 @@
                                             {% endfor %}
                                         {% endif %}
                                         {% set can_modify = emp_can_modify(entry) %}
+                                        {% set can_note_only = (not can_modify) and emp_can_note(entry) %}
                                         {# Brak godziny zakończenia oznaczamy tylko w MINIONYCH dniach — w bieżącym dniu praca może jeszcze trwać. #}
                                         {% set missing_end = entry.entry_type == 'work' and entry.time_start and not entry.time_end and entry.date < employee_today %}
-                                        <tr class="entry-row transition-colors{% if can_modify %} entry-link{% endif %}"
-                                            {% if can_modify %}:class="selected.includes({{ entry.id }}) ? 'is-selected' : ''"
-                                            @click="rowClick($event, '{{ url_for('entries.edit', entry_id=entry.id) }}')"{% endif %}>
+                                        <tr class="entry-row transition-colors{% if can_modify or can_note_only %} entry-link{% endif %}"
+                                            {% if can_modify %}:class="selected.includes({{ entry.id }}) ? 'is-selected' : ''"{% endif %}
+                                            {% if can_modify or can_note_only %}@click="rowClick($event, '{{ url_for('entries.edit', entry_id=entry.id) }}')"{% endif %}>
 
                                             <td class="col-check">
                                                 {% if can_modify %}
@@ -341,7 +342,7 @@
                                             </td>
 
                                             <td class="col-date font-medium text-sm whitespace-nowrap">
-                                                {% if can_modify %}<a href="{{ url_for('entries.edit', entry_id=entry.id) }}" class="{% if missing_end %}text-error{% endif %}" title="Edytuj dzień">{{ entry.date.strftime('%d.%m.%Y') }}</a>
+                                                {% if can_modify or can_note_only %}<a href="{{ url_for('entries.edit', entry_id=entry.id) }}" class="{% if missing_end %}text-error{% endif %}" title="{{ 'Edytuj dzień' if can_modify else 'Edytuj notatkę' }}">{{ entry.date.strftime('%d.%m.%Y') }}</a>
                                                 {% else %}<span class="{% if missing_end %}text-error{% endif %}">{{ entry.date.strftime('%d.%m.%Y') }}</span>{% endif %}
                                             </td>
 

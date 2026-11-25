@@ -54,6 +54,12 @@ def index():
         people = get_company_employees(current_user.id)
     else:
         people = [current_user]
+        # Konto indywidualne w zespole: widzi też nieobecności pozostałych członków
+        from wlogio_app.routes.welcome import get_user_team
+        team = get_user_team(current_user)
+        if team:
+            people = [current_user] + [m.user for m in team.members if m.user_id != current_user.id]
+    group_mode = is_company or len(people) > 1
     names = {p.id: p.name for p in people}
 
     entries = []
@@ -94,4 +100,4 @@ def index():
         })
 
     return render_template('calendar/index.html', blocks=blocks, days=days,
-                           is_company=is_company, total=len(people))
+                           is_company=group_mode, total=len(people))

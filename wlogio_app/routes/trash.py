@@ -12,18 +12,43 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 
 from wlogio_app import db
-from wlogio_app.models import TrashEntry, WorkEntry, User, TRASH_RETENTION_DAYS
+from wlogio_app.models import TrashEntry, WorkEntry, MonthConfig, User, TRASH_RETENTION_DAYS
 from wlogio_app.routes.dashboard import get_company_employees, MONTH_NAMES
 from wlogio_app.routes.entries import renumber_vacations
 
 trash_bp = Blueprint('trash', __name__)
 
 
+def drop_orphan_month_configs(pairs):
+    """
+    Kasuje konfigurację miesiąca (bez commita), jeśli dla (user_id, rok, miesiąc)
+    nie zostało już ani jednego dnia — ani w panelu, ani w koszu. Wywoływane po
+    TRWAŁYM usunięciu dni z kosza (ręcznie, przez opróżnienie lub po 30 dniach).
+    """
+    db.session.flush()
+    for uid, y, m in set(pairs):
+        has_entry = WorkEntry.query.filter_by(user_id=uid, billing_year=y, billing_month=m).first()
+        has_trash = TrashEntry.query.filter_by(user_id=uid, billing_year=y, billing_month=m).first()
+        if has_entry or has_trash:
+            continue
+        cfg = MonthConfig.query.filter_by(user_id=uid, billing_year=y, billing_month=m).first()
+        if cfg:
+            db.session.delete(cfg)
+
+
+def _pairs(items):
+    return [(t.user_id, t.billing_year, t.billing_month) for t in items]
+
+
 def purge_expired_trash():
     """Kasuje z kosza wpisy starsze niż TRASH_RETENTION_DAYS (z commitem)."""
     limit = datetime.utcnow() - timedelta(days=TRASH_RETENTION_DAYS)
-    deleted = TrashEntry.query.filter(TrashEntry.deleted_at < limit).delete(synchronize_session=False)
-    if deleted:
+    expired = TrashEntry.query.filter(TrashEntry.deleted_at < limit).all()
+    if expired:
+        pairs = _pairs(expired)
+        for t in expired:
+            db.session.delete(t)
+        drop_orphan_month_configs(pairs)
         db.session.commit()
 
 
@@ -119,8 +144,10 @@ def restore():
 @login_required
 def purge():
     items = _selected_entries()
+    pairs = _pairs(items)
     for t in items:
         db.session.delete(t)
+    drop_orphan_month_configs(pairs)
     db.session.commit()
     if items:
         flash(f'Trwale usunięto dni: {len(items)}.', 'success')
@@ -130,7 +157,12 @@ def purge():
 @trash_bp.route('/empty', methods=['POST'])
 @login_required
 def empty():
-    count = _scope_query().delete(synchronize_session=False)
+    items = _scope_query().all()
+    pairs = _pairs(items)
+    for t in items:
+        db.session.delete(t)
+    drop_orphan_month_configs(pairs)
+    count = len(items)
     db.session.commit()
     flash(f'Opróżniono kosz (usunięto dni: {count}).', 'success')
     return redirect(url_for('trash.index'))

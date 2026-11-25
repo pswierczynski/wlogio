@@ -8,6 +8,7 @@ from wlogio_app.holidays import seed_month_holidays, month_is_empty
 from wlogio_app.models import WorkEntry, MonthConfig, TrashEntry, NOTE_MAX_LENGTH
 from wlogio_app.routes.welcome import parse_open_breaks, format_breaks_with_open
 from wlogio_app.scope import (
+    employee_can_note,
     require_entry_user, local_today, employee_set_error, employee_can_delete,
     employee_can_add_any, entry_policy_type,
 )
@@ -506,6 +507,19 @@ def edit(entry_id):
     if is_employee:
         _t = entry_policy_type(entry.entry_type, entry.is_remote)
         err = employee_set_error(entry.date, _t, _t)
+        if err and employee_can_note(entry):
+            # Pracownik bez prawa edycji dnia, ale z prawem do notatki (opcja firmy) —
+            # zmienia wyłącznie notatkę bieżącego dnia.
+            if request.method == 'POST':
+                nerr = notes_too_long()
+                if nerr:
+                    flash(nerr, 'error')
+                    return redirect(url_for('entries.edit', entry_id=entry_id))
+                entry.notes = request.form.get('notes', '').strip() or None
+                db.session.commit()
+                flash('Zapisano notatkę.', 'success')
+                return redirect(url_for('dashboard.index'))
+            return render_template('entries/note_only.html', entry=entry, note_max=NOTE_MAX_LENGTH)
         if err:
             flash(err, 'error')
             return redirect(url_for('dashboard.index'))
@@ -602,9 +616,9 @@ def edit(entry_id):
 
 def _remove_entry(entry, target):
     """
-    Przenosi wpis do kosza (bez commita) i zwraca (rok_urlopu|None). Gdy miesiąc rozliczeniowy
-    zostaje pusty, kasuje też jego konfigurację. Numeracja urlopów jest przeliczana
-    przez wywołującego (raz na rok), żeby przy usuwaniu wielu dni nie powtarzać pracy.
+    Przenosi wpis do kosza (bez commita) i zwraca (rok_urlopu|None). Konfiguracja miesiąca
+    NIE jest kasowana (trafia do kosza razem z dniem — patrz trash.drop_orphan_month_configs).
+    Numeracja urlopów jest przeliczana przez wywołującego (raz na rok), żeby przy usuwaniu wielu dni nie powtarzać pracy.
     """
     billing_year  = entry.billing_year
     billing_month = entry.billing_month
@@ -614,15 +628,8 @@ def _remove_entry(entry, target):
     db.session.delete(entry)
     db.session.flush()
 
-    remaining = WorkEntry.query.filter_by(
-        user_id=target.id, billing_year=billing_year, billing_month=billing_month,
-    ).count()
-    if remaining == 0:
-        config = MonthConfig.query.filter_by(
-            user_id=target.id, billing_year=billing_year, billing_month=billing_month,
-        ).first()
-        if config:
-            db.session.delete(config)
+    # Konfiguracja miesiąca zostaje — jest kasowana dopiero po trwałym usunięciu
+    # z kosza ostatniego dnia tego miesiąca (routes/trash.py: drop_orphan_month_configs).
     return vacation_year
 
 
