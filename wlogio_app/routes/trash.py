@@ -13,7 +13,7 @@ from flask_login import login_required, current_user
 
 from wlogio_app import db
 from wlogio_app.models import TrashEntry, WorkEntry, MonthConfig, User, TRASH_RETENTION_DAYS
-from wlogio_app.routes.dashboard import get_company_employees, MONTH_NAMES
+from wlogio_app.routes.dashboard import get_company_employees
 from wlogio_app.routes.entries import renumber_vacations
 
 trash_bp = Blueprint('trash', __name__)
@@ -83,31 +83,13 @@ def index():
     rows = _scope_query().order_by(TrashEntry.date.desc()).all()
 
     by_user = {}
-    for r in rows:
-        by_user.setdefault(r.user_id, {}).setdefault(r.billing_year, {}).setdefault(r.billing_month, []).append(r)
-
-    groups = []      # [{user, years: [{year, months: [{key, name, entries}]}]}]
-    month_ids = {}   # klucz miesiąca -> lista id (do zaznaczania wszystkich)
-    for u in users:
-        years = []
-        for y in sorted(by_user.get(u.id, {}), reverse=True):
-            months = []
-            for m in sorted(by_user[u.id][y], reverse=True):
-                entries = by_user[u.id][y][m]
-                key = f'{u.id}-{y}-{m}'
-                month_ids[key] = [e.id for e in entries]
-                months.append({'key': key, 'name': MONTH_NAMES.get(m, str(m)), 'entries': entries})
-            years.append({'year': y, 'count': sum(len(mm['entries']) for mm in months), 'months': months})
-        if years:
-            groups.append({'user': u, 'years': years})
-
-    first = None
-    if groups:
-        g = groups[0]
-        first = {'user': g['user'].id, 'year': g['years'][0]['year'], 'month': g['years'][0]['months'][0]['key']}
+    for r in rows:                      # rows są posortowane po dacie malejąco
+        by_user.setdefault(r.user_id, []).append(r)
+    groups = [{'user': u, 'entries': by_user[u.id]} for u in users if u.id in by_user]
+    all_ids = [r.id for r in rows]
 
     return render_template(
-        'trash/index.html', groups=groups, month_ids=month_ids, first=first,
+        'trash/index.html', groups=groups, all_ids=all_ids,
         is_company=current_user.account_type == 'company', total=len(rows),
         retention_days=TRASH_RETENTION_DAYS, now=datetime.utcnow(),
     )
