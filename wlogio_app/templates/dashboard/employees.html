@@ -55,8 +55,8 @@
 <div class="flex items-center justify-between mb-4 sm:mb-6">
     <div class="flex items-baseline gap-3 flex-wrap">
         <h1 class="text-xl font-bold">Pracownicy</h1>
-        <span class="text-sm text-base-content/60" data-emp-pool>
-            {{ employee_count }} / {{ employee_limit }} pracowników
+        <span class="text-sm text-base-content/60 flex flex-col sm:block" data-emp-pool>
+            <span>{{ employee_count }} / {{ employee_limit }} pracowników</span>
             <span class="text-base-content/40">({{ current_user.account_type_label }})</span>
         </span>
     </div>
