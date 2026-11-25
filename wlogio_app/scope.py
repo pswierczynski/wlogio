@@ -136,6 +136,11 @@ def employee_can_modify(entry):
     return _employee_day_allowed(current_user, entry.date, t, t)
 
 
+def employee_can_note(entry):
+    """Czy pracownik może zmienić WYŁĄCZNIE notatkę tego wpisu (zawsze, ale tylko w bieżącym dniu)."""
+    return current_user.account_type == 'employee' and entry.date == local_today()
+
+
 def employee_can_add_any():
     """Czy w panelu ma być widoczny przycisk dodawania dnia."""
     if current_user.account_type != 'employee':
