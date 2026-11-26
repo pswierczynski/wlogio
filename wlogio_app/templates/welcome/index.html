@@ -366,7 +366,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
     {# Pasek z godziną: przezroczysty, o zerowej wysokości (nie przesuwa centrowania zdjęć), przykleja się
        do górnej krawędzi z odstępem 0.75rem i nie przechwytuje kliknięć #}
     {% if kiosk %}
-    <div class="sticky top-3 z-10 h-0 pointer-events-none">
+    <div class="relative z-10 h-0 pointer-events-none">
         <div class="flex items-start justify-between px-6 pt-1">
             <div class="flex items-center gap-2">
                 <span class="wlogio-logo h-6" role="img" aria-label="Wlogio"></span>
@@ -379,7 +379,7 @@ const INIT_NOTES    = {{ user_notes | tojson }};
     </div>
     {% else %}
     {# Wersja z paskiem bocznym i górnym konta: sama godzina/data, bez logo, szerokość jak reszta podstron #}
-    <div class="sticky top-3 z-10 h-0 pointer-events-none">
+    <div class="relative z-10 h-0 pointer-events-none">
         <div class="flex items-start justify-end">
             <div class="text-right">
                 <div class="text-sm font-medium" x-text="currentTime"></div>

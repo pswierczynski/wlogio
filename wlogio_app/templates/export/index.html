@@ -40,17 +40,17 @@
                         <span class="label-text font-medium">Format pliku</span>
                     </label>
                     <div class="flex gap-2">
-                        <label class="btn flex-1"
+                        <label class="btn px-6"
                                :class="format === 'csv' ? 'btn-neutral' : 'btn-outline'">
                             <input type="radio" name="format" value="csv" class="hidden" x-model="format"/>
                             CSV
                         </label>
-                        <label class="btn flex-1"
+                        <label class="btn px-6"
                                :class="format === 'xlsx' ? 'btn-neutral' : 'btn-outline'">
                             <input type="radio" name="format" value="xlsx" class="hidden" x-model="format"/>
                             Excel (XLSX)
                         </label>
-                        <label class="btn flex-1"
+                        <label class="btn px-6"
                                :class="format === 'pdf' ? 'btn-neutral' : 'btn-outline'">
                             <input type="radio" name="format" value="pdf" class="hidden" x-model="format"/>
                             PDF

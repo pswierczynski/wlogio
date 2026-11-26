@@ -405,7 +405,7 @@
 
                             <!-- Podsumowanie miesiąca -->
                             {% set ot_rate_pct = (month.config.overtime_rate if month.config and month.config.overtime_rate is not none else 100) / 100 %}
-                            {% set overtime_amount = month.summary.overtime_hours * month.hourly_rate * ot_rate_pct %}
+                            {% set overtime_amount = month.summary.overtime_hours * month.hourly_rate * (ot_rate_pct if month.summary.overtime_hours > 0 else 1) %}
                             <div class="bg-base-100 px-3 sm:px-5 py-5 sm:py-6">
                                 <div class="grid {{ 'grid-cols-3' if hide_amounts else 'grid-cols-2 sm:grid-cols-5' }} gap-3 sm:gap-4 text-sm">
                                     <div>

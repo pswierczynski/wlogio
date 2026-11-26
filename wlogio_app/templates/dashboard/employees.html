@@ -135,7 +135,7 @@
             </div>
             <div class="hidden md:block text-sm text-base-content/70 whitespace-nowrap xl:w-[96px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Stawka</span>
-                {% if st and st.hourly_rate %}{{ format_currency(st.hourly_rate) }}/h{% else %}—{% endif %}
+                {{ format_currency(st.hourly_rate if st and st.hourly_rate else 0) }}/h
             </div>
             <div class="text-sm whitespace-nowrap xl:w-[96px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Zarobione</span>
