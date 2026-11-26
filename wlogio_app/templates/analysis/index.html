@@ -1,6 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Analiza{% endblock %}
 
+{% macro pln(v) %}{{ ('{:,.2f}'.format(v)).replace(',', ' ').replace('.', ',') }} zł{% endmacro %}
+{% macro num(v) %}{{ ('{:,.2f}'.format(v)).replace(',', ' ').replace('.', ',') }}{% endmacro %}
+{% macro stat(label, value, sub=None, tone='') %}
+<div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-2 border-b border-base-200 last:border-b-0">
+    <div class="text-sm text-base-content/70 leading-snug flex-1 min-w-[9rem]">{{ label }}</div>
+    <div class="text-right ml-auto">
+        <div class="font-semibold tabular-nums {{ tone }}">{{ value if value else '—' }}</div>
+        {% if sub %}<div class="text-xs text-base-content/50">{{ sub }}</div>{% endif %}
+    </div>
+</div>
+{% endmacro %}
+
 {% block content %}
 <div class="w-full" x-data="analysis()">
     <div class="flex items-center gap-3 mb-6">
@@ -15,6 +27,38 @@
             <p class="text-sm text-base-content/60">
                 Dane zbiorcze wszystkich pracowników{% if employees_count %} ({{ employees_count }}){% endif %} — suma w każdym miesiącu rozliczeniowym.
             </p>
+            {% endif %}
+
+            {% if stats %}
+            <div class="grid gap-3 lg:grid-cols-3">
+                <div class="rounded-xl border border-base-200 px-4 py-2">
+                    <div class="text-xs font-bold uppercase tracking-wide text-base-content/50 pt-2">Średnie</div>
+                    {{ stat('Średnie miesięczne wynagrodzenie w tym roku', pln(stats.avg_this_year) if stats.avg_this_year is not none else None) }}
+                    {{ stat('Średnie miesięczne wynagrodzenie w poprzednim roku', pln(stats.avg_prev_year) if stats.avg_prev_year is not none else None) }}
+                    {{ stat('Średnie wynagrodzenie przez cały okres', pln(stats.avg_all)) }}
+                    {{ stat('Średnia stawka wynagrodzenia', (num(stats.avg_rate) ~ ' zł/h') if stats.avg_rate else None) }}
+                </div>
+                <div class="rounded-xl border border-base-200 px-4 py-2">
+                    <div class="text-xs font-bold uppercase tracking-wide text-base-content/50 pt-2">Sumy</div>
+                    {{ stat('Suma zarobiona przez cały okres', pln(stats.sum_all)) }}
+                    {{ stat('Suma zarobiona w tym roku (do dziś)', pln(stats.ytd),
+                            ('rok wcześniej: ' ~ pln(stats.ytd_prev))) }}
+                    {% set d = stats.ytd_diff %}
+                    {{ stat('Porównanie z tym samym okresem rok wcześniej',
+                            ('+' if d > 0 else ('−' if d < 0 else '')) ~ pln(d|abs),
+                            (('+' if stats.ytd_pct > 0 else ('−' if stats.ytd_pct < 0 else '')) ~ num(stats.ytd_pct|abs) ~ ' %') if stats.ytd_pct is not none else None,
+                            'text-success' if d > 0 else ('text-error' if d < 0 else '')) }}
+                </div>
+                <div class="rounded-xl border border-base-200 px-4 py-2">
+                    <div class="text-xs font-bold uppercase tracking-wide text-base-content/50 pt-2">Rekordy</div>
+                    {{ stat('Najwyższe wynagrodzenie', pln(stats.max_salary.value), stats.max_salary.label) }}
+                    {{ stat('Najniższe wynagrodzenie', pln(stats.min_salary.value), stats.min_salary.label) }}
+                    {{ stat('Największa premia', pln(stats.max_bonus.value) if stats.max_bonus else None, stats.max_bonus.label if stats.max_bonus else None) }}
+                    {{ stat('Największa ilość nadgodzin w miesiącu', (num(stats.max_overtime.value) ~ ' h') if stats.max_overtime else None, stats.max_overtime.label if stats.max_overtime else None) }}
+                    {{ stat('Najdłuższy urlop', (stats.longest_vacation.days ~ ' dni') if stats.longest_vacation else None, stats.longest_vacation.range if stats.longest_vacation else None) }}
+                    {{ stat('Najdłuższe zwolnienie lekarskie', (stats.longest_sick.days ~ ' dni') if stats.longest_sick else None, stats.longest_sick.range if stats.longest_sick else None) }}
+                </div>
+            </div>
             {% endif %}
 
             {% if rows %}
