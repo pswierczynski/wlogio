@@ -697,7 +697,11 @@ const INIT_NOTES    = {{ user_notes | tojson }};
                 </svg>
                 <div class="flex-1 min-w-0">
                     <small>Status</small>
-                    <b x-text="isDayOff ? 'Dzień wolny od pracy' : (clockOut ? 'Zakończono pracę' : (clockStatus === 'break' ? 'Na przerwie' : (clockIn ? 'W pracy' : 'Nie rozpoczęto pracy')))"></b>
+                    <b>
+                        {# Komórka: krótkie nazwy statusu, żeby mieściły się w polu #}
+                        <span class="sm:hidden" x-text="isDayOff ? 'Dzień wolny' : (clockOut ? 'Koniec pracy' : (clockStatus === 'break' ? 'Przerwa' : (clockIn ? 'W pracy' : 'Brak startu')))"></span>
+                        <span class="hidden sm:inline" x-text="isDayOff ? 'Dzień wolny od pracy' : (clockOut ? 'Zakończono pracę' : (clockStatus === 'break' ? 'Na przerwie' : (clockIn ? 'W pracy' : 'Nie rozpoczęto pracy')))"></span>
+                    </b>
                 </div>
                 <span class="sp-sep"></span>
                 <div class="shrink-0" style="min-width:3.2rem">

@@ -210,18 +210,18 @@
 
                         <div>
                             {% if month.entries %}
-                            <div class="overflow-x-auto">
+                            <div class="overflow-x-hidden md:overflow-x-auto">
                                 <table class="table table-sm dash-table w-full">
                                     <thead>
                                         <tr class="text-xs text-base-content/50 uppercase tracking-wide">
                                             <th class="col-check"></th>
                                             <th class="col-type font-semibold">Typ</th>
                                             <th class="col-date font-semibold">Data</th>
-                                            <th class="col-time font-semibold">Przyjście</th>
-                                            <th class="col-time font-semibold">Wyjście</th>
-                                            <th class="col-break font-semibold">Przerwa</th>
+                                            <th class="hidden md:table-cell col-time font-semibold">Przyjście</th>
+                                            <th class="hidden md:table-cell col-time font-semibold">Wyjście</th>
+                                            <th class="hidden md:table-cell col-break font-semibold">Przerwa</th>
                                             <th class="col-hours font-semibold text-right">Godziny</th>
-                                            {% if not hide_amounts %}<th class="col-salary font-semibold text-right">Wynagrodzenie</th>{% endif %}
+                                            {% if not hide_amounts %}<th class="hidden md:table-cell col-salary font-semibold text-right">Wynagrodzenie</th>{% endif %}
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -347,14 +347,14 @@
                                                 {% else %}<span class="{% if missing_end %}text-error{% endif %}">{{ entry.date.strftime('%d.%m.%Y') }}</span>{% endif %}
                                             </td>
 
-                                            <td class="col-time text-base-content/70 text-sm whitespace-nowrap">
+                                            <td class="hidden md:table-cell col-time text-base-content/70 text-sm whitespace-nowrap">
                                                 {% if entry.time_start %}{{ entry.time_start.strftime('%H:%M') }}{% else %}—{% endif %}
                                             </td>
-                                            <td class="col-time text-base-content/70 text-sm whitespace-nowrap">
+                                            <td class="hidden md:table-cell col-time text-base-content/70 text-sm whitespace-nowrap">
                                                 {% if entry.time_end %}{{ entry.time_end.strftime('%H:%M') }}{% else %}—{% endif %}
                                             </td>
 
-                                            <td class="col-break text-base-content/70 text-xs whitespace-nowrap">
+                                            <td class="hidden md:table-cell col-break text-base-content/70 text-xs whitespace-nowrap">
                                                 {% if break_total_min.v > 0 and not (entry.entry_type == 'work' and entry.time_start and not entry.time_end) %}
                                                     {% set paid_break = (month.config.paid_break_minutes if month.config and month.config.paid_break_minutes is not none else 15) | int %}
                                                     {% if break_total_min.v <= paid_break %}
@@ -375,7 +375,7 @@
                                                 {% endif %}
                                             </td>
                                             {% if not hide_amounts %}
-                                            <td class="col-salary text-right font-medium text-sm whitespace-nowrap" style="color:#16C72E;">
+                                            <td class="hidden md:table-cell col-salary text-right font-medium text-sm whitespace-nowrap" style="color:#16C72E;">
                                                 {% if month.hourly_rate > 0 and entry.entry_type != 'unpaid' and (entry.time_end or entry.entry_type != 'work') %}
                                                     {% set ot_rate = (month.config.overtime_rate if month.config and month.config.overtime_rate is not none else 100) / 100 %}
                                                     {% set od_rate = (month.config.offday_rate if month.config and month.config.offday_rate is not none else 100) / 100 %}

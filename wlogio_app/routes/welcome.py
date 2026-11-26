@@ -354,9 +354,19 @@ def kiosk_index():
     return render_terminal(kiosk=True)
 
 
-def today_note(entry):
-    """Notatka z wpisu BIEŻĄCEGO dnia (chmurka w terminalu) albo ''."""
-    return (entry.notes or '').strip() if entry else ''
+def today_note(entry, status=None):
+    """
+    Notatka z wpisu BIEŻĄCEGO dnia (chmurka w terminalu) albo ''.
+    Pokazywana tylko, gdy pracownik jest w pracy lub na przerwie ('working' | 'break'),
+    po zakończeniu pracy (i przed jej rozpoczęciem) chmurki nie ma.
+    """
+    if not entry:
+        return ''
+    if status is None:
+        status = compute_status(entry)
+    if status not in ('working', 'break'):
+        return ''
+    return (entry.notes or '').strip()
 
 
 def render_terminal(kiosk):
@@ -376,7 +386,7 @@ def render_terminal(kiosk):
         status = compute_status(entry)
         user_statuses[user.id] = status
         user_badges[user.id]   = compute_badge(entry, status)
-        user_notes[user.id]    = today_note(entry)
+        user_notes[user.id]    = today_note(entry, status)
 
     return render_template(
         'welcome/index.html',
@@ -441,7 +451,7 @@ def statuses():
         result[str(user.id)] = {
             'status': status,
             'badge':  compute_badge(entry, status),
-            'note':   today_note(entry),
+            'note':   today_note(entry, status),
         }
     return jsonify(result)
 

@@ -143,7 +143,7 @@
             </div>
             <div class="text-sm font-semibold whitespace-nowrap xl:w-[96px] xl:shrink-0">
                 <span class="xl:hidden block text-xs font-normal text-base-content/50">Prognoza</span>
-                {% if st and st.hourly_rate %}{{ format_currency(st.forecast) }}{% else %}—{% endif %}
+                {{ format_currency(st.forecast if st and st.hourly_rate and st.forecast else 0) }}
             </div>
             <div class="xl:w-[112px] xl:shrink-0">
                 <span class="xl:hidden block text-xs text-base-content/50">Przepracowane</span>

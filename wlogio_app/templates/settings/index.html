@@ -232,46 +232,48 @@
                              x-transition:enter-start="opacity-0"
                              x-transition:enter-end="opacity-100">
 
-                            <div class="border-t border-base-200 overflow-x-auto">
-                                <table class="table w-full">
+                            <div class="border-t border-base-200">
+                                <table class="table w-full text-[11px] sm:text-sm">
                                     <thead>
                                         <tr class="text-xs text-base-content/50 bg-base-200/50">
-                                            <th class="min-w-[140px]">Miesiąc</th>
+                                            <th class="px-1.5 sm:px-4 sm:min-w-[140px]">Miesiąc</th>
                                             {% if not hide_amounts %}
-                                            <th class="min-w-[100px] text-right">Stawka</th>
-                                            <th class="min-w-[110px] text-right">Wymagane</th>
-                                            <th class="min-w-[100px] text-right">Premia</th>
+                                            <th class="px-1.5 sm:px-4 sm:min-w-[100px] text-right">Stawka</th>
+                                            <th class="px-1.5 sm:px-4 sm:min-w-[110px] text-right">Wymagane</th>
+                                            <th class="px-1.5 sm:px-4 sm:min-w-[100px] text-right">Premia</th>
                                             {% else %}
-                                            <th class="min-w-[110px] text-right">Wymagane</th>
+                                            <th class="px-1.5 sm:px-4 sm:min-w-[110px] text-right">Wymagane</th>
                                             {% endif %}
-                                            {% if current_user.account_type != 'employee' %}<th class="min-w-[80px]"></th>{% endif %}
+                                            {% if current_user.account_type != 'employee' %}<th class="px-1.5 sm:px-4 sm:min-w-[80px]"></th>{% endif %}
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for config in group.configs %}
                                         <tr class="hover">
-                                            <td class="font-medium whitespace-nowrap">
+                                            <td class="px-1.5 sm:px-4 font-medium whitespace-nowrap">
                                                 {{ MONTH_NAMES.get(config.billing_month) }}
                                             </td>
                                             {% if not hide_amounts %}
-                                            <td class="text-right whitespace-nowrap">
-                                                {{ config.hourly_rate }} zł/h
+                                            <td class="px-1.5 sm:px-4 text-right whitespace-nowrap">
+                                                {{ '%g' % (config.hourly_rate|float) }} zł/h
                                             </td>
                                             {% endif %}
-                                            <td class="text-right whitespace-nowrap">
-                                                {{ config.expected_hours or '—' }}{% if config.expected_hours %}h{% endif %}
+                                            <td class="px-1.5 sm:px-4 text-right whitespace-nowrap">
+                                                {% if config.expected_hours %}{{ '%g' % (config.expected_hours|float) }}h{% else %}—{% endif %}
                                             </td>
                                             {% if not hide_amounts %}
-                                            <td class="text-right whitespace-nowrap">
+                                            <td class="px-1.5 sm:px-4 text-right whitespace-nowrap">
                                                 {% if config.bonus and config.bonus > 0 %}
-                                                <span class="font-medium" style="color:#16C72E;">+{{ config.bonus }} zł</span>
+                                                <span class="font-medium" style="color:#16C72E;">+{{ '%g' % (config.bonus|float) }} zł</span>
                                                 {% else %}—{% endif %}
                                             </td>
                                             {% endif %}
                                             {% if current_user.account_type != 'employee' %}
-                                            <td class="whitespace-nowrap">
+                                            <td class="px-1.5 sm:px-4 whitespace-nowrap">
                                                 <a href="{{ url_for('settings.month_config', year=config.billing_year, month=config.billing_month) }}"
-                                                   class="btn btn-ghost btn-xs">Edytuj</a>
+                                                   class="btn btn-ghost btn-xs btn-square" aria-label="Edytuj" title="Edytuj">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                                </a>
                                             </td>
                                             {% endif %}
                                         </tr>
