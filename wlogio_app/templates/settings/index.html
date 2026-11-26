@@ -162,7 +162,7 @@
                         ('force_majeure', 'Siła wyższa (dni)', balance.force_majeure_total),
                         ('child_care', 'Opieka nad dz. (dni)', balance.child_care_total)] %}
                     <div class="px-3 py-3 min-[1150px]:px-5 min-[1150px]:py-4 bg-base-200 rounded-xl flex flex-col min-[1150px]:flex-row items-center gap-2.5 min-[1150px]:gap-4">
-                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0" style="color:#9ca3af">{{ bal_icons[key] | safe }}</svg>
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0" style="color:#b9bec6">{{ bal_icons[key] | safe }}</svg>
                         <div class="h-px w-full min-[1150px]:h-auto min-[1150px]:w-px min-[1150px]:self-stretch shrink-0 bg-[#d1d5db]"></div>
                         <div class="flex flex-col min-w-0 items-center text-center min-[1150px]:items-start min-[1150px]:text-left">
                             <div class="text-2xl font-bold text-base-content">{{ total }}</div>
@@ -233,49 +233,25 @@
                              x-transition:enter-end="opacity-100">
 
                             <div class="border-t border-base-200">
-                                <table class="table w-full text-[11px] sm:text-sm">
+                                {% set can_edit = current_user.account_type != 'employee' %}
+                                <table class="table table-fixed w-full">
                                     <thead>
                                         <tr class="text-xs text-base-content/50 bg-base-200/50">
-                                            <th class="px-1.5 sm:px-4 sm:min-w-[140px]">Miesiąc</th>
-                                            {% if not hide_amounts %}
-                                            <th class="px-1.5 sm:px-4 sm:min-w-[100px] text-right">Stawka</th>
-                                            <th class="px-1.5 sm:px-4 sm:min-w-[110px] text-right">Wymagane</th>
-                                            <th class="px-1.5 sm:px-4 sm:min-w-[100px] text-right">Premia</th>
-                                            {% else %}
-                                            <th class="px-1.5 sm:px-4 sm:min-w-[110px] text-right">Wymagane</th>
-                                            {% endif %}
-                                            {% if current_user.account_type != 'employee' %}<th class="px-1.5 sm:px-4 sm:min-w-[80px]"></th>{% endif %}
+                                            <th>Miesiąc</th>
+                                            {% if not hide_amounts %}<th class="text-center">Stawka</th>{% endif %}
+                                            <th class="text-right">Wymagane</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for config in group.configs %}
-                                        <tr class="hover">
-                                            <td class="px-1.5 sm:px-4 font-medium whitespace-nowrap">
-                                                {{ MONTH_NAMES.get(config.billing_month) }}
-                                            </td>
+                                        {# Kliknięcie w pasek miesiąca otwiera jego ustawienia (jak edycja dnia w panelu pracy) #}
+                                        <tr class="hover transition-colors{% if can_edit %} cursor-pointer{% endif %}"
+                                            {% if can_edit %}onclick="window.location.href='{{ url_for('settings.month_config', year=config.billing_year, month=config.billing_month) }}'"{% endif %}>
+                                            <td class="font-medium whitespace-nowrap">{{ MONTH_NAMES.get(config.billing_month) }}</td>
                                             {% if not hide_amounts %}
-                                            <td class="px-1.5 sm:px-4 text-right whitespace-nowrap">
-                                                {{ '%g' % (config.hourly_rate|float) }} zł/h
-                                            </td>
+                                            <td class="text-center whitespace-nowrap">{{ '%g' % (config.hourly_rate|float) }} zł/h</td>
                                             {% endif %}
-                                            <td class="px-1.5 sm:px-4 text-right whitespace-nowrap">
-                                                {% if config.expected_hours %}{{ '%g' % (config.expected_hours|float) }}h{% else %}—{% endif %}
-                                            </td>
-                                            {% if not hide_amounts %}
-                                            <td class="px-1.5 sm:px-4 text-right whitespace-nowrap">
-                                                {% if config.bonus and config.bonus > 0 %}
-                                                <span class="font-medium" style="color:#16C72E;">+{{ '%g' % (config.bonus|float) }} zł</span>
-                                                {% else %}—{% endif %}
-                                            </td>
-                                            {% endif %}
-                                            {% if current_user.account_type != 'employee' %}
-                                            <td class="px-1.5 sm:px-4 whitespace-nowrap">
-                                                <a href="{{ url_for('settings.month_config', year=config.billing_year, month=config.billing_month) }}"
-                                                   class="btn btn-ghost btn-xs btn-square" aria-label="Edytuj" title="Edytuj">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                                </a>
-                                            </td>
-                                            {% endif %}
+                                            <td class="text-right whitespace-nowrap">{% if config.expected_hours %}{{ '%g' % (config.expected_hours|float) }}h{% else %}—{% endif %}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>

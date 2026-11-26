@@ -9,6 +9,8 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         /* Logo Wlogio (wordmark) — kolor dziedziczony z tekstu */
+        /* Narożnik paska bocznego z górnym: zaokrąglony jak paski w panelu pracy (rounded-box) */
+        @media (min-width: 1024px) { .content-corner { border-top-left-radius: var(--rounded-box, 1rem); } }
         .wlogio-logo{display:inline-block;aspect-ratio:1267.0/375.7;background:currentColor;
             -webkit-mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;
             mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;}
@@ -155,7 +157,7 @@
 {# Pasek boczny: na desktopie (lg+) zawsze rozwinięty, na mniejszych ekranach wysuwany przyciskiem w pasku górnym #}
 <div class="drawer lg:drawer-open">
 <input id="nav-drawer" type="checkbox" class="drawer-toggle" aria-label="Menu"/>
-<div class="drawer-content flex flex-col min-w-0">
+<div class="drawer-content flex flex-col min-w-0 min-h-screen lg:bg-base-100">
 
 <div class="navbar bg-base-100 px-0 min-h-16">
   <div class="container mx-auto max-w-6xl px-3 sm:px-4 flex flex-row items-center w-full">
@@ -172,19 +174,20 @@
     </div>
 
     {# Awatar (użytkownika / pracownika / firmy) — przenosi do ustawień konta; inicjały jak w "Moje konto" #}
-    <a href="{{ url_for('settings.profile') }}" class="btn btn-ghost btn-sm ml-auto h-auto min-h-0 p-1 rounded-full" aria-label="Moje konto" title="{{ nav_display_name }}">
+    <a href="{{ url_for('settings.profile') }}" class="btn btn-ghost btn-sm ml-auto h-auto min-h-0 p-2 rounded-full" aria-label="Moje konto" title="{{ nav_display_name }}">
         {% if current_user.avatar %}
-        <img src="{{ current_user.avatar }}" alt="" class="w-9 h-9 rounded-full object-cover shrink-0"/>
+        <img src="{{ current_user.avatar }}" alt="" class="w-9 h-9 rounded-full object-cover shrink-0" style="box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0,0,0,.08);"/>
         {% else %}
         {% set _parts = (nav_display_name or '?').split() %}
         <span class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
-              style="background-color: {{ avatar_color(current_user.id) }};">{{ _parts[0][0] | upper }}{% if _parts | length > 1 %}{{ _parts[1][0] | upper }}{% endif %}</span>
+              style="background-color: {{ avatar_color(current_user.id) }}; box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0,0,0,.08);">{{ _parts[0][0] | upper }}{% if _parts | length > 1 %}{{ _parts[1][0] | upper }}{% endif %}</span>
         {% endif %}
     </a>
   </div>
 </div>
 {% endif %}
 
+{% if current_user.is_authenticated %}<div class="flex-1 bg-base-200 content-corner">{% endif %}
 {# Komunikaty flash — pokazujemy tylko błędy (inline, nad treścią strony, bez
    floating "chmurki"). Potwierdzenia sukcesu ('success') są celowo ukryte. #}
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -203,17 +206,18 @@
 <main class="container mx-auto px-3 sm:px-4 py-4 sm:py-6 max-w-6xl">
     {% block content %}{% endblock %}
 </main>
+{% if current_user.is_authenticated %}</div>{# /content-corner #}{% endif %}
 
 {% if current_user.is_authenticated %}
 </div>{# /drawer-content #}
 
 <div class="drawer-side z-40">
     <label for="nav-drawer" class="drawer-overlay" aria-label="Zamknij menu"></label>
-    <aside class="w-60 min-h-full bg-base-100 flex flex-col">
+    <aside class="w-64 min-h-full bg-base-100 flex flex-col">
         <a href="{{ url_for('dashboard.index') }}" class="flex items-center px-5 h-16 min-h-16 shrink-0" aria-label="Wlogio">
             <span class="wlogio-logo h-6" role="img" aria-label="Wlogio"></span>
         </a>
-        <div class="px-3 mb-6 h-8 shrink-0">  {# stała wysokość: menu nie przeskakuje, gdy przycisku brak #}
+        <div class="px-3 mb-8 h-8 shrink-0">  {# stała wysokość: menu nie przeskakuje, gdy przycisku brak #}
             {% if nav_effective_user and emp_can_add %}
             <a href="{{ url_for('entries.add') }}" class="btn btn-primary btn-sm w-full gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -243,6 +247,14 @@
                 </a>
                 {% endif %}
             </li>
+            {% if current_user.account_type != 'employee' %}
+            <li>
+                <a href="{{ url_for('trash.index') }}" class="gap-3 {% if ep.startswith('trash.') %}bg-base-200 font-semibold{% endif %}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Kosz
+                </a>
+            </li>
+            {% endif %}
             <li>
                 <a href="{{ url_for('export.index') }}" class="gap-3 {% if ep.startswith('export.') %}bg-base-200 font-semibold{% endif %}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
@@ -275,12 +287,6 @@
                         Terminal
                     </button>
                 </form>
-            </li>
-            <li>
-                <a href="{{ url_for('trash.index') }}" class="gap-3 {% if ep.startswith('trash.') %}bg-base-200 font-semibold{% endif %}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    Kosz
-                </a>
             </li>
             {% endif %}
             <li class="mt-auto border-t border-base-300 pt-1">

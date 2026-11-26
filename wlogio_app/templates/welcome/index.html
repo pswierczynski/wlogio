@@ -1,12 +1,7 @@
-<!DOCTYPE html>
-<html lang="pl" data-theme="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wlogio - Terminal</title>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet"/>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+{% extends ('welcome/kiosk_shell.html' if kiosk else 'base.html') %}
+{% block title %}Terminal{% endblock %}
+
+{% block content %}
     <style>
         /* Pola formularzy — jak w reszcie aplikacji (cienka linia #E5E3DC, ciemna ramka po kliknięciu, bez podwójnego obramowania) */
         .input { border: 1px solid #E5E3DC; border-radius: 12px; background-color: #fff; color: #1A1A19; }
@@ -45,7 +40,8 @@
         @media (min-width: 900px)  { .users-grid { grid-template-columns: repeat(4, 1fr); } }
         .users-grid.u1 { grid-template-columns: 1fr; max-width: 200px; }
         .users-grid.u2 { grid-template-columns: repeat(2, 1fr); max-width: 420px; }
-        .users-grid.u3 { grid-template-columns: repeat(3, 1fr); max-width: 620px; }
+        .users-grid.u3 { max-width: 620px; }
+        @media (min-width: 640px) { .users-grid.u3 { grid-template-columns: repeat(3, 1fr); } }  /* poniżej 640 px 2 kolumny — 3 zdjęcia 128 px się nie mieszczą */
 
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(30px); }
@@ -347,9 +343,9 @@
             transition: background-color 9999s ease-in-out 0s;
         }
         input:autofill, input:-moz-autofill { background-color: oklch(var(--b1)) !important; color: oklch(var(--bc)) !important; filter: none; }
+            /* Terminal w układzie z paskiem bocznym: wysokość = ekran minus pasek górny (4rem) i odstępy strony */
+        .terminal-embedded { min-height: calc(100dvh - 7rem); }
     </style>
-</head>
-<body class="bg-base-200 min-h-screen">
 
 <script>
 const PIN_REQUIRED = {{ "true" if pin_required else "false" }};
@@ -361,8 +357,9 @@ const INIT_BADGES   = {{ user_badges | tojson }};
 const INIT_NOTES    = {{ user_notes | tojson }};
 </script>
 
-<div x-data="welcomeApp()" x-init="init()" class="min-h-screen flex flex-col">
+<div x-data="welcomeApp()" x-init="init()" class="{{ 'min-h-screen' if kiosk else 'terminal-embedded' }} flex flex-col">
 
+    {% if kiosk %}
     <div class="sticky top-0 z-10 bg-base-200 flex items-center justify-between px-6 py-4 shadow-sm">
         <div class="flex items-center gap-2">
             <span class="wlogio-logo h-6" role="img" aria-label="Wlogio"></span>
@@ -372,6 +369,15 @@ const INIT_NOTES    = {{ user_notes | tojson }};
             <div class="text-xs text-base-content/50" x-text="currentDate"></div>
         </div>
     </div>
+    {% else %}
+    {# Wersja z paskiem bocznym i górnym konta: sama godzina/data w polu strony, bez logo, szerokość jak reszta podstron #}
+    <div class="sticky top-0 z-10 bg-base-200 flex items-center justify-end pb-4">
+        <div class="text-right">
+            <div class="text-sm font-medium" x-text="currentTime"></div>
+            <div class="text-xs text-base-content/50" x-text="currentDate"></div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- EKRAN 1: Siatka avatarów -->
     <div x-show="screen === 'avatars'"
@@ -520,12 +526,6 @@ const INIT_NOTES    = {{ user_notes | tojson }};
         </div>
         {% endif %}
 
-        {% if not kiosk %}
-        <a href="{{ url_for('dashboard.index') if current_user.is_authenticated else url_for('auth.login') }}"
-           class="mt-10 btn btn-ghost btn-sm text-base-content/30">
-            ← Wróć
-        </a>
-        {% endif %}
     </div>
 
     {% if team is not none %}
@@ -1113,6 +1113,4 @@ function welcomeApp() {
     }
 }
 </script>
-
-</body>
-</html>
+{% endblock %}
