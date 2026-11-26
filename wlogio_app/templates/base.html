@@ -174,7 +174,7 @@
     </div>
 
     {# Awatar (użytkownika / pracownika / firmy) — przenosi do ustawień konta; inicjały jak w "Moje konto" #}
-    <a href="{{ url_for('settings.profile') }}" class="btn btn-ghost btn-sm ml-auto h-auto min-h-0 p-2 rounded-full" aria-label="Moje konto" title="{{ nav_display_name }}">
+    <a href="{{ url_for('settings.profile') }}" class="btn btn-ghost btn-sm ml-auto -mr-1 h-auto min-h-0 p-2 rounded-full" aria-label="Moje konto" title="{{ nav_display_name }}">
         {% if current_user.avatar %}
         <img src="{{ current_user.avatar }}" alt="" class="w-9 h-9 rounded-full object-cover shrink-0" style="box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0,0,0,.08);"/>
         {% else %}

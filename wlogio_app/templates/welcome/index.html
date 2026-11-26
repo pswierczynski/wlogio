@@ -157,6 +157,8 @@
         }
         /* Miejsce na chmurkę zarezerwowane zawsze — pojawienie się notatki nie przesuwa kafelków */
         .users-grid .avatar-btn { padding-top: 3.4rem; }
+        /* Miejsce na chmurkę nad zdjęciami nie może przesuwać ich z środka ekranu */
+        .users-grid { margin-top: -3.4rem; }
         .note-bubble { transform-origin: 50% 100%; }
         /* Wejście jak wiadomość w iMessage: rośnie od dołu (od ogonka) ze sprężystym "odbiciem" */
         .bubble-enter       { transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease-out; }
@@ -345,6 +347,8 @@
         input:autofill, input:-moz-autofill { background-color: oklch(var(--b1)) !important; color: oklch(var(--bc)) !important; filter: none; }
             /* Terminal w układzie z paskiem bocznym: wysokość = ekran minus pasek górny (4rem) i odstępy strony */
         .terminal-embedded { min-height: calc(100dvh - 7rem); }
+        /* pasek górny (4rem) przesuwa środek obszaru poniżej środka ekranu — korekta, by zdjęcia były na środku ekranu */
+        .terminal-embedded .users-grid { margin-top: calc(-3.4rem - 22px); }
     </style>
 
 <script>
@@ -359,32 +363,35 @@ const INIT_NOTES    = {{ user_notes | tojson }};
 
 <div x-data="welcomeApp()" x-init="init()" class="{{ 'min-h-screen' if kiosk else 'terminal-embedded' }} flex flex-col">
 
+    {# Pasek z godziną: przezroczysty, o zerowej wysokości (nie przesuwa centrowania zdjęć), przykleja się
+       do górnej krawędzi z odstępem 0.75rem i nie przechwytuje kliknięć #}
     {% if kiosk %}
-    <div class="sticky top-0 z-10 bg-base-200 flex items-center justify-between px-6 py-4 shadow-sm">
-        <div class="flex items-center gap-2">
-            <span class="wlogio-logo h-6" role="img" aria-label="Wlogio"></span>
-        </div>
-        <div class="text-right">
-            <div class="text-sm font-medium" x-text="currentTime"></div>
-            <div class="text-xs text-base-content/50" x-text="currentDate"></div>
+    <div class="sticky top-3 z-10 h-0 pointer-events-none">
+        <div class="flex items-start justify-between px-6 pt-1">
+            <div class="flex items-center gap-2">
+                <span class="wlogio-logo h-6" role="img" aria-label="Wlogio"></span>
+            </div>
+            <div class="text-right">
+                <div class="text-sm font-medium" x-text="currentTime"></div>
+                <div class="text-xs text-base-content/50" x-text="currentDate"></div>
+            </div>
         </div>
     </div>
     {% else %}
-    {# Wersja z paskiem bocznym i górnym konta: sama godzina/data w polu strony, bez logo, szerokość jak reszta podstron #}
-    <div class="sticky top-0 z-10 bg-base-200 flex items-center justify-end pb-4">
-        <div class="text-right">
-            <div class="text-sm font-medium" x-text="currentTime"></div>
-            <div class="text-xs text-base-content/50" x-text="currentDate"></div>
+    {# Wersja z paskiem bocznym i górnym konta: sama godzina/data, bez logo, szerokość jak reszta podstron #}
+    <div class="sticky top-3 z-10 h-0 pointer-events-none">
+        <div class="flex items-start justify-end">
+            <div class="text-right">
+                <div class="text-sm font-medium" x-text="currentTime"></div>
+                <div class="text-xs text-base-content/50" x-text="currentDate"></div>
+            </div>
         </div>
     </div>
     {% endif %}
 
     <!-- EKRAN 1: Siatka avatarów -->
     <div x-show="screen === 'avatars'"
-         class="flex-1 flex flex-col items-center justify-center p-6 overflow-y-auto animate-fade-in avatars-screen">
-
-        <h1 class="text-3xl font-bold mb-1 text-center">Dzień dobry!</h1>
-        <p class="text-base-content/50 text-sm mb-10 text-center">Wybierz swój profil</p>
+         class="flex-1 flex flex-col items-center justify-center px-6 py-14 overflow-y-auto animate-fade-in avatars-screen">
 
         {% set n = users|length %}
         <div class="users-grid w-full max-w-4xl mx-auto
