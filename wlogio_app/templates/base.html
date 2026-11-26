@@ -171,13 +171,14 @@
         </a>
     </div>
 
-    {# Awatar (użytkownika / pracownika / firmy) — przenosi do ustawień konta #}
-    <a href="{{ url_for('settings.profile') }}" class="ml-auto flex items-center rounded-full" aria-label="Moje konto" title="{{ nav_display_name }}">
+    {# Awatar (użytkownika / pracownika / firmy) — przenosi do ustawień konta; inicjały jak w "Moje konto" #}
+    <a href="{{ url_for('settings.profile') }}" class="btn btn-ghost btn-sm ml-auto h-auto min-h-0 p-1 rounded-full" aria-label="Moje konto" title="{{ nav_display_name }}">
         {% if current_user.avatar %}
         <img src="{{ current_user.avatar }}" alt="" class="w-9 h-9 rounded-full object-cover shrink-0"/>
         {% else %}
+        {% set _parts = (nav_display_name or '?').split() %}
         <span class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold text-white shrink-0"
-              style="background-color: {{ avatar_color(current_user.id) }};">{{ (nav_display_name or '?')[:1] | upper }}</span>
+              style="background-color: {{ avatar_color(current_user.id) }};">{{ _parts[0][0] | upper }}{% if _parts | length > 1 %}{{ _parts[1][0] | upper }}{% endif %}</span>
         {% endif %}
     </a>
   </div>
@@ -212,16 +213,16 @@
         <a href="{{ url_for('dashboard.index') }}" class="flex items-center px-5 h-16 min-h-16 shrink-0" aria-label="Wlogio">
             <span class="wlogio-logo h-6" role="img" aria-label="Wlogio"></span>
         </a>
-        {% if nav_effective_user and emp_can_add %}
-        <div class="px-3 mb-6">
+        <div class="px-3 mb-6 h-8 shrink-0">  {# stała wysokość: menu nie przeskakuje, gdy przycisku brak #}
+            {% if nav_effective_user and emp_can_add %}
             <a href="{{ url_for('entries.add') }}" class="btn btn-primary btn-sm w-full gap-1">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                 </svg>
                 Dodaj dzień
             </a>
+            {% endif %}
         </div>
-        {% endif %}
         <ul class="menu px-3 pb-3 gap-1 flex-1">
             <li>
                 <a href="{{ url_for('settings.profile') }}" class="gap-3 {% if ep == 'settings.profile' %}bg-base-200 font-semibold{% endif %}">
@@ -232,7 +233,7 @@
             <li>
                 {% if current_user.is_company %}
                 <a href="{{ url_for('dashboard.index', list=1) }}" class="gap-3 {% if ep.startswith('dashboard.') %}bg-base-200 font-semibold{% endif %}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
                     Lista pracowników
                 </a>
                 {% else %}
