@@ -10,7 +10,11 @@
     <style>
         /* Logo Wlogio (wordmark) — kolor dziedziczony z tekstu */
         /* Narożnik paska bocznego z górnym: zaokrąglony jak paski w panelu pracy (rounded-box) */
-        @media (min-width: 1024px) { .content-corner { border-top-left-radius: var(--rounded-box, 1rem); } }
+        /* Tło za zaokrąglonym narożnikiem = kolor paska (daisyUI nie generuje wariantów lg: dla bg-base-100 w Tailwind CDN) */
+        @media (min-width: 1024px) {
+            .drawer-content-bg { background-color: oklch(var(--b1)); }
+            .content-corner { border-top-left-radius: var(--rounded-box, 1rem); }
+        }
         .wlogio-logo{display:inline-block;aspect-ratio:1267.0/375.7;background:currentColor;
             -webkit-mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;
             mask:url("{{ url_for('static', filename='img/wlogio-logo.svg') }}") left center/contain no-repeat;}
@@ -157,7 +161,7 @@
 {# Pasek boczny: na desktopie (lg+) zawsze rozwinięty, na mniejszych ekranach wysuwany przyciskiem w pasku górnym #}
 <div class="drawer lg:drawer-open">
 <input id="nav-drawer" type="checkbox" class="drawer-toggle" aria-label="Menu"/>
-<div class="drawer-content flex flex-col min-w-0 min-h-screen lg:bg-base-100">
+<div class="drawer-content flex flex-col min-w-0 min-h-screen drawer-content-bg">
 
 <div class="navbar bg-base-100 px-0 min-h-16">
   <div class="container mx-auto max-w-6xl px-3 sm:px-4 flex flex-row items-center w-full">
@@ -174,7 +178,7 @@
     </div>
 
     {# Awatar (użytkownika / pracownika / firmy) — przenosi do ustawień konta; inicjały jak w "Moje konto" #}
-    <a href="{{ url_for('settings.profile') }}" class="btn btn-ghost btn-sm ml-auto -mr-1 h-auto min-h-0 p-2 rounded-full" aria-label="Moje konto" title="{{ nav_display_name }}">
+    <a href="{{ url_for('settings.profile') }}" class="btn btn-ghost btn-sm ml-auto -mr-2 h-auto min-h-0 p-2 rounded-full" aria-label="Moje konto" title="{{ nav_display_name }}">
         {% if current_user.avatar %}
         <img src="{{ current_user.avatar }}" alt="" class="w-9 h-9 rounded-full object-cover shrink-0" style="box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(0,0,0,.08);"/>
         {% else %}
