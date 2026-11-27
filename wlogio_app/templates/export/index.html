@@ -2,6 +2,28 @@
 {% block title %}Eksport danych{% endblock %}
 
 {% block content %}
+<style>
+    /* Lista rozwijana pracowników: to samo obramowanie i zaokrąglenie co pole; po rozwinięciu pole traci dolne
+       zaokrąglenie i przechodzi płynnie w listę, która ma zaokrąglone dolne narożniki */
+    .emp-select { position: relative; --es-border: oklch(var(--bc) / 0.2); --es-r: var(--rounded-btn, 0.5rem); }
+    .emp-select-btn {
+        width: 100%; height: 3rem; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between;
+        background: oklch(var(--b1)); border: 1px solid var(--es-border); border-radius: var(--es-r);
+        font-size: 0.875rem; text-align: left; cursor: pointer;
+    }
+    .emp-select-btn:focus-visible { outline: 2px solid oklch(var(--bc) / 0.2); outline-offset: 2px; }
+    .emp-select-btn.is-open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
+    .emp-select-caret { flex: none; transition: transform .15s ease; }
+    .emp-select-list {
+        position: absolute; left: 0; right: 0; top: calc(100% - 1px); z-index: 30; margin: 0; padding: 0 0 .25rem; list-style: none;
+        max-height: 20rem; overflow-y: auto; background: oklch(var(--b1));
+        border: 1px solid var(--es-border); border-top: 0; border-radius: 0 0 var(--es-r) var(--es-r);
+    }
+    .emp-select-list button { width: 100%; padding: .45rem 1rem; text-align: left; font-size: .875rem; background: transparent; border: 0; cursor: pointer; }
+    .emp-select-list button:hover { background: oklch(var(--b2)); }
+    .emp-select-list button.is-selected { font-weight: 600; }
+    [x-cloak] { display: none !important; }
+</style>
 <div class="w-full"
      x-data="{ range: 'current_year', format: 'csv' }">
     <div class="flex items-center gap-3 mb-6">
@@ -17,21 +39,32 @@
                 (godziny, wynagrodzenie, nadgodziny), pogrupowane wg miesięcy rozliczeniowych.
             </div>
 
-            <form method="POST" action="{{ url_for('export.generate') }}" class="flex flex-col gap-6">
+            <form method="POST" action="{{ url_for('export.generate') }}" class="flex flex-col gap-6"
+                  {% if employees is not none %}@submit="if (!$el.elements.employee_id.value) { $event.preventDefault(); $el.querySelector('.emp-select-btn').click(); }"{% endif %}>
 
                 {% if employees is not none %}
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-medium">Pracownik</span>
                     </label>
-                    <select name="employee_id" required class="select select-bordered w-full">
-                        <option value="" disabled {% if not selected_id %}selected{% endif %}>Wybierz pracownika</option>
-                        {% for e in employees %}
-                        <option value="{{ e.id }}" {% if e.id == selected_id %}selected{% endif %}>
-                            {{ e.name or e.login }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    {# Własna lista rozwijana (natywnego <select> nie da się zaokrąglić): pole i lista tworzą jedną bryłę #}
+                    <div class="emp-select" x-data='{ open: false, id: "{{ selected_id or '' }}", name: {{ ((employees | selectattr("id", "equalto", selected_id) | map(attribute="name") | first | default("", true)) if selected_id else "") | tojson }} }'
+                         @click.outside="open = false" @keydown.escape="open = false">
+                        <input type="hidden" name="employee_id" :value="id">
+                        <button type="button" class="emp-select-btn" :class="open && 'is-open'"
+                                @click="open = !open" :aria-expanded="open" aria-haspopup="listbox">
+                            <span :class="id ? '' : 'text-base-content/50'" x-text="id ? name : 'Wybierz pracownika'"></span>
+                            <svg class="emp-select-caret" :class="open && 'rotate-180'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <ul class="emp-select-list" x-show="open" x-cloak role="listbox">
+                            {% for e in employees %}
+                            <li><button type="button" role="option"
+                                        :aria-selected="id === '{{ e.id }}'"
+                                        :class="id === '{{ e.id }}' && 'is-selected'"
+                                        @click='id = "{{ e.id }}"; name = {{ (e.name or e.login) | tojson }}; open = false'>{{ e.name or e.login }}</button></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
                 {% endif %}
 
