@@ -5,19 +5,20 @@
 <style>
     /* Lista rozwijana pracowników: to samo obramowanie i zaokrąglenie co pole; po rozwinięciu pole traci dolne
        zaokrąglenie i przechodzi płynnie w listę, która ma zaokrąglone dolne narożniki */
-    .emp-select { position: relative; --es-border: oklch(var(--bc) / 0.2); --es-r: var(--rounded-btn, 0.5rem); }
+    .emp-select { position: relative; --es-border: oklch(var(--bc) / 0.2); --es-border-open: oklch(var(--bc)); --es-r: var(--rounded-btn, 0.5rem); }
     .emp-select-btn {
         width: 100%; height: 3rem; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between;
         background: oklch(var(--b1)); border: 1px solid var(--es-border); border-radius: var(--es-r);
         font-size: 0.875rem; text-align: left; cursor: pointer;
     }
     .emp-select-btn:focus-visible { outline: 2px solid oklch(var(--bc) / 0.2); outline-offset: 2px; }
-    .emp-select-btn.is-open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
+    .emp-select-btn:hover { border-color: oklch(var(--bc) / 0.4); }
+    .emp-select-btn.is-open { border-color: var(--es-border-open); border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-color: transparent; }
     .emp-select-caret { flex: none; transition: transform .15s ease; }
     .emp-select-list {
         position: absolute; left: 0; right: 0; top: calc(100% - 1px); z-index: 30; margin: 0; padding: 0 0 .25rem; list-style: none;
         max-height: 20rem; overflow-y: auto; background: oklch(var(--b1));
-        border: 1px solid var(--es-border); border-top: 0; border-radius: 0 0 var(--es-r) var(--es-r);
+        border: 1px solid var(--es-border-open); border-top: 0; border-radius: 0 0 var(--es-r) var(--es-r);
     }
     .emp-select-list button { width: 100%; padding: .45rem 1rem; text-align: left; font-size: .875rem; background: transparent; border: 0; cursor: pointer; }
     .emp-select-list button:hover { background: oklch(var(--b2)); }
