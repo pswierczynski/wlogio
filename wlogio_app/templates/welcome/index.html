@@ -323,6 +323,9 @@
         }
         .clock-btn svg { flex: none; }
         .clock-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        /* Wygaszone (nieklikalne) przyciski: bez obramowania */
+        .btn:disabled, .btn[disabled], .btn.btn-disabled { border-color: transparent !important; }
+        .clock-btn:disabled, .clock-btn.clock-ended { border-color: transparent; }
         .clock-dark  { background: #1A1A19; color: #fff; }
         .clock-light { background: #fff; border-color: #e2e0da; color: #1A1A19; }
         .clock-light.clock-break-icon svg { color: #FA930D; }

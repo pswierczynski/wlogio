@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
+        /* Wygaszone (nieklikalne) przyciski: bez obramowania */
+        .btn:disabled, .btn[disabled], .btn.btn-disabled { border-color: transparent !important; }
         /* Logo Wlogio (wordmark) — kolor dziedziczony z tekstu */
         /* Narożnik paska bocznego z górnym: zaokrąglony jak paski w panelu pracy (rounded-box) */
         /* Tło za zaokrąglonym narożnikiem = kolor paska (daisyUI nie generuje wariantów lg: dla bg-base-100 w Tailwind CDN) */

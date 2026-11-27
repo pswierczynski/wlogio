@@ -3,6 +3,8 @@
 
 {% block content %}
 <style>
+    /* Tytuły kolumn tylko w pierwszej widocznej sekcji (sekcje bez wierszy mają atrybut hidden) */
+    section[data-emp-group]:not([hidden]) ~ section[data-emp-group]:not([hidden]) .emp-cols { display: none !important; }
     /* Kolor imienia i nazwiska pracownika: czerwony = minione dni bez godziny
        zakończenia pracy, zielony = aktualnie w pracy. */
     .emp-card-missing-end .emp-name { color: oklch(var(--er)); }
@@ -61,7 +63,7 @@
         </span>
     </div>
     {% if employee_count >= employee_limit %}
-    <button type="button" class="btn btn-primary btn-sm gap-1" disabled title="Osiągnięto limit pracowników" style="border-color: transparent;">
+    <button type="button" class="btn btn-primary btn-sm gap-1" disabled title="Osiągnięto limit pracowników">
         Limit osiągnięty
     </button>
     {% else %}
@@ -96,9 +98,19 @@
 {% endfor %}
 <section class="mb-4" data-emp-group="{{ gkey }}"{% if not group_rows %} hidden{% endif %}>
     <div class="flex items-center gap-2 mb-1.5 px-1">
-        <span class="inline-block rounded-full" style="width:9px;height:9px;background:{{ gcolor }}"></span>
-        <span class="text-sm font-semibold">{{ glabel }}</span>
-        <span class="text-xs text-base-content/40" data-emp-group-count>{{ group_rows|length }}</span>
+        <div class="flex items-center gap-2 xl:w-[268px] xl:shrink-0">
+            <span class="inline-block rounded-full" style="width:9px;height:9px;background:{{ gcolor }}"></span>
+            <span class="text-sm font-semibold">{{ glabel }}</span>
+            <span class="text-xs text-base-content/40" data-emp-group-count>{{ group_rows|length }}</span>
+        </div>
+        {# Tytuły kolumn: tylko na xl i tylko w pierwszej widocznej sekcji (patrz CSS .emp-cols) #}
+        <div class="emp-cols hidden xl:flex items-center gap-x-2 text-xs text-base-content/40 whitespace-nowrap" aria-hidden="true">
+            <span class="w-[96px] shrink-0">Przerwa</span>
+            <span class="w-[96px] shrink-0">Stawka</span>
+            <span class="w-[96px] shrink-0">Zarobione</span>
+            <span class="w-[96px] shrink-0">Prognoza</span>
+            <span class="w-[112px] shrink-0">Przepracowane</span>
+        </div>
     </div>
     <div class="card shadow-none overflow-hidden emp-group-body">
     {% for employee in group_rows %}
